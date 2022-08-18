@@ -1,0 +1,155 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Quelldateien">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Headerdateien">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Ressourcendateien">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Quelldateien\Lexer">
+      <UniqueIdentifier>{f7a298f2-b64b-4a70-8922-d1564a29df01}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headerdateien\Lexer">
+      <UniqueIdentifier>{f8cd04a2-151e-49e3-844a-b7b91714800f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Quelldateien\Parser">
+      <UniqueIdentifier>{b43f9f6b-c7a9-44e8-a99a-476bde6dbea5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Headerdateien\Parser">
+      <UniqueIdentifier>{2b58a604-d2ef-4447-b7fc-5c9cda7f3db1}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Lexer.cpp">
+      <Filter>Quelldateien\Lexer</Filter>
+    </ClCompile>
+    <ClCompile Include="Token.cpp">
+      <Filter>Quelldateien\Lexer</Filter>
+    </ClCompile>
+    <ClCompile Include="TokenType.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="Error.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="Projekt2.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="Parser.cpp">
+      <Filter>Quelldateien\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="Statement.cpp">
+      <Filter>Quelldateien\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="BlockNode.cpp">
+      <Filter>Quelldateien\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="BinOp.cpp">
+      <Filter>Quelldateien\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="ElseCond.cpp">
+      <Filter>Quelldateien\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="Expression.cpp">
+      <Filter>Quelldateien\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="IfCond.cpp">
+      <Filter>Quelldateien\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="Loop.cpp">
+      <Filter>Quelldateien\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="SymbTable.cpp">
+      <Filter>Quelldateien\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="GetVar.cpp">
+      <Filter>Quelldateien\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="SetVar.cpp">
+      <Filter>Quelldateien\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="DeclVar.cpp">
+      <Filter>Quelldateien\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="Literal.cpp">
+      <Filter>Quelldateien\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="IEASTNode.cpp">
+      <Filter>Quelldateien\Parser</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Lexer.h">
+      <Filter>Headerdateien\Lexer</Filter>
+    </ClInclude>
+    <ClInclude Include="Token.h">
+      <Filter>Headerdateien\Lexer</Filter>
+    </ClInclude>
+    <ClInclude Include="Error.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="Parser.h">
+      <Filter>Headerdateien\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="Statement.h">
+      <Filter>Headerdateien\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="BlockNode.h">
+      <Filter>Headerdateien\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="GetVar.h">
+      <Filter>Headerdateien\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="SymbTable.h">
+      <Filter>Headerdateien\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="TokenType.h">
+      <Filter>Headerdateien\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="Loop.h">
+      <Filter>Headerdateien\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="Literal.h">
+      <Filter>Headerdateien\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="IfCond.h">
+      <Filter>Headerdateien\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="Expression.h">
+      <Filter>Headerdateien\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="ElseCond.h">
+      <Filter>Headerdateien\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="BinOp.h">
+      <Filter>Headerdateien\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="SetVar.h">
+      <Filter>Headerdateien\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="DeclVar.h">
+      <Filter>Headerdateien\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="SuppType.h">
+      <Filter>Headerdateien\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="IEASTNode.h">
+      <Filter>Headerdateien\Parser</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Projekt2.rc">
+      <Filter>Ressourcendateien</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>

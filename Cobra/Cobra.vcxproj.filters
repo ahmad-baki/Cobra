@@ -1,0 +1,153 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Resource Files\Lexer">
+      <UniqueIdentifier>{41f595e0-0538-4210-a99d-de2a4893941b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Parser">
+      <UniqueIdentifier>{5cbb3b80-5a56-481c-9f9b-3d604b6fbd2e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Lexer">
+      <UniqueIdentifier>{d87ed55f-0ec5-4417-a96c-b467906eb5d1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Parser">
+      <UniqueIdentifier>{a44274d0-b1a5-4fe0-a199-33dda1fa1cfd}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="TokenType.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Lexer.cpp">
+      <Filter>Source Files\Lexer</Filter>
+    </ClCompile>
+    <ClCompile Include="BinOp.cpp">
+      <Filter>Source Files\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="BlockNode.cpp">
+      <Filter>Source Files\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="DeclVar.cpp">
+      <Filter>Source Files\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="ElseCond.cpp">
+      <Filter>Source Files\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="Expression.cpp">
+      <Filter>Source Files\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="GetVar.cpp">
+      <Filter>Source Files\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="IEASTNode.cpp">
+      <Filter>Source Files\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="IfCond.cpp">
+      <Filter>Source Files\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="Literal.cpp">
+      <Filter>Source Files\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="Loop.cpp">
+      <Filter>Source Files\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="Parser.cpp">
+      <Filter>Source Files\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="Projekt2.cpp">
+      <Filter>Source Files\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="SetVar.cpp">
+      <Filter>Source Files\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="Statement.cpp">
+      <Filter>Source Files\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="SymbTable.cpp">
+      <Filter>Source Files\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="Token.cpp">
+      <Filter>Source Files\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="Error.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Cobra.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="BinOp.h">
+      <Filter>Resource Files\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="BlockNode.h">
+      <Filter>Resource Files\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="DeclVar.h">
+      <Filter>Resource Files\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="ElseCond.h">
+      <Filter>Resource Files\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="Expression.h">
+      <Filter>Resource Files\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="GetVar.h">
+      <Filter>Resource Files\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="IEASTNode.h">
+      <Filter>Resource Files\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="IfCond.h">
+      <Filter>Resource Files\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="Literal.h">
+      <Filter>Resource Files\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="Loop.h">
+      <Filter>Resource Files\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="Parser.h">
+      <Filter>Resource Files\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="SetVar.h">
+      <Filter>Resource Files\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="Statement.h">
+      <Filter>Resource Files\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="SuppType.h">
+      <Filter>Resource Files\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="SymbTable.h">
+      <Filter>Resource Files\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="Token.h">
+      <Filter>Resource Files\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="TokenType.h">
+      <Filter>Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Error.h">
+      <Filter>Resource Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Lexer.h">
+      <Filter>Resource Files\Lexer</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
