@@ -13,12 +13,20 @@ BlockNode::BlockNode(std::vector<Statement*> statements, SymbTable* parentTable)
 	table = new SymbTable(parentTable);
 }
 
-void BlockNode::run() {
+void BlockNode::contin() {
 	while (nextExecIndex < statements.size()){
 		statements[nextExecIndex]->run();
 		nextExecIndex++;
 	}
 }
+
+void BlockNode::run()
+{
+	for (Statement* statement : statements) {
+		statement->run();
+	}
+}
+
 
 void BlockNode::add(Statement* statement)
 {

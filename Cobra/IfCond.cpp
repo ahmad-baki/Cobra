@@ -15,7 +15,8 @@ void IfCond::run()
 		for (int i = 0; i < ifElseStates.size(); i++)
 			if (ifElseStates[i]->run())
 				return;
-		elseState->run();
+		if(elseState != nullptr)
+			elseState->run();
 	}
 }
 

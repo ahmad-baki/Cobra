@@ -23,6 +23,10 @@ T3 BinOp<T1, T2, T3>::run()
 		return T3(val1 / val2);
 	case TokenType::MUL:
 		return T3(val1 * val2);
+	case TokenType::EQEQ:
+		return T3(val1 == val2);
+	case TokenType::EXCLAEQ:
+		return T3(val1 != val2);
 	default:
 		throw std::invalid_argument("invalid operator");
 	}
@@ -38,3 +42,13 @@ template class BinOp<int, float, float>;
 template class BinOp<float, bool, float>;
 template class BinOp<float, int, float>;
 template class BinOp<float, float, float>;
+
+
+template class BinOp<bool, int, bool>;
+template class BinOp<bool, float, bool>;
+template class BinOp<int, bool, bool>;
+template class BinOp<int, int, bool>;
+template class BinOp<int, float, bool>;
+template class BinOp<float, bool, bool>;
+template class BinOp<float, int, bool>;
+template class BinOp<float, float, bool>;

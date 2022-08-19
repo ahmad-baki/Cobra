@@ -17,7 +17,9 @@ Lexer::Lexer(std::string_view text, std::string_view fileName) :
 		{"!", TokenType::EXCLA},
 		{"=", TokenType::EQ},
 		{"==", TokenType::EQEQ},
-		{";", TokenType::SEMICOLON}
+		{"!=", TokenType::EXCLAEQ},
+		{";", TokenType::SEMICOLON},
+		//{"if", TokenType::IF}
 	};
 }
 
@@ -100,7 +102,7 @@ std::pair<Token, Error> Lexer::getNextOperator() {
 			possNextTokens.push_back(token.first);
 	}
 
-	// 2. advances as long there are mult poss. tokens
+	// 2. advances as long there are mult poss. tokens, and it completly parsed tokenstring
 	int i = 0;
 	std::string currentTokenName{ _currentChar };
 	while (possNextTokens.size() > 1) {
@@ -121,13 +123,15 @@ std::pair<Token, Error> Lexer::getNextOperator() {
 		std::vector<size_t> delList{};
 		for (size_t j = 0; j < possNextTokens.size(); j++) {
 			std::string token = possNextTokens[j];
-			if (_currentChar != token[i])
+			if (token.size()-1 < i || _currentChar != token[i])
 				delList.push_back(j);
 		}
 		for (int j = 0; j < delList.size(); j++)
 		{
 			possNextTokens.erase(possNextTokens.begin() + delList[j]-j);
 		}
+		//if (possNextTokens.size() <= 1)
+		//	break;
 	}
 
 	if (possNextTokens.size() == 0) {

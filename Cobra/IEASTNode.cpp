@@ -72,16 +72,42 @@ Expression<bool>* IEASTNode::getExpr() {
 			return nullptr;
 		int leftType = leftNode->getReturnType();
 		if (leftType == 0) {
-			Expression<bool>* leftExpr = leftNode->getExpr<bool>();
 			// nodes get filled from left->right
 			if (rightNode == nullptr)
-				return leftExpr;
+				return leftNode->getExpr<bool>();
+
+			Expression<int>* leftExpr = leftNode->getExpr<int>();
 
 			int rightType = rightNode->getReturnType();
 			if (rightType == 0)
 			{
-				Expression<bool>* rightExpr = rightNode->getExpr<bool>();
-				return new BinOp<bool, bool, bool>(leftExpr, rightExpr, token._type);
+				Expression<int>* rightExpr = rightNode->getExpr<int>();
+				return new BinOp<int, int, bool>(leftExpr, rightExpr, token._type);
+			}
+			if (rightType == 1) {
+				Expression<float>* rightExpr = rightNode->getExpr<float>();
+				return new BinOp<int, float, bool>(leftExpr, rightExpr, token._type);
+			}
+			else {
+				return nullptr;
+			}
+		}
+		if (leftType == 1) {
+			// nodes get filled from left->right
+			if (rightNode == nullptr)
+				return leftNode->getExpr<bool>();
+
+			Expression<float>* leftExpr = leftNode->getExpr<float>();
+
+			int rightType = rightNode->getReturnType();
+			if (rightType == 0)
+			{
+				Expression<int>* rightExpr = rightNode->getExpr<int>();
+				return new BinOp<float, int, bool>(leftExpr, rightExpr, token._type);
+			}
+			else if (rightType == 1) {
+				Expression<float>* rightExpr = rightNode->getExpr<float>();
+				return new BinOp<float, float, bool>(leftExpr, rightExpr, token._type);
 			}
 			else {
 				return nullptr;

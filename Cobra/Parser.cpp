@@ -90,7 +90,7 @@ Statement* Parser::getStatement1(SymbTable* table)
 			return nullptr;
 		}
 		blockNode->add(statement);
-		advance();
+		//advance();
 	}
 	blockNode->table->clearReg();
 	return blockNode;
@@ -99,15 +99,29 @@ Statement* Parser::getStatement1(SymbTable* table)
 // If-Statement
 Statement* Parser::getStatement2(SymbTable* table)
 {
-	if (currentToken._type != TokenType::IF)
+	if (currentToken._type != TokenType::IDENTIFIER ||
+		currentToken._value != "if")
 		return nullptr;
 	size_t startPos = currentPos;
 	advance();
+
+	if (currentToken._type != TokenType::LBRACKET) {
+		revert(startPos);
+		return nullptr;
+	}
+	advance();
+
 	Expression<bool>* cond = getExpr<bool>(table);
 	if (cond == nullptr) {
 		revert(startPos);
 		return nullptr;
 	}
+	if (currentToken._type != TokenType::RBRACKET) {
+		revert(startPos);
+		return nullptr;
+	}
+
+	advance();
 
 	Statement* statement = getStatement(table);
 	if (statement == nullptr) {
@@ -123,17 +137,29 @@ Statement* Parser::getStatement2(SymbTable* table)
 // While-Loop
 Statement* Parser::getStatement3(SymbTable* table)
 {
-	if (currentToken._type != TokenType::WHILE)
+	if (currentToken._type != TokenType::IDENTIFIER ||
+		currentToken._value != "while")
 		return nullptr;
-
 	size_t startPos = currentPos;
 	advance();
-	Expression<bool>* cond = getExpr<bool>(table);
 
-	if (cond != nullptr) {
+	if (currentToken._type != TokenType::LBRACKET) {
 		revert(startPos);
 		return nullptr;
 	}
+	advance();
+
+	Expression<bool>* cond = getExpr<bool>(table);
+	if (cond == nullptr) {
+		revert(startPos);
+		return nullptr;
+	}
+	if (currentToken._type != TokenType::RBRACKET) {
+		revert(startPos);
+		return nullptr;
+	}
+
+	advance();
 
 	Statement* statement = getStatement(table);
 	if (statement == nullptr) {
@@ -442,6 +468,14 @@ std::vector<Token> Parser::getExprTokStream() {
 	size_t bracketSur = 0;
 	bool mustValue = true;
 	TokenType returnType = currentToken._type;
+	std::vector<enum TokenType> valTypes{
+		TokenType::INTLIT, TokenType::DECLIT, TokenType::IDENTIFIER
+	};
+	std::vector<enum TokenType> binOps{
+		TokenType::PLUS, TokenType::MINUS, TokenType::MUL,
+		TokenType::DIV, TokenType::EQEQ, TokenType::EXCLAEQ
+	};
+
 	while (returnType != TokenType::SEMICOLON &&
 		!(returnType == TokenType::RBRACKET && bracketSur == 0)
 		&& currentToken._type != TokenType::NONE) 
@@ -449,7 +483,7 @@ std::vector<Token> Parser::getExprTokStream() {
 
 		if (mustValue) {
 			if (returnType != TokenType::LBRACKET) {
-				if (returnType != TokenType::INTLIT && returnType != TokenType::DECLIT && returnType != TokenType::IDENTIFIER) {
+				if (std::find(valTypes.begin(), valTypes.end(), returnType) == valTypes.end()) {
 					revert(startPos);
 					return std::vector<Token>();
 				}
@@ -461,7 +495,7 @@ std::vector<Token> Parser::getExprTokStream() {
 		}
 		else {
 			if (returnType != TokenType::RBRACKET) {
-				if (returnType != TokenType::PLUS && returnType != TokenType::MINUS && returnType != TokenType::MUL && returnType != TokenType::DIV && returnType != TokenType::EQEQ) {
+				if (std::find(binOps.begin(), binOps.end(), returnType) == binOps.end()) {
 					revert(startPos);
 					return std::vector<Token>();
 				}
@@ -485,7 +519,7 @@ std::vector<Token> Parser::transExprTokStream(std::vector<Token> tokenStream) {
 	std::vector<enum TokenType> opClasses[]{
 		{TokenType::MUL, TokenType::DIV},
 		{TokenType::PLUS, TokenType::MINUS},
-		{TokenType::EQEQ},
+		{TokenType::EQEQ, TokenType::EXCLAEQ},
 	};
 
 	for (auto opClass : opClasses)
