@@ -1,6 +1,7 @@
 #include "BinOp.h"
 #include <stdexcept>
 #include "TokenType.CPP"
+#include <iostream>
 
 template<SuppType T1, SuppType T2, SuppType T3>
 inline BinOp<T1, T2, T3>::BinOp(Expression<T1>* expr1, Expression<T2>* expr2, enum TokenType op):
@@ -9,8 +10,8 @@ inline BinOp<T1, T2, T3>::BinOp(Expression<T1>* expr1, Expression<T2>* expr2, en
 template<SuppType T1, SuppType T2, SuppType T3>
 T3 BinOp<T1, T2, T3>::run()
 {
-	T1 val1 = (*expr1).run();
-	T2 val2 = (*expr2).run();
+	T1 val1 = expr1->run();
+	T2 val2 = expr2->run();
 
 	switch (op)
 	{
@@ -21,7 +22,7 @@ T3 BinOp<T1, T2, T3>::run()
 	case TokenType::DIV:
 		return T3(val1 / val2);
 	case TokenType::MUL:
-		return T3(val1 / val2);
+		return T3(val1 * val2);
 	default:
 		throw std::invalid_argument("invalid operator");
 	}

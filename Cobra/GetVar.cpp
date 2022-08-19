@@ -8,7 +8,7 @@ GetVar<T>::GetVar(std::string varName, SymbTable* table)
 
 template<SuppType T>
 T GetVar<T>::run() {
-	return (*table).run<int>(varName);
+	return table->run<T>(varName);
 }
 
 template class GetVar<bool>;

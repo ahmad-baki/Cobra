@@ -15,7 +15,7 @@ DeclVar<bool>::DeclVar(std::string name, SymbTable* table)
 	Init(table);
 
 	// for expr purp
-	(*table).reg(name, 0);
+	table->reg(name, 0);
 }
 
 template<>
@@ -25,7 +25,7 @@ DeclVar<int>::DeclVar(std::string name, SymbTable* table)
 	Init(table);
 
 	// for expr purp
-	(*table).reg(name, 0);
+	table->reg(name, 0);
 }
 
 template<>
@@ -35,7 +35,7 @@ DeclVar<float>::DeclVar(std::string name, SymbTable* table)
 	Init(table);
 
 	// for expr purp
-	(*table).reg(name, 1);
+	table->reg(name, 1);
 }
 
 template<SuppType T>

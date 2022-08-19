@@ -110,7 +110,7 @@ std::pair<Token, Error> Lexer::getNextOperator() {
 		if (isspace(_currentChar) || _currentChar == NULL) {
 			auto elem = operators.find(currentTokenName);
 			if (elem != operators.end()) {
-				return std::pair<Token, Error>{Token((*elem).second), Error()};
+				return std::pair<Token, Error>{Token(elem->second), Error()};
 			}
 			return std::pair<Token, Error>{
 				Token(TokenType::NONE), Error("IvalidCharacterError", "Received Invalied Token", _text, _line, _column)
@@ -157,7 +157,7 @@ std::pair<Token, Error> Lexer::getNextWord() {
 	if (elem == keywords.end()) {
 		return std::pair<Token, Error>{Token(TokenType::IDENTIFIER, tokenString), Error()};
 	}
-	return std::pair<Token, Error>{Token((*elem).second), Error()};
+	return std::pair<Token, Error>{Token(elem->second), Error()};
 }
 
 bool Lexer::isOperator(char chr) {

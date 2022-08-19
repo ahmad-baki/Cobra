@@ -8,14 +8,14 @@ IfCond::IfCond(Expression<bool>* cond, Statement* statement, std::vector<ElseCon
 
 void IfCond::run()
 {
-	if ((*cond).run()) {
-		(*statement).run();
+	if (cond->run()) {
+		statement->run();
 	}
 	else {
 		for (int i = 0; i < ifElseStates.size(); i++)
-			if ((*ifElseStates[i]).run())
+			if (ifElseStates[i]->run())
 				return;
-		(*elseState).run();
+		elseState->run();
 	}
 }
 

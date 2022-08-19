@@ -35,7 +35,7 @@ void SymbTable::declare(std::string name, float value) {
 	auto elem = floats.find(name);
 	if (elem != floats.end())
 		throw std::invalid_argument("tried to declare" + name + "despite it already existing");
-	floats.insert(std::pair<std::string, int>(name, value));
+	floats.insert(std::pair<std::string, float>(name, value));
 	varNames.insert(std::pair<std::string, int>(name, 1));
 }
 #pragma endregion
@@ -80,7 +80,7 @@ void SymbTable::set(std::string name, int value) {
 	if (elem == integers.end())
 		// then checks floats
 
-		(*parent).set(name, value);
+		parent->set(name, value);
 	else {
 		integers[name] = value;
 	}
@@ -90,7 +90,7 @@ template<>
 void SymbTable::set(std::string name, float value) {
 	auto elem = floats.find(name);
 	if (elem == floats.end())
-		(*parent).set(name, value);
+		parent->set(name, value);
 	floats[name] = value;
 }
 
@@ -133,18 +133,20 @@ template<>
 int SymbTable::run(std::string name) {
 	auto elem = integers.find(name);
 	if (elem == integers.end()) {
-		return (*parent).run<int>(name);
+		return parent->run<int>(name);
 	}
-	return (*elem).second;
+	return elem->second;
 }
 
 template<>
 float SymbTable::run(std::string name) {
 	auto elem = floats.find(name);
 	if (elem == floats.end()) {
-		return (*parent).run<float>(name);
+		if (parent == nullptr)
+			throw std::invalid_argument(name + " not found");
+		return parent->run<float>(name);
 	}
-	return (*elem).second;
+	return elem->second;
 }
 
 #pragma endregion

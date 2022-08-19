@@ -5,8 +5,8 @@ ElseCond::ElseCond(Expression<bool>* cond, Statement* statement)
 
 bool ElseCond::run()
 {
-	if ((*cond).run()) {
-		(*statement).run();
+	if (cond->run()) {
+		statement->run();
 		return true;
 	}
 	return false;

@@ -8,13 +8,10 @@
 
 class IEASTNode
 {
-private:
+public:
 	int returnType{ -1 };
 	SymbTable* table;
-
-public:
-	Token* token{nullptr};
-	std::string name{ "" };
+	Token token;
 	IEASTNode* leftNode{nullptr};
 	IEASTNode* rightNode{nullptr};
 

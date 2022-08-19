@@ -5,6 +5,6 @@ Loop::Loop(Expression<bool>* cond, Statement* statement)
 
 void Loop::run()
 {
-	while ((*cond).run())
-		(*statement).run();
+	while (cond->run())
+		statement->run();
 }

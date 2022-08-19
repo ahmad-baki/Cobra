@@ -11,13 +11,13 @@ int IEASTNode::getReturnType() {
 }
 
 IEASTNode::IEASTNode(SymbTable* table)
-	: table{table}
+	: table{table}, token{Token(TokenType::NONE)}
 {
 }
 
 void IEASTNode::setReturnType(SymbTable* table)
 {
-	switch (token->_type)
+	switch (token._type)
 	{
 	// value
 	case TokenType::INTLIT:
@@ -27,7 +27,7 @@ void IEASTNode::setReturnType(SymbTable* table)
 		returnType = 1;
 		break;
 	case TokenType::IDENTIFIER:
-		returnType = table->varReg[token->_value];
+		returnType = table->varReg[token._value];
 		break;
 
 	// operator
@@ -58,12 +58,14 @@ Expression<bool>* IEASTNode::getExpr() {
 	if (returnType != 0)
 		return nullptr;
 
-	switch (token->_type)
+	switch (token._type)
 	{
 	case TokenType::INTLIT:
-		return new Literal<bool>(std::stoi(token->_value));
+		return new Literal<bool>(std::stoi(token._value));
+	case TokenType::DECLIT:
+		return new Literal<bool>(std::stoi(token._value));
 	case TokenType::IDENTIFIER:
-		return new GetVar<bool>(token->_value, table);
+		return new GetVar<bool>(token._value, table);
 
 	default:
 		if (leftNode == nullptr)
@@ -79,7 +81,7 @@ Expression<bool>* IEASTNode::getExpr() {
 			if (rightType == 0)
 			{
 				Expression<bool>* rightExpr = rightNode->getExpr<bool>();
-				return new BinOp<bool, bool, bool>(leftExpr, rightExpr, token->_type);
+				return new BinOp<bool, bool, bool>(leftExpr, rightExpr, token._type);
 			}
 			else {
 				return nullptr;
@@ -93,15 +95,17 @@ Expression<bool>* IEASTNode::getExpr() {
 
 template<>
 Expression<int>* IEASTNode::getExpr() {
-	if (returnType != 0)
+	if (returnType != 1 && returnType != 0)
 		return nullptr;
 
-	switch (token->_type)
+	switch (token._type)
 	{
 	case TokenType::INTLIT:
-		return new Literal<int>(std::stoi(token->_value));
+		return new Literal<int>(std::stoi(token._value));
+	case TokenType::DECLIT:
+		return new Literal<int>(std::stoi(token._value));
 	case TokenType::IDENTIFIER:
-		return new GetVar<int>(token->_value, table);
+		return new GetVar<int>(token._value, table);
 
 	default:
 		if (leftNode == nullptr)
@@ -116,7 +120,7 @@ Expression<int>* IEASTNode::getExpr() {
 			if (rightType == 0)
 			{
 				Expression<int>* rightExpr = rightNode->getExpr<int>();
-				return new BinOp<int, int, int>(leftExpr, rightExpr, token->_type);
+				return new BinOp<int, int, int>(leftExpr, rightExpr, token._type);
 			}
 			else {
 				return nullptr;
@@ -130,28 +134,36 @@ Expression<int>* IEASTNode::getExpr() {
 
 template<>
 Expression<float>* IEASTNode::getExpr() {
-	if (returnType != 1)
+	if (returnType != 1 && returnType != 0)
 		return nullptr;
 
-	switch (token->_type)
+	switch (token._type)
 	{
+	case TokenType::INTLIT:
+		return new Literal<float>(std::stof(token._value));
 	case TokenType::DECLIT:
-		return new Literal<float>(std::stoi(token->_value));
+		return new Literal<float>(std::stof(token._value));
 	case TokenType::IDENTIFIER:
-		return new GetVar<float>(token->_value, table);
+		return new GetVar<float>(token._value, table);
 
+	// operator
 	default:
 		if (leftNode == nullptr || rightNode == nullptr)
 			return nullptr;
 
-		int leftType = leftNode->getReturnType();
-		int rightType = rightNode->getReturnType();
-		if (leftType == 0) {
+		//int leftType = leftNode->getReturnType();
+		//int rightType = rightNode->getReturnType();
+		Expression<float>* leftExpr = leftNode->getExpr<float>();
+		Expression<float>* rightExpr = rightNode->getExpr<float>();
+		return new BinOp<float, float, float>(leftExpr, rightExpr, token._type);
+
+
+		/*if (leftType == 0) {
 			Expression<int>* leftExpr = leftNode->getExpr<int>();
 			if (rightType == 1)
 			{
 				Expression<float>* rightExpr = rightNode->getExpr<float>();
-				return new BinOp<int, float, float>(leftExpr, rightExpr, token->_type);
+				return new BinOp<int, float, float>(leftExpr, rightExpr, token._type);
 			}
 			else {
 				return nullptr;
@@ -162,12 +174,12 @@ Expression<float>* IEASTNode::getExpr() {
 			if (rightType == 0)
 			{
 				Expression<int>* rightExpr = rightNode->getExpr<int>();
-				return new BinOp<float, int, float>(leftExpr, rightExpr, token->_type);
+				return new BinOp<float, int, float>(leftExpr, rightExpr, token._type);
 			}
 			if (rightType == 1)
 			{
 				Expression<float>* rightExpr = rightNode->getExpr<float>();
-				return new BinOp<float, float, float>(leftExpr, rightExpr, token->_type);
+				return new BinOp<float, float, float>(leftExpr, rightExpr, token._type);
 			}
 			else {
 				return nullptr;
@@ -175,6 +187,6 @@ Expression<float>* IEASTNode::getExpr() {
 		}
 		else {
 			return nullptr;
-		}
+		}*/
 	}
 }

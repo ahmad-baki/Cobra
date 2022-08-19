@@ -13,17 +13,17 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Resource Files\Lexer">
-      <UniqueIdentifier>{41f595e0-0538-4210-a99d-de2a4893941b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Resource Files\Parser">
-      <UniqueIdentifier>{5cbb3b80-5a56-481c-9f9b-3d604b6fbd2e}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\Lexer">
       <UniqueIdentifier>{d87ed55f-0ec5-4417-a96c-b467906eb5d1}</UniqueIdentifier>
     </Filter>
     <Filter Include="Source Files\Parser">
       <UniqueIdentifier>{a44274d0-b1a5-4fe0-a199-33dda1fa1cfd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Lexer">
+      <UniqueIdentifier>{41f595e0-0538-4210-a99d-de2a4893941b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Parser">
+      <UniqueIdentifier>{5cbb3b80-5a56-481c-9f9b-3d604b6fbd2e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -87,67 +87,73 @@
     <ClCompile Include="Cobra.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="PrintState.cpp">
+      <Filter>Source Files\Parser</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BinOp.h">
-      <Filter>Resource Files\Parser</Filter>
+      <Filter>Header Files\Parser</Filter>
     </ClInclude>
     <ClInclude Include="BlockNode.h">
-      <Filter>Resource Files\Parser</Filter>
+      <Filter>Header Files\Parser</Filter>
     </ClInclude>
     <ClInclude Include="DeclVar.h">
-      <Filter>Resource Files\Parser</Filter>
+      <Filter>Header Files\Parser</Filter>
     </ClInclude>
     <ClInclude Include="ElseCond.h">
-      <Filter>Resource Files\Parser</Filter>
+      <Filter>Header Files\Parser</Filter>
     </ClInclude>
     <ClInclude Include="Expression.h">
-      <Filter>Resource Files\Parser</Filter>
+      <Filter>Header Files\Parser</Filter>
     </ClInclude>
     <ClInclude Include="GetVar.h">
-      <Filter>Resource Files\Parser</Filter>
+      <Filter>Header Files\Parser</Filter>
     </ClInclude>
     <ClInclude Include="IEASTNode.h">
-      <Filter>Resource Files\Parser</Filter>
+      <Filter>Header Files\Parser</Filter>
     </ClInclude>
     <ClInclude Include="IfCond.h">
-      <Filter>Resource Files\Parser</Filter>
+      <Filter>Header Files\Parser</Filter>
     </ClInclude>
     <ClInclude Include="Literal.h">
-      <Filter>Resource Files\Parser</Filter>
+      <Filter>Header Files\Parser</Filter>
     </ClInclude>
     <ClInclude Include="Loop.h">
-      <Filter>Resource Files\Parser</Filter>
+      <Filter>Header Files\Parser</Filter>
     </ClInclude>
     <ClInclude Include="Parser.h">
-      <Filter>Resource Files\Parser</Filter>
+      <Filter>Header Files\Parser</Filter>
     </ClInclude>
     <ClInclude Include="SetVar.h">
-      <Filter>Resource Files\Parser</Filter>
+      <Filter>Header Files\Parser</Filter>
     </ClInclude>
     <ClInclude Include="Statement.h">
-      <Filter>Resource Files\Parser</Filter>
+      <Filter>Header Files\Parser</Filter>
     </ClInclude>
     <ClInclude Include="SuppType.h">
-      <Filter>Resource Files\Parser</Filter>
+      <Filter>Header Files\Parser</Filter>
     </ClInclude>
     <ClInclude Include="SymbTable.h">
-      <Filter>Resource Files\Parser</Filter>
+      <Filter>Header Files\Parser</Filter>
     </ClInclude>
     <ClInclude Include="Token.h">
-      <Filter>Resource Files\Parser</Filter>
-    </ClInclude>
-    <ClInclude Include="TokenType.h">
-      <Filter>Resource Files</Filter>
-    </ClInclude>
-    <ClInclude Include="resource.h">
-      <Filter>Resource Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Error.h">
-      <Filter>Resource Files</Filter>
+      <Filter>Header Files\Parser</Filter>
     </ClInclude>
     <ClInclude Include="Lexer.h">
-      <Filter>Resource Files\Lexer</Filter>
+      <Filter>Header Files\Lexer</Filter>
+    </ClInclude>
+    <ClInclude Include="Error.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TokenType.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PrintState.h">
+      <Filter>Header Files\Parser</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <stdexcept>
 #include "Parser.h"
-#include "IEASTNode.h"
+#include "printState.h"
 
 
 
@@ -29,7 +29,7 @@ void Parser::parse(std::vector<Token> tokens, BlockNode* block)
 		block->add(statement);
 		statement = getStatement(block->table);
 	}
-	block->table->clearReg();
+	//block->table->clearReg();
 
 	// add check wether EOF-Token is reached
 }
@@ -53,13 +53,17 @@ void Parser::revert(size_t pos) {
 
 Statement* Parser::getStatement(SymbTable* table)
 {
+	if (currentToken._type == TokenType::NONE)
+		return nullptr;
+
 	Statement* (Parser:: *statementTypes[])(SymbTable * table) = {
 		&Parser::getStatement1, 
 		&Parser::getStatement2,
 		&Parser::getStatement3,
 		&Parser::getStatement5,
 		&Parser::getStatement7,
-		&Parser::getStatement8
+		&Parser::getStatement8,
+		&Parser::getPrint
 	};
 
 	for (auto statementType : statementTypes) {
@@ -85,7 +89,7 @@ Statement* Parser::getStatement1(SymbTable* table)
 			revert(startPos);
 			return nullptr;
 		}
-		(*blockNode).add(statement);
+		blockNode->add(statement);
 		advance();
 	}
 	blockNode->table->clearReg();
@@ -257,6 +261,54 @@ Statement* Parser::getStatement8(SymbTable* table)
 	return new BlockNode();
 }
 
+// Print statement
+Statement* Parser::getPrint(SymbTable* table) 
+{
+	if (currentToken._type != TokenType::IDENTIFIER && 
+		currentToken._value == "print")
+		return nullptr;
+
+	size_t startPos = currentPos;
+	advance();
+
+	if (currentToken._type != TokenType::LBRACKET) {
+		revert(startPos);
+		return nullptr;
+	}
+	advance();
+	IEASTNode rootNode = getIEAST(table);
+
+	// int
+	if (rootNode.getReturnType() == 0) {
+		if (currentToken._type != TokenType::RBRACKET) {
+			revert(startPos);
+			return nullptr;
+		}
+		advance();
+		if (currentToken._type != TokenType::SEMICOLON) {
+			revert(startPos);
+			return nullptr;
+		}
+		advance();
+		return new PrintState(rootNode.getExpr<int>());
+	}
+
+	// float
+	if (rootNode.getReturnType() == 1) {
+		if (currentToken._type != TokenType::RBRACKET) {
+			revert(startPos);
+			return nullptr;
+		}
+		advance();
+		if (currentToken._type != TokenType::SEMICOLON) {
+			revert(startPos);
+			return nullptr;
+		}
+		advance();
+		return new PrintState(rootNode.getExpr<float>());
+	}
+}
+
 std::vector<ElseCond*> Parser::getIfElse(SymbTable* table)
 {
 	auto output = std::vector<ElseCond*>();
@@ -309,18 +361,78 @@ inline Expression<T>* Parser::getExpr(SymbTable* table)
 	std::vector<Token> tokenStream = getExprTokStream();
 	if (tokenStream.size() == 0)
 		return nullptr;
-	
 
-	// order decides op-binding-strength strong -> weak 
-	auto lvl1 = { TokenType::MUL, TokenType::DIV, TokenType::EQEQ };
-	auto lvl2 = { TokenType::PLUS , TokenType::MINUS };
-	tokenStream = addBrackets(tokenStream, lvl1);
-	tokenStream = addBrackets(tokenStream, lvl2);
+	tokenStream = transExprTokStream(tokenStream);
+	IEASTNode rootNode = streamToIEAST(tokenStream, table);
+	return rootNode.getExpr<T>();
+}
 
-	// inserts Brackets around expr. for streamToExpr
-	//tokenStream.insert(tokenStream.begin(), Token(LBRACKET));
-	//tokenStream.insert(tokenStream.end(), Token(RBRACKET));
-	return streamToExpr<T>(tokenStream, table);
+IEASTNode Parser::getIEAST(SymbTable* table) {
+	std::vector<Token> tokenStream = getExprTokStream();
+	// better error-handling
+	//if (tokenStream.size() == 0)
+	//	return nullptr;
+
+	tokenStream = transExprTokStream(tokenStream);
+	return streamToIEAST(tokenStream, table);
+}
+
+IEASTNode Parser::streamToIEAST(std::vector<Token> tokenStream, SymbTable* table)
+{
+	IEASTNode rootNode = IEASTNode(table);
+	auto nodeStack = std::stack<IEASTNode*>();
+	nodeStack.push(&rootNode);
+	for (size_t i = 0; i < tokenStream.size(); i++) {
+		switch (tokenStream[i]._type)
+		{
+		case TokenType::LBRACKET:
+		{
+			IEASTNode lNode = IEASTNode(table);
+			nodeStack.top()->leftNode = &lNode;
+			nodeStack.push(&lNode);
+			break;
+		}
+		case TokenType::DECLIT:
+		{
+			IEASTNode* DecNode = nodeStack.top();
+			nodeStack.pop();
+			DecNode->token = tokenStream[i];
+			break;
+		}
+		case TokenType::INTLIT:
+		{
+			IEASTNode* IntNode = nodeStack.top();
+			nodeStack.pop();
+			IntNode->token = tokenStream[i];
+			break;
+		}
+		case TokenType::IDENTIFIER:
+		{
+			IEASTNode* varNode = nodeStack.top();
+			nodeStack.pop();
+			varNode->token = tokenStream[i];
+			break;
+		}
+		case TokenType::RBRACKET:
+		{
+			nodeStack.pop();
+			break;
+		}
+
+		// operator
+		default:
+			IEASTNode* topNode = nodeStack.top();
+			topNode->token = tokenStream[i];
+			IEASTNode rightNode = IEASTNode(table);
+			topNode->rightNode = &rightNode;
+			nodeStack.push(&rightNode);
+			break;
+		}
+	}
+	if (nodeStack.size() > 0)
+		throw std::invalid_argument("IEASTNode-Stack has elements over");
+	rootNode.setReturnType(table);
+	return rootNode;
 }
 
 // finds token-string of expression and checks wether it 
@@ -368,7 +480,20 @@ std::vector<Token> Parser::getExprTokStream() {
 	return std::vector<Token>(tokenStream.begin() + startPos, tokenStream.begin() + currentPos);
 }
 
-std::vector<Token> Parser::addBrackets(std::vector<Token> tokenStream, std::initializer_list<TokenType> op)
+std::vector<Token> Parser::transExprTokStream(std::vector<Token> tokenStream) {
+	// order decides op-binding-strength: strong -> weak 
+	std::vector<enum TokenType> opClasses[]{
+		{TokenType::MUL, TokenType::DIV},
+		{TokenType::PLUS, TokenType::MINUS},
+		{TokenType::EQEQ},
+	};
+
+	for (auto opClass : opClasses)
+		tokenStream = addBrackets(tokenStream, opClass);
+	return tokenStream;
+}
+
+std::vector<Token> Parser::addBrackets(std::vector<Token> tokenStream, std::vector<enum TokenType> op)
 {
 	auto valExpr = { TokenType::INTLIT, TokenType::DECLIT, TokenType::IDENTIFIER };
 	for (int i = 1; i < tokenStream.size(); i++) {
@@ -431,91 +556,3 @@ std::vector<Token> Parser::addBrackets(std::vector<Token> tokenStream, std::init
 	}
 	return tokenStream;
 }
-
-template<SuppType T>
-inline Expression<T>* Parser::streamToExpr(std::vector<Token> tokenStream, SymbTable* table)
-{
-	IEASTNode rootNode = IEASTNode(table);
-	rootNode.name = "ad";
-	auto nodeStack = std::stack<IEASTNode*>();
-	nodeStack.push(&rootNode);
-	for (Token token : tokenStream) {
-		switch (token._type)
-		{
-		case TokenType::LBRACKET:
-		{
-			IEASTNode lNode = IEASTNode(table);
-			nodeStack.top()->leftNode = &lNode;
-			nodeStack.push(&lNode);
-			break;
-		}
-		case TokenType::DECLIT:
-		{
-			IEASTNode* DecNode = nodeStack.top();
-			nodeStack.pop();
-			DecNode->token = new Token(token);
-			break;
-		}
-		case TokenType::INTLIT:
-		{
-			IEASTNode* IntNode = nodeStack.top();
-			nodeStack.pop();
-			IntNode->token = new Token(token);
-			break;
-		}
-		case TokenType::IDENTIFIER:
-		{
-			IEASTNode* varNode = nodeStack.top();
-			nodeStack.pop();
-			varNode->token = new Token(token);
-			break;
-		}
-		case TokenType::RBRACKET:
-		{
-			nodeStack.pop();
-			break;
-		}
-
-		// operator
-		default:
-			IEASTNode* topNode = nodeStack.top();
-			topNode->token = new Token(token);
-			IEASTNode rightNode = IEASTNode(table);
-			topNode->rightNode = &rightNode;
-			nodeStack.push(&rightNode);
-			break;
-		}
-	}
-	if (nodeStack.size() > 0)
-		throw std::invalid_argument("IEASTNode-Stack has elements over");
-	rootNode.setReturnType(table);
-	return rootNode.getExpr<T>();
-
-
-	//if (tokenStream[0]._type == TokenType::LBRACKET) {
-	//	// find end of bracket
-	//	size_t eOB = 0;
-	//	size_t surBrack = 0;
-	//	for (size_t i = 1; i < tokenStream.size(); i++) {
-	//		if (tokenStream[i]._type == TokenType::RBRACKET) {
-	//			if (surBrack == 0) {
-	//				eOB = i;
-	//				break;
-	//			}
-	//			surBrack--;
-	//		}
-	//		else if (tokenStream[i]._type == TokenType::LBRACKET)
-	//			surBrack++;
-	//	}
-
-	//	// when expression is surrounded by brackets
-	//	if (eOB == tokenStream.size()-1) {
-	//		auto cutStream = std::vector<Token>(tokenStream.begin() + 1, tokenStream.end() - 1);
-	//		return streamToExpr(cutStream);
-	//	}
-
-	//	// when there is bin_op
-
-	//}
-}
-
