@@ -55,7 +55,7 @@ Expression<T>* IEASTNode::getExpr() {
 
 template<>
 Expression<bool>* IEASTNode::getExpr() {
-	if (returnType != 0)
+	if (returnType != 0 && returnType != 1)
 		return nullptr;
 
 	switch (token._type)
