@@ -13,8 +13,11 @@ void IfCond::run()
 	}
 	else {
 		for (int i = 0; i < ifElseStates.size(); i++)
-			if (ifElseStates[i]->run())
+		{
+			if (ifElseStates[i]->run()) {
 				return;
+			}
+		}
 		if(elseState != nullptr)
 			elseState->run();
 	}

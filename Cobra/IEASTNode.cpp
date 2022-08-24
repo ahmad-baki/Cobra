@@ -1,5 +1,6 @@
-#include <exception>
+#include <stdexcept>
 #include <algorithm>
+#include <iostream>
 #include "IEASTNode.h"
 #include "TokenType.cpp"
 #include "Literal.h"
@@ -15,11 +16,19 @@ IEASTNode::IEASTNode(SymbTable* table)
 {
 }
 
+
+IEASTNode::~IEASTNode() {
+	if (leftNode != nullptr)
+		delete leftNode;
+	if (rightNode != nullptr)
+		delete rightNode;
+}
+
+
 void IEASTNode::setReturnType(SymbTable* table)
 {
-	switch (token._type)
+	switch(token._type)
 	{
-	// value
 	case TokenType::INTLIT:
 		returnType = 0;
 		break;
@@ -30,17 +39,19 @@ void IEASTNode::setReturnType(SymbTable* table)
 		returnType = table->varReg[token._value];
 		break;
 
-	// operator
+// operator
 	default:
 		int leftNodeType{ -1 };
 		int rightNodeType{ -1 };
 
-		if (leftNode != nullptr)
+		if (leftNode != nullptr) {
 			leftNode->setReturnType(table);
 			leftNodeType = leftNode->returnType;
-		if (rightNode != nullptr)
+		}
+		if (rightNode != nullptr) {
 			rightNode->setReturnType(table);
 			rightNodeType = rightNode->returnType;
+		}
 
 		returnType = std::max(leftNodeType, rightNodeType);
 		break;
@@ -66,7 +77,14 @@ Expression<bool>* IEASTNode::getExpr() {
 		return new Literal<bool>(std::stoi(token._value));
 	case TokenType::IDENTIFIER:
 		return new GetVar<bool>(token._value, table);
-
+	case TokenType::NONE:
+		if (leftNode != nullptr) {
+			return leftNode->getExpr<bool>();
+		}
+		if (rightNode != nullptr) {
+			return rightNode->getExpr<bool>();
+		}
+		throw std::invalid_argument("IEASTNode has TokenType: None but now chield-nodes");
 	default:
 		if (leftNode == nullptr)
 			return nullptr;

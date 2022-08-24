@@ -21,13 +21,14 @@ private:
 	char _currentChar;
 
 	void advance();
-	void revert();
+	void revert(size_t pos);
 	std::pair<Token, Error> getNextToken();
 	std::pair<Token, Error> getNextNumber();
 	std::pair<Token, Error> getNextOperator();
 	std::pair<Token, Error> getNextWord();
-	bool isOperator(char chr);
 	bool isInt(int val);
+
+	void skipSpace();
 	
 	std::map<std::string, enum TokenType> operators;
 	std::map<std::string, enum TokenType> keywords;

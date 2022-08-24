@@ -31,12 +31,12 @@ private:
 	void advance();
 	void revert(size_t pos);
 	Statement* getStatement(SymbTable* table);
-	Statement* getStatement1(SymbTable* table);
-	Statement* getStatement2(SymbTable* table);
-	Statement* getStatement3(SymbTable* table);
-	Statement* getStatement5(SymbTable* table);
-	Statement* getStatement7(SymbTable* table);
-	Statement* getStatement8(SymbTable* table);
+	Statement* getBlockState(SymbTable* table);
+	Statement* getIfState(SymbTable* table);
+	Statement* getWhileState(SymbTable* table);
+	Statement* getDeclState(SymbTable* table);
+	Statement* getSetState(SymbTable* table);
+	Statement* getEmptyState(SymbTable* table);
 
 	Statement* getPrint(SymbTable* table);
 
@@ -45,8 +45,8 @@ private:
 
 	template<SuppType T>
 	Expression<T>* getExpr(SymbTable* table);
-	IEASTNode getIEAST(SymbTable* table);
-	IEASTNode streamToIEAST(std::vector<Token> tokenStream, SymbTable* table);
+	IEASTNode* getIEAST(SymbTable* table);
+	IEASTNode* streamToIEAST(std::vector<Token> tokenStream, SymbTable* table);
 	std::vector<Token> getExprTokStream();
 	std::vector<Token> transExprTokStream(std::vector<Token> tokenStream);
 	std::vector<Token> addBrackets(std::vector<Token> tokenStream, std::vector<enum TokenType> op);

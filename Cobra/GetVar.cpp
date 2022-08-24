@@ -2,7 +2,7 @@
 #include <string>
 
 template<SuppType T>
-GetVar<T>::GetVar(std::string varName, SymbTable* table) 
+GetVar<T>::GetVar(std::string varName, SymbTable* table)
 	: varName{varName}, table{table} {}
 
 

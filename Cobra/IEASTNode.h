@@ -18,6 +18,7 @@ public:
 	int getReturnType();
 	
 	IEASTNode(SymbTable* table);
+	~IEASTNode();
 	
 	void setReturnType(SymbTable* table);
 

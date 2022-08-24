@@ -57,12 +57,12 @@ Statement* Parser::getStatement(SymbTable* table)
 		return nullptr;
 
 	Statement* (Parser:: *statementTypes[])(SymbTable * table) = {
-		&Parser::getStatement1, 
-		&Parser::getStatement2,
-		&Parser::getStatement3,
-		&Parser::getStatement5,
-		&Parser::getStatement7,
-		&Parser::getStatement8,
+		&Parser::getBlockState, 
+		&Parser::getIfState,
+		&Parser::getWhileState,
+		&Parser::getDeclState,
+		&Parser::getSetState,
+		&Parser::getEmptyState,
 		&Parser::getPrint
 	};
 
@@ -76,7 +76,7 @@ Statement* Parser::getStatement(SymbTable* table)
 }
 
 // Code-Block
-Statement* Parser::getStatement1(SymbTable* table)
+Statement* Parser::getBlockState(SymbTable* table)
 {
 	if (currentToken._type != TokenType::LCURLBRACKET)
 		return nullptr;
@@ -92,15 +92,15 @@ Statement* Parser::getStatement1(SymbTable* table)
 		blockNode->add(statement);
 		//advance();
 	}
+	advance();
 	blockNode->table->clearReg();
 	return blockNode;
 }
 
 // If-Statement
-Statement* Parser::getStatement2(SymbTable* table)
+Statement* Parser::getIfState(SymbTable* table)
 {
-	if (currentToken._type != TokenType::IDENTIFIER ||
-		currentToken._value != "if")
+	if (currentToken._type != TokenType::IF)
 		return nullptr;
 	size_t startPos = currentPos;
 	advance();
@@ -135,10 +135,9 @@ Statement* Parser::getStatement2(SymbTable* table)
 }
 
 // While-Loop
-Statement* Parser::getStatement3(SymbTable* table)
+Statement* Parser::getWhileState(SymbTable* table)
 {
-	if (currentToken._type != TokenType::IDENTIFIER ||
-		currentToken._value != "while")
+	if (currentToken._type != TokenType::WHILE)
 		return nullptr;
 	size_t startPos = currentPos;
 	advance();
@@ -171,12 +170,12 @@ Statement* Parser::getStatement3(SymbTable* table)
 }
 
 // Decl (initialization)
-Statement* Parser::getStatement5(SymbTable* table)
+Statement* Parser::getDeclState(SymbTable* table)
 {
-	if (currentToken._type != TokenType::IDENTIFIER) {
+	if (currentToken._type != TokenType::INTWORD && currentToken._type != TokenType::FLOATWORD) {
 		return nullptr;
 	}
-	std::string returnType = currentToken._value;
+	auto returnType = currentToken._type;
 
 	size_t startPos = currentPos;
 	advance();
@@ -188,7 +187,7 @@ Statement* Parser::getStatement5(SymbTable* table)
 	std::string varName = currentToken._value;
 
 
-	if (returnType == "int") {
+	if (returnType == TokenType::INTWORD) {
 		DeclVar<int>* decl = new DeclVar<int>(varName, table);
 		advance();
 
@@ -201,13 +200,13 @@ Statement* Parser::getStatement5(SymbTable* table)
 		if (currentToken._type == TokenType::EQ) {
 			// not very clean, but does it job
 			revert(currentPos - 1);
-			Statement* setVar = getStatement7(table);
+			Statement* setVar = getSetState(table);
 			return new BlockNode(std::vector<Statement*>{
 				decl, setVar
 			}, nullptr);
 		}
 	}
-	else if (returnType == "float") {
+	else if (returnType == TokenType::FLOATWORD) {
 		DeclVar<float>* decl = new DeclVar<float>(varName, table);
 		advance();
 
@@ -220,7 +219,7 @@ Statement* Parser::getStatement5(SymbTable* table)
 		if (currentToken._type == TokenType::EQ) {
 			// not very clean, but does it job
 			revert(currentPos - 1);
-			Statement* setVar = getStatement7(table);
+			Statement* setVar = getSetState(table);
 			return new BlockNode(std::vector<Statement*>{
 				decl, setVar
 			}, nullptr);
@@ -232,7 +231,7 @@ Statement* Parser::getStatement5(SymbTable* table)
 }
 
 // setVar
-Statement* Parser::getStatement7(SymbTable* table)
+Statement* Parser::getSetState(SymbTable* table)
 {
 	if (currentToken._type != TokenType::IDENTIFIER) {
 		return nullptr;
@@ -251,6 +250,10 @@ Statement* Parser::getStatement7(SymbTable* table)
 	int type = table->varReg[varName];
 	if (type == 0){
 		Expression<int>* expr = getExpr<int>(table);
+
+		if (expr == nullptr)
+			throw std::invalid_argument("no expr found");
+
 		SetVar<int>* setVar = new SetVar<int>(varName, expr, table);
 		if (currentToken._type != TokenType::SEMICOLON) {
 			delete setVar;
@@ -279,7 +282,7 @@ Statement* Parser::getStatement7(SymbTable* table)
 }
 
 // Empty statement
-Statement* Parser::getStatement8(SymbTable* table)
+Statement* Parser::getEmptyState(SymbTable* table)
 {
 	if (currentToken._type != TokenType::SEMICOLON)
 		return nullptr;
@@ -302,7 +305,7 @@ Statement* Parser::getPrint(SymbTable* table)
 		return nullptr;
 	}
 	advance();
-	IEASTNode rootNode = getIEAST(table);
+	IEASTNode& rootNode = *getIEAST(table);
 
 	// int
 	if (rootNode.getReturnType() == 0) {
@@ -333,6 +336,9 @@ Statement* Parser::getPrint(SymbTable* table)
 		advance();
 		return new PrintState(rootNode.getExpr<float>());
 	}
+
+	// its constructed on the heap
+	delete &rootNode;
 }
 
 std::vector<ElseCond*> Parser::getIfElse(SymbTable* table)
@@ -342,24 +348,37 @@ std::vector<ElseCond*> Parser::getIfElse(SymbTable* table)
 		size_t startPos = currentPos;
 		advance();
 
-		if (currentToken._type != TokenType::IF) {
+		if (currentToken._type != TokenType::IF)
+		{
 			revert(startPos);
 			break;
 		}
 
 		advance();
+
+		if (currentToken._type != TokenType::LBRACKET) {
+			revert(startPos);
+			break;
+		}
+		advance();
+
 		Expression<bool>* cond = getExpr<bool>(table);
 		if (cond == nullptr) {
 			revert(startPos);
 			break;
 		}
+		if (currentToken._type != TokenType::RBRACKET) {
+			revert(startPos);
+			break;
+		}
+
+		advance();
 
 		Statement* statement = getStatement(table);
 		if (statement == nullptr) {
 			revert(startPos);
 			break;
 		}
-
 		output.push_back(new ElseCond(cond, statement));
 	}
 	return output;
@@ -389,33 +408,37 @@ inline Expression<T>* Parser::getExpr(SymbTable* table)
 		return nullptr;
 
 	tokenStream = transExprTokStream(tokenStream);
-	IEASTNode rootNode = streamToIEAST(tokenStream, table);
-	return rootNode.getExpr<T>();
+	IEASTNode& rootNode = *streamToIEAST(tokenStream, table);
+	auto expr = rootNode.getExpr<T>();
+	delete &rootNode;
+	return expr;
 }
 
-IEASTNode Parser::getIEAST(SymbTable* table) {
+// delete the node, becouse its constructed on the heap
+IEASTNode* Parser::getIEAST(SymbTable* table) {
 	std::vector<Token> tokenStream = getExprTokStream();
-	// better error-handling
-	//if (tokenStream.size() == 0)
-	//	return nullptr;
+	if (tokenStream.size() == 0)
+		return nullptr;
 
 	tokenStream = transExprTokStream(tokenStream);
+
 	return streamToIEAST(tokenStream, table);
 }
 
-IEASTNode Parser::streamToIEAST(std::vector<Token> tokenStream, SymbTable* table)
+// delete the node, becouse its constructed on the heap
+IEASTNode* Parser::streamToIEAST(std::vector<Token> tokenStream, SymbTable* table)
 {
-	IEASTNode rootNode = IEASTNode(table);
+	IEASTNode* rootNode = new IEASTNode(table);
 	auto nodeStack = std::stack<IEASTNode*>();
-	nodeStack.push(&rootNode);
+	nodeStack.push(rootNode);
 	for (size_t i = 0; i < tokenStream.size(); i++) {
 		switch (tokenStream[i]._type)
 		{
 		case TokenType::LBRACKET:
 		{
-			IEASTNode lNode = IEASTNode(table);
-			nodeStack.top()->leftNode = &lNode;
-			nodeStack.push(&lNode);
+			IEASTNode* lNode = new IEASTNode(table);
+			nodeStack.top()->leftNode = lNode;
+			nodeStack.push(lNode);
 			break;
 		}
 		case TokenType::DECLIT:
@@ -449,15 +472,15 @@ IEASTNode Parser::streamToIEAST(std::vector<Token> tokenStream, SymbTable* table
 		default:
 			IEASTNode* topNode = nodeStack.top();
 			topNode->token = tokenStream[i];
-			IEASTNode rightNode = IEASTNode(table);
-			topNode->rightNode = &rightNode;
-			nodeStack.push(&rightNode);
+			IEASTNode* rightNode = new IEASTNode(table);
+			topNode->rightNode = rightNode;
+			nodeStack.push(rightNode);
 			break;
 		}
 	}
 	if (nodeStack.size() > 0)
 		throw std::invalid_argument("IEASTNode-Stack has elements over");
-	rootNode.setReturnType(table);
+	rootNode->setReturnType(table);
 	return rootNode;
 }
 
@@ -582,7 +605,7 @@ std::vector<Token> Parser::addBrackets(std::vector<Token> tokenStream, std::vect
 				}
 				else if (std::find(valExpr.begin(), valExpr.end(), tokenStream[j]._type) != valExpr.end()
 					&& bracketSur == 0) {
-					tokenStream.insert(tokenStream.begin() + j, Token(TokenType::RBRACKET));
+					tokenStream.insert(tokenStream.begin() + j+1, Token(TokenType::RBRACKET));
 					break;
 				}
 			}
