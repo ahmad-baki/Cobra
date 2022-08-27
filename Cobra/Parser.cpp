@@ -325,7 +325,7 @@ ParserReturn Parser::getEmptyState(SymbTable* table)
 // Print statement
 ParserReturn Parser::getPrint(SymbTable* table) 
 {
-	if (currentToken.type != TokenType::IDENTIFIER && 
+	if (currentToken.type != TokenType::IDENTIFIER || 
 		currentToken.value == "print")
 		return { nullptr, Error() };
 
