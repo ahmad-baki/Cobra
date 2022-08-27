@@ -126,7 +126,7 @@ std::pair<Token, Error> Lexer::getNextOperator()
 
 	// 2. advances as long there are mult poss. tokens, and it completly parsed tokenstring
 	int i = 1;
-	std::string opString{ "" };
+	std::string opString{  };
 	while (possNextTokens.size() > 1) {
 		opString += currentChar;
 		advance();
@@ -171,9 +171,10 @@ std::pair<Token, Error> Lexer::getNextOperator()
 	}
 
 	// when there is only one poss.
-	advance();
+	opString += currentChar;
 	size_t startColumn = column + 1 - opString.size();
 	size_t endColumn = column + 1;
+	advance();
 	return { Token(operators[opString], line, startColumn, endColumn),
 		Error()
 	};

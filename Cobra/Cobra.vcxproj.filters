@@ -155,9 +155,6 @@
     <ClInclude Include="Lexer.h">
       <Filter>Header Files\Lexer</Filter>
     </ClInclude>
-    <ClInclude Include="resource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="TokenType.h">
       <Filter>Header Files</Filter>
     </ClInclude>

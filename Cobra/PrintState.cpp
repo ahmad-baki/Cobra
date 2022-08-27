@@ -15,6 +15,7 @@ Error PrintState<T>::run() {
 		return error;
 
 	std::cout << val << std::endl;
+	return Error();
 }
 
 template class PrintState<bool>;

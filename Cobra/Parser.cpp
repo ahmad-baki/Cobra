@@ -39,7 +39,7 @@ Error Parser::parse(std::vector<Token> tokens, BlockNode* block)
 		block->add(statement);
 	}
 
-	// add check wether EOF-Token is reached
+	return Error();
 }
 
 void Parser::advance()
@@ -63,10 +63,12 @@ void Parser::revert(size_t pos) {
 
 ParserReturn Parser::getStatement(SymbTable* table)
 {
-	if (currentToken.type == TokenType::NONE)
-		return {nullptr, 
-		SyntaxError("Reached End of File while Parcing", path, text, currentToken.line, 
-			currentToken.startColumn, currentToken.endColumn) };
+	if (currentToken.type == TokenType::NONE) {
+		return { nullptr,
+			SyntaxError("Reached End of File while Parcing", path, text, currentToken.line,
+			currentToken.startColumn, currentToken.endColumn)
+		};
+	}
 
 	ParserReturn(Parser:: *statementTypes[])(SymbTable * table) = {
 		&Parser::getBlockState, 
@@ -81,7 +83,7 @@ ParserReturn Parser::getStatement(SymbTable* table)
 	for (auto statementType : statementTypes) {
 		auto [statement, error] = (this->*statementType)(table);
 		if (statement != nullptr)
-			return {statement, error};
+			return {statement, Error()};
 
 		if (error.m_errorName != "NULL") {
 			return { nullptr, error };
@@ -326,7 +328,7 @@ ParserReturn Parser::getEmptyState(SymbTable* table)
 ParserReturn Parser::getPrint(SymbTable* table) 
 {
 	if (currentToken.type != TokenType::IDENTIFIER || 
-		currentToken.value == "print")
+		currentToken.value != "print")
 		return { nullptr, Error() };
 
 	size_t startPos = currentPos;
@@ -456,8 +458,9 @@ inline std::pair<Expression<T>*, Error> Parser::getExpr(SymbTable* table)
 	tokenStream = transExprTokStream(tokenStream);
 	auto [rootNode, exprError] = streamToIEAST(tokenStream, table);
 
-	if (exprError.m_errorName == "NULL")
-		return { nullptr, Error() };
+	if (exprError.m_errorName != "NULL")
+		return { nullptr, SyntaxError("Invalid Expression", path, text,
+			currentToken.line, currentToken.startColumn, currentToken.endColumn) };
 
 	auto [expr, error] = rootNode->getExpr<T>();
 	delete rootNode;
@@ -544,6 +547,7 @@ std::vector<Token> Parser::getExprTokStream() {
 	size_t bracketSur = 0;
 	bool mustValue = true;
 	TokenType returnType = currentToken.type;
+
 	std::vector<enum TokenType> valTypes{
 		TokenType::INTLIT, TokenType::DECLIT, TokenType::IDENTIFIER
 	};

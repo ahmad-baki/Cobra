@@ -60,7 +60,6 @@
     <ClInclude Include="Loop.h" />
     <ClInclude Include="Parser.h" />
     <ClInclude Include="PrintState.h" />
-    <ClInclude Include="resource.h" />
     <ClInclude Include="RuntimeError.h" />
     <ClInclude Include="SetVar.h" />
     <ClInclude Include="Statement.h" />
