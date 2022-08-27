@@ -29,15 +29,18 @@
     <ClCompile Include="GetVar.cpp" />
     <ClCompile Include="IEASTNode.cpp" />
     <ClCompile Include="IfCond.cpp" />
+    <ClCompile Include="InvChrError.cpp" />
     <ClCompile Include="Lexer.cpp" />
     <ClCompile Include="Literal.cpp" />
     <ClCompile Include="Loop.cpp" />
     <ClCompile Include="Parser.cpp" />
     <ClCompile Include="PrintState.cpp" />
     <ClCompile Include="Projekt2.cpp" />
+    <ClCompile Include="RuntimeError.cpp" />
     <ClCompile Include="SetVar.cpp" />
     <ClCompile Include="Statement.cpp" />
     <ClCompile Include="SymbTable.cpp" />
+    <ClCompile Include="SyntaxError.cpp" />
     <ClCompile Include="Token.cpp" />
     <ClCompile Include="TokenType.cpp" />
   </ItemGroup>
@@ -51,16 +54,19 @@
     <ClInclude Include="GetVar.h" />
     <ClInclude Include="IEASTNode.h" />
     <ClInclude Include="IfCond.h" />
+    <ClInclude Include="InvChrError.h" />
     <ClInclude Include="Lexer.h" />
     <ClInclude Include="Literal.h" />
     <ClInclude Include="Loop.h" />
     <ClInclude Include="Parser.h" />
     <ClInclude Include="PrintState.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="RuntimeError.h" />
     <ClInclude Include="SetVar.h" />
     <ClInclude Include="Statement.h" />
     <ClInclude Include="SuppType.h" />
     <ClInclude Include="SymbTable.h" />
+    <ClInclude Include="SyntaxError.h" />
     <ClInclude Include="Token.h" />
     <ClInclude Include="TokenType.h" />
   </ItemGroup>

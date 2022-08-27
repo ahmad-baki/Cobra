@@ -1,76 +1,79 @@
 #include "Lexer.h"
 #include "Error.h"
+#include "InvChrError.h"
 #include <list>
 
 
-Lexer::Lexer(std::string_view text, std::string_view fileName) : 
-	_text{ text }, _fileName{ fileName }, _pos{ 0 }, _currentChar{ text[0]}
-{
-	operators = std::map<std::string, TokenType> {
-		{"+", TokenType::PLUS},
-		{"-", TokenType::MINUS},
-		{"*", TokenType::MUL},
-		{"/", TokenType::DIV},
-		{"(", TokenType::LBRACKET},
-		{")", TokenType::RBRACKET},
-		{"{", TokenType::LCURLBRACKET},
-		{"}", TokenType::RCURLBRACKET},
-		{"!", TokenType::EXCLA},
-		{"=", TokenType::EQ},
-		{"==", TokenType::EQEQ},
-		{"!=", TokenType::EXCLAEQ},
-		{";", TokenType::SEMICOLON},
-	};
-
-	keywords = {
-		{"if", TokenType::IF},
-		{"else", TokenType::ELSE},
-		{"while", TokenType::WHILE},
-		{"int", TokenType::INTWORD},
-		{"float", TokenType::FLOATWORD},
-	};
+Lexer::Lexer(std::string_view text, std::string_view path) : 
+	text{ text }, path{ path }, pos{ 0 }, line{1}, column{0}, currentChar{' '}
+{	
+	if (text.size() > 0)
+		currentChar = text[0];
 }
 
-std::pair<std::vector<Token>, Error> Lexer::lex()
+LexReturn Lexer::lex()
 {
-	std::vector<Token> operators{};
-	while (_currentChar != 0) {
+	std::vector<Token> tokens{};
+	while (currentChar != 0) {
 		std::pair<Token, Error> returnValues = getNextToken();
 
 		// when lexer throws error
 		if (returnValues.second.m_errorName != "NULL") {
-			return std::pair{ operators, returnValues.second };
+			return { tokens, returnValues.second };
 		}
-		operators.push_back(returnValues.first);
+		tokens.push_back(returnValues.first);
 		skipSpace();
 	}
-	return std::pair<std::vector<Token>, Error>{operators, Error()};
+	return {tokens, Error()};
 }
 
 void Lexer::advance()
 {
-	_pos++;
-	if (_pos < _text.size()) {
-		_currentChar = _text[_pos];
+	pos++;
+	if (pos < text.size()) {
+		if (currentChar == '\n') {
+			line++;
+			column = 0;
+		}
+		else {
+			column++;
+		}
+		currentChar = text[pos];
 	}
 	else {
-		_currentChar = 0;
+		currentChar = 0;
 	}
 }
 
 void Lexer::revert(size_t pos)
 {
-	_pos = pos-1;
-	advance();
+	// calc correct line
+	for (size_t i = pos; i < pos; i++) {
+		if (text[i] == '\n') {
+			line--;
+		}
+	}
+
+	bool foundSol = false;
+	// calc correct column
+	for (size_t i = 1; i < pos - 1; i++) {
+		if (text[pos - i] == '\n') {
+			column = i - 1;
+			foundSol = true;
+		}
+	}
+	if (!foundSol) {
+		column = 0;
+	}
 }
 
 std::pair<Token, Error> Lexer::getNextToken() {
 
-	while (isspace(_currentChar))
+	while (isspace(currentChar))
 		advance();
 
 	// 1. return literal
-	if (isInt(_currentChar)) {
+	if (isInt(currentChar)) {
 		return getNextNumber();
 	}
 
@@ -87,25 +90,28 @@ std::pair<Token, Error> Lexer::getNextToken() {
 std::pair<Token, Error> Lexer::getNextNumber() {
 	std::string tokenString{ "" };
 	bool containsPeriod = false;
-	while (_currentChar != 0 && (isInt(_currentChar) || _currentChar == '.')) {
-		if (_currentChar == '.') {
+	while (currentChar != 0 && (isInt(currentChar) || currentChar == '.')) {
+		if (currentChar == '.') {
 			if (containsPeriod) {
-				return std::pair<Token, Error>{
-					Token(TokenType::NONE), Error("IvalidCharacterError", "More than one '.' in decimal", _text, _line, _column)
+				return { Token(), 
+					InvChrError("More than one '.' in decimal", path,  text, line, column, column+1)
 				};
 			}
 			containsPeriod = true;
 		}
-		tokenString += _currentChar;
+		tokenString += currentChar;
 		advance();
 	}
+	size_t startColumn = column + 1 - tokenString.size();
+	size_t endcolumn = column + 1;
+
 	if (containsPeriod) {
-		return std::pair<Token, Error>{
-			Token(TokenType::DECLIT, tokenString), Error()
+		return { Token(TokenType::DECLIT, line, startColumn, endcolumn, tokenString), 
+			Error()
 		};
 	}
-	return std::pair<Token, Error>{
-		Token(TokenType::INTLIT, tokenString), Error()
+	return { Token(TokenType::INTLIT, line, startColumn, endcolumn, tokenString), 
+		Error()
 	};
 }
 
@@ -114,7 +120,7 @@ std::pair<Token, Error> Lexer::getNextOperator()
 	// 1. finds all operators which could match current char
 	std::list<std::string> possNextTokens{};
 	for (auto token : operators) {
-		if (token.first[0] == _currentChar)
+		if (token.first[0] == currentChar)
 			possNextTokens.push_back(token.first);
 	}
 
@@ -122,23 +128,25 @@ std::pair<Token, Error> Lexer::getNextOperator()
 	int i = 1;
 	std::string opString{ "" };
 	while (possNextTokens.size() > 1) {
-		opString += _currentChar;
+		opString += currentChar;
 		advance();
 
-		if (isspace(_currentChar) || _currentChar == 0) {
+		if (isspace(currentChar) || currentChar == 0) {
 			auto elem = operators.find(opString);
 			if (elem != operators.end()) {
-				return std::pair<Token, Error>{Token(elem->second), Error()};
+				size_t startColumn = column + 1- opString.size();
+				size_t endColumn = column + 1;
+				return {Token(elem->second, line, startColumn, endColumn), Error()};
 			}
-			return std::pair<Token, Error>{
-				Token(TokenType::NONE), Error("IvalidCharacterError", "Received Invalied Token", _text, _line, _column)
+			return { Token(), 
+				InvChrError("Received Invalied Token", path, text, line, column, column+1)
 			};
 		}
 
 		// removes operators which are not poss.
 		std::list<std::string> newPossTokens{};
 		for (auto tokenString : possNextTokens){
-			if (tokenString.size() > i || _currentChar == tokenString[i]){
+			if (tokenString.size() > i || currentChar == tokenString[i]){
 				newPossTokens.push_back(tokenString);
 			}
 		}
@@ -150,32 +158,46 @@ std::pair<Token, Error> Lexer::getNextOperator()
 		if (opString.size() > 0) {
 			auto elem = operators.find(opString);
 			if (elem != operators.find(opString)) {
-				return std::pair<Token, Error>{Token(operators[opString]), Error()};
+				size_t startColumn = column + 1 - opString.size();
+				size_t endColumn = column + 1;
+				return { Token(operators[opString], line, startColumn, endColumn), 
+					Error()
+				};
 			}
 		}
-		return std::pair<Token, Error>{
-			Token(TokenType::NONE), Error("IvalidCharacterError", "Received Invalied Token", _text, _line, _column)
+		return { Token(), 
+			InvChrError("Received Invalied Token", path, text, line, column, column+1)
 		};
 	}
 
 	// when there is only one poss.
 	advance();
-	return std::pair<Token, Error>{
-		Token(operators[possNextTokens.front()]), Error()
+	size_t startColumn = column + 1 - opString.size();
+	size_t endColumn = column + 1;
+	return { Token(operators[opString], line, startColumn, endColumn),
+		Error()
 	};
 }
 
 std::pair<Token, Error> Lexer::getNextWord() {
 	std::string tokenString{ "" };
-	while (isalpha(_currentChar) || isInt(_currentChar) || _currentChar == '_') {
-		tokenString += _currentChar;
+	while (isalpha(currentChar) || isInt(currentChar) || currentChar == '_') {
+		tokenString += currentChar;
 		advance();
 	}
 	auto elem = keywords.find(tokenString);
 	if (elem == keywords.end()) {
-		return std::pair<Token, Error>{Token(TokenType::IDENTIFIER, tokenString), Error()};
+		size_t startColumn = column + 1 - tokenString.size();
+		size_t endColumn = column + 1;
+		return { Token(TokenType::IDENTIFIER, line, startColumn, endColumn, tokenString), 
+			Error()
+		};
 	}
-	return std::pair<Token, Error>{Token(elem->second), Error()};
+	size_t startColumn = column + 1 - tokenString.size();
+	size_t endColumn = column + 1;
+	return { Token(elem->second, line, startColumn, endColumn, tokenString), 
+		Error() 
+	};
 }
 
 bool Lexer::isInt(int val) {
@@ -183,6 +205,6 @@ bool Lexer::isInt(int val) {
 }
 
 void Lexer::skipSpace() {
-	while (isspace(_currentChar))
+	while (isspace(currentChar))
 		advance();
 }

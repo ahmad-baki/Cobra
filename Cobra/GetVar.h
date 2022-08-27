@@ -3,6 +3,7 @@
 #include <string>
 #include "SymbTable.h"
 #include "SuppType.h"
+#include "Error.h"
 
 template<SuppType T>
 class GetVar : public Expression<T>
@@ -13,6 +14,6 @@ private:
 
 public:
     GetVar(std::string varName, SymbTable* table);
-    T run();
+    std::pair<T, Error> run();
 };
 

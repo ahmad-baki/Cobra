@@ -3,9 +3,14 @@
 Loop::Loop(Expression<bool>* cond, Statement* statement) 
 	: cond{cond}, statement{ statement } {}
 
-void Loop::run()
+Error Loop::run()
 {
-	while (cond->run()) {
-		statement->run();
+	auto [val, condError] = cond->run();
+
+	if (condError.m_errorName != "NULL")
+		return { condError };
+
+	while (val) {
+		return statement->run();
 	}
 }

@@ -13,6 +13,7 @@
 #include "Literal.h"
 #include "Loop.h"
 #include "Statement.h"
+#include <string_view>
 #include "SetVar.h"
 #include "SymbTable.h"
 #include "Token.h"
@@ -20,40 +21,46 @@
 #include "SuppType.h"
 #include "IEASTNode.h"
 
+struct ParserReturn {
+	Statement* statement;
+	Error error;
+};
 
 class Parser
 {
 private:
+	std::string_view text;
+	std::string_view path;
 	size_t currentPos;
 	Token currentToken;
 	std::vector<Token> tokenStream;
 
 	void advance();
 	void revert(size_t pos);
-	Statement* getStatement(SymbTable* table);
-	Statement* getBlockState(SymbTable* table);
-	Statement* getIfState(SymbTable* table);
-	Statement* getWhileState(SymbTable* table);
-	Statement* getDeclState(SymbTable* table);
-	Statement* getSetState(SymbTable* table);
-	Statement* getEmptyState(SymbTable* table);
+	ParserReturn getStatement(SymbTable* table);
+	ParserReturn getBlockState(SymbTable* table);
+	ParserReturn getIfState(SymbTable* table);
+	ParserReturn getWhileState(SymbTable* table);
+	ParserReturn getDeclState(SymbTable* table);
+	ParserReturn getSetState(SymbTable* table);
+	ParserReturn getEmptyState(SymbTable* table);
 
-	Statement* getPrint(SymbTable* table);
+	ParserReturn getPrint(SymbTable* table);
 
-	std::vector<ElseCond*> getIfElse(SymbTable* table);
-	Statement* getElse(SymbTable* table);
+	std::pair<std::vector<ElseCond*>, Error> getIfElse(SymbTable* table);
+	ParserReturn getElse(SymbTable* table);
 
 	template<SuppType T>
-	Expression<T>* getExpr(SymbTable* table);
-	IEASTNode* getIEAST(SymbTable* table);
-	IEASTNode* streamToIEAST(std::vector<Token> tokenStream, SymbTable* table);
+	std::pair<Expression<T>*, Error> getExpr(SymbTable* table);
+	std::pair<IEASTNode*, Error> getIEAST(SymbTable* table);
+	std::pair<IEASTNode*, Error> streamToIEAST(std::vector<Token> tokenStream, SymbTable* table);
 	std::vector<Token> getExprTokStream();
 	std::vector<Token> transExprTokStream(std::vector<Token> tokenStream);
 	std::vector<Token> addBrackets(std::vector<Token> tokenStream, std::vector<enum TokenType> op);
 
 public:
-	Parser();
-	BlockNode* parse(std::vector<Token> tokens);
-	void parse(std::vector<Token> tokens, BlockNode* block);	
+	Parser(std::string_view text, std::string_view path);
+	ParserReturn parse(std::vector<Token> tokens);
+	Error parse(std::vector<Token> tokens, BlockNode* block);
 };
 

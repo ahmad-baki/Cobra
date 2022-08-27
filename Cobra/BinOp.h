@@ -2,6 +2,7 @@
 #include "Expression.h"
 #include "TokenType.h"
 #include "SuppType.h"
+#include "Error.h"
 
 
 //enum class Op { ADD, SUB, DIV, MUL };
@@ -16,5 +17,5 @@ private:
 
 public:
 	BinOp(Expression<T1>* expr1, Expression<T2>* expr2, enum TokenType op);
-	T3 run();
+	std::pair<T3, Error> run();
 };

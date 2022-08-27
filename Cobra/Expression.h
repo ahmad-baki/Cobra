@@ -1,11 +1,12 @@
 #pragma once
 #include <concepts>
 #include "SuppType.h"
+#include "Error.h"
 
 template<SuppType T>
 class Expression
 {
 public:
-	virtual T run() = 0;
+	virtual std::pair<T, Error> run() = 0;
 };
 

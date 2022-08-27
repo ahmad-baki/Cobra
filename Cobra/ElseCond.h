@@ -2,6 +2,7 @@
 #include "Statement.h"
 #include "Expression.h"
 #include "BlockNode.h"
+#include "Error.h"
 
 class ElseCond
 {
@@ -11,6 +12,6 @@ private:
 
 public:
 	ElseCond(Expression<bool>* cond, Statement* statement);
-	bool run();
+	std::pair<bool, Error> run();
 };
 

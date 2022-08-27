@@ -2,6 +2,7 @@
 #include "Statement.h"
 #include "Expression.h"
 #include "BlockNode.h"
+#include "Error.h"
 
 class Loop : public Statement
 {
@@ -10,5 +11,5 @@ class Loop : public Statement
 
 public:
 	Loop(Expression<bool>* cond, Statement* statement);
-	void run();
+	Error run();
 };

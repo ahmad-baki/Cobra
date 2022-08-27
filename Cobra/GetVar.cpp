@@ -7,7 +7,7 @@ GetVar<T>::GetVar(std::string varName, SymbTable* table)
 
 
 template<SuppType T>
-T GetVar<T>::run() {
+std::pair<T, Error> GetVar<T>::run() {
 	return table->run<T>(varName);
 }
 

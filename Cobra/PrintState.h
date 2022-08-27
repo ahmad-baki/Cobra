@@ -10,6 +10,6 @@ private:
 	Expression<T>* param;
 public:
 	PrintState(Expression<T>* param);
-	void run();
+	Error run();
 };
 

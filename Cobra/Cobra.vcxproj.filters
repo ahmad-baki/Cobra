@@ -25,6 +25,12 @@
     <Filter Include="Header Files\Parser">
       <UniqueIdentifier>{5cbb3b80-5a56-481c-9f9b-3d604b6fbd2e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Error">
+      <UniqueIdentifier>{97b5e066-8e8b-497a-9065-7011518fabd6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Error">
+      <UniqueIdentifier>{8cb19821-6287-474b-af25-f3a5cef3f984}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="TokenType.cpp">
@@ -78,9 +84,6 @@
     <ClCompile Include="SymbTable.cpp">
       <Filter>Source Files\Parser</Filter>
     </ClCompile>
-    <ClCompile Include="Error.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Cobra.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -89,6 +92,18 @@
     </ClCompile>
     <ClCompile Include="Token.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Error.cpp">
+      <Filter>Source Files\Error</Filter>
+    </ClCompile>
+    <ClCompile Include="InvChrError.cpp">
+      <Filter>Source Files\Error</Filter>
+    </ClCompile>
+    <ClCompile Include="RuntimeError.cpp">
+      <Filter>Source Files\Error</Filter>
+    </ClCompile>
+    <ClCompile Include="SyntaxError.cpp">
+      <Filter>Source Files\Error</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -140,9 +155,6 @@
     <ClInclude Include="Lexer.h">
       <Filter>Header Files\Lexer</Filter>
     </ClInclude>
-    <ClInclude Include="Error.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -154,6 +166,18 @@
     </ClInclude>
     <ClInclude Include="Token.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Error.h">
+      <Filter>Header Files\Error</Filter>
+    </ClInclude>
+    <ClInclude Include="InvChrError.h">
+      <Filter>Header Files\Error</Filter>
+    </ClInclude>
+    <ClInclude Include="RuntimeError.h">
+      <Filter>Header Files\Error</Filter>
+    </ClInclude>
+    <ClInclude Include="SyntaxError.h">
+      <Filter>Header Files\Error</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

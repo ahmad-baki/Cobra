@@ -13,5 +13,5 @@ private:
 
 public:
 	DeclVar<T>(std::string name, SymbTable* table);
-	void run();
+	Error run();
 };

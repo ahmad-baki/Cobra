@@ -6,6 +6,7 @@
 #include "Literal.h"
 #include "GetVar.h"
 #include "BinOp.h"
+#include "SyntaxError.h"
 
 int IEASTNode::getReturnType() { 
 	return returnType; 
@@ -25,9 +26,9 @@ IEASTNode::~IEASTNode() {
 }
 
 
-void IEASTNode::setReturnType(SymbTable* table)
+Error IEASTNode::setReturnType(SymbTable* table)
 {
-	switch(token._type)
+	switch(token.type)
 	{
 	case TokenType::INTLIT:
 		returnType = 0;
@@ -36,8 +37,16 @@ void IEASTNode::setReturnType(SymbTable* table)
 		returnType = 1;
 		break;
 	case TokenType::IDENTIFIER:
-		returnType = table->varReg[token._value];
+	{
+		auto elem = table->varReg.find(token.value);
+
+		if (elem == table->varReg.end())
+			//return SyntaxError("Presumably Missing '('-Bracket", path, text, currentToken.line, currentToken.column - 1, currentToken.column + 1);
+			throw std::invalid_argument("variable " + token.value + " is not declared");
+
+		returnType = table->varReg[token.value];
 		break;
+	}
 
 // operator
 	default:
@@ -56,27 +65,33 @@ void IEASTNode::setReturnType(SymbTable* table)
 		returnType = std::max(leftNodeType, rightNodeType);
 		break;
 	}
+	return Error();
 }
 
 
 template<SuppType T>
-Expression<T>* IEASTNode::getExpr() {
-	return nullptr;
+std::pair<Expression<T>*, Error> IEASTNode::getExpr() {
+	//return { nullptr, 
+	//	SyntaxError("Contact the Creator: getExpr<T> should not habe been called", path, text, currentToken.line, currentToken.column - 1, currentToken.column + 1)
+	//};
+	throw std::invalid_argument("Contact the Creator: getExpr<T> should not habe been called");
 }
 
 template<>
-Expression<bool>* IEASTNode::getExpr() {
+std::pair<Expression<bool>*, Error> IEASTNode::getExpr() {
 	if (returnType != 0 && returnType != 1)
-		return nullptr;
+		/*return { nullptr,
+			SyntaxError("Contact the Creator: getExpr<T> should not habe been called", path, text, currentToken.line, currentToken.column - 1, currentToken.column + 1)
+		};*/
+		throw std::invalid_argument("implicit Cast to bool not possible");
 
-	switch (token._type)
+	switch (token.type)
 	{
 	case TokenType::INTLIT:
-		return new Literal<bool>(std::stoi(token._value));
 	case TokenType::DECLIT:
-		return new Literal<bool>(std::stoi(token._value));
+		return { new Literal<bool>(std::stoi(token.value)), Error()};
 	case TokenType::IDENTIFIER:
-		return new GetVar<bool>(token._value, table);
+		return { new GetVar<bool>(token.value, table), Error() };
 	case TokenType::NONE:
 		if (leftNode != nullptr) {
 			return leftNode->getExpr<bool>();
@@ -84,30 +99,43 @@ Expression<bool>* IEASTNode::getExpr() {
 		if (rightNode != nullptr) {
 			return rightNode->getExpr<bool>();
 		}
-		throw std::invalid_argument("IEASTNode has TokenType: None but now chield-nodes");
+		throw std::invalid_argument("IEASTNode has TokenType: None, but no child-nodes");
+
+	// operator
 	default:
 		if (leftNode == nullptr)
-			return nullptr;
+			throw std::invalid_argument("Operator Node has no child-elements");
+
 		int leftType = leftNode->getReturnType();
 		if (leftType == 0) {
 			// nodes get filled from left->right
 			if (rightNode == nullptr)
 				return leftNode->getExpr<bool>();
 
-			Expression<int>* leftExpr = leftNode->getExpr<int>();
+			auto [leftExpr, leftError] = leftNode->getExpr<int>();
+
+			if (leftError.m_errorName != "NULL")
+				return { nullptr, leftError };
 
 			int rightType = rightNode->getReturnType();
 			if (rightType == 0)
 			{
-				Expression<int>* rightExpr = rightNode->getExpr<int>();
-				return new BinOp<int, int, bool>(leftExpr, rightExpr, token._type);
+				auto [rightExpr, rightError] = rightNode->getExpr<int>();
+
+				if (rightError.m_errorName != "NULL")
+					return { nullptr, rightError };
+
+				return { new BinOp<int, int, bool>(leftExpr, rightExpr, token.type), Error()};
 			}
 			if (rightType == 1) {
-				Expression<float>* rightExpr = rightNode->getExpr<float>();
-				return new BinOp<int, float, bool>(leftExpr, rightExpr, token._type);
+				auto [rightExpr, rightError] = rightNode->getExpr<float>();
+
+				if (rightError.m_errorName != "NULL")
+					return { nullptr, rightError };
+				return { new BinOp<int, float, bool>(leftExpr, rightExpr, token.type), Error()};
 			}
 			else {
-				return nullptr;
+				throw std::invalid_argument("implicit Cast to bool not possible");
 			}
 		}
 		if (leftType == 1) {
@@ -115,122 +143,113 @@ Expression<bool>* IEASTNode::getExpr() {
 			if (rightNode == nullptr)
 				return leftNode->getExpr<bool>();
 
-			Expression<float>* leftExpr = leftNode->getExpr<float>();
+			auto [leftExpr, leftError] = leftNode->getExpr<float>();
+
+			if (leftError.m_errorName != "NULL")
+				return { nullptr, leftError };
 
 			int rightType = rightNode->getReturnType();
 			if (rightType == 0)
 			{
-				Expression<int>* rightExpr = rightNode->getExpr<int>();
-				return new BinOp<float, int, bool>(leftExpr, rightExpr, token._type);
+				auto [rightExpr, rightError] = rightNode->getExpr<int>();
+				if (rightError.m_errorName != "NULL")
+					return { nullptr, rightError };
+				return { new BinOp<float, int, bool>(leftExpr, rightExpr, token.type), Error() };
 			}
 			else if (rightType == 1) {
-				Expression<float>* rightExpr = rightNode->getExpr<float>();
-				return new BinOp<float, float, bool>(leftExpr, rightExpr, token._type);
+				auto [rightExpr, rightError] = rightNode->getExpr<float>();
+				if (rightError.m_errorName != "NULL")
+					return { nullptr, rightError };
+				return { new BinOp<float, float, bool>(leftExpr, rightExpr, token.type), Error() };
 			}
 			else {
-				return nullptr;
+				throw std::invalid_argument("implicit Cast to bool not possible");
 			}
 		}
 		else {
-			return nullptr;
+			throw std::invalid_argument("implicit Cast to bool not possible");
 		}
 	}
 }
 
 template<>
-Expression<int>* IEASTNode::getExpr() {
+std::pair <Expression<int>*, Error> IEASTNode::getExpr() {
 	if (returnType != 1 && returnType != 0)
-		return nullptr;
+		throw std::invalid_argument("implicit Cast to int not possible");
 
-	switch (token._type)
+	switch (token.type)
 	{
 	case TokenType::INTLIT:
-		return new Literal<int>(std::stoi(token._value));
 	case TokenType::DECLIT:
-		return new Literal<int>(std::stoi(token._value));
+		return { new Literal<int>(std::stoi(token.value)), Error() };
 	case TokenType::IDENTIFIER:
-		return new GetVar<int>(token._value, table);
+		return { new GetVar<int>(token.value, table), Error() };
 
 	default:
 		if (leftNode == nullptr)
-			return nullptr;
+			throw std::invalid_argument("Operator Node has no child-elements");
+
 		int leftType = leftNode->getReturnType();
 		if (leftType == 0){
-			Expression<int>* leftExpr = leftNode->getExpr<int>();
+			auto [leftExpr, leftError] = leftNode->getExpr<int>();
+
+			if (leftError.m_errorName != "NULL")
+				return { nullptr, leftError };
+
 			if (rightNode == nullptr)
-				return leftExpr;
+				return { leftExpr, Error() };
 
 			int rightType = rightNode->getReturnType();
 			if (rightType == 0)
 			{
-				Expression<int>* rightExpr = rightNode->getExpr<int>();
-				return new BinOp<int, int, int>(leftExpr, rightExpr, token._type);
+				auto [rightExpr, rightError] = rightNode->getExpr<int>();
+
+				if (rightError.m_errorName != "NULL")
+					return { nullptr, leftError };
+
+				return { new BinOp<int, int, int>(leftExpr, rightExpr, token.type), Error()};
 			}
 			else {
-				return nullptr;
+				throw std::invalid_argument("invalid 2. type");
 			}
 		}
 		else {
-			return nullptr;
+			throw std::invalid_argument("invalid 1. type");
 		}
 	}
 }
 
 template<>
-Expression<float>* IEASTNode::getExpr() {
+std::pair<Expression<float>*, Error> IEASTNode::getExpr() {
 	if (returnType != 1 && returnType != 0)
-		return nullptr;
+		throw std::invalid_argument("implicit Cast to float not possible");
 
-	switch (token._type)
+	switch (token.type)
 	{
 	case TokenType::INTLIT:
-		return new Literal<float>(std::stof(token._value));
 	case TokenType::DECLIT:
-		return new Literal<float>(std::stof(token._value));
+		return { new Literal<float>(std::stof(token.value)), Error() };
 	case TokenType::IDENTIFIER:
-		return new GetVar<float>(token._value, table);
+		return { new GetVar<float>(token.value, table), Error() };
 
 	// operator
 	default:
-		if (leftNode == nullptr || rightNode == nullptr)
-			return nullptr;
+		if (leftNode == nullptr)
+			throw std::invalid_argument("Operator Node has no child-elements");
 
-		//int leftType = leftNode->getReturnType();
-		//int rightType = rightNode->getReturnType();
-		Expression<float>* leftExpr = leftNode->getExpr<float>();
-		Expression<float>* rightExpr = rightNode->getExpr<float>();
-		return new BinOp<float, float, float>(leftExpr, rightExpr, token._type);
+		auto [leftExpr, leftError] = leftNode->getExpr<float>();
 
+		if (leftError.m_errorName != "NULL")
+			return { nullptr, leftError };
 
-		/*if (leftType == 0) {
-			Expression<int>* leftExpr = leftNode->getExpr<int>();
-			if (rightType == 1)
-			{
-				Expression<float>* rightExpr = rightNode->getExpr<float>();
-				return new BinOp<int, float, float>(leftExpr, rightExpr, token._type);
-			}
-			else {
-				return nullptr;
-			}
-		}
-		if (leftType == 1) {
-			Expression<float>* leftExpr = leftNode->getExpr<float>();
-			if (rightType == 0)
-			{
-				Expression<int>* rightExpr = rightNode->getExpr<int>();
-				return new BinOp<float, int, float>(leftExpr, rightExpr, token._type);
-			}
-			if (rightType == 1)
-			{
-				Expression<float>* rightExpr = rightNode->getExpr<float>();
-				return new BinOp<float, float, float>(leftExpr, rightExpr, token._type);
-			}
-			else {
-				return nullptr;
-			}
-		}
-		else {
-			return nullptr;
-		}*/
+		if (rightNode == nullptr)
+			return { leftExpr, Error() };
+
+		auto [rightExpr, rightError] = rightNode->getExpr<float>();
+
+		if (rightError.m_errorName != "NULL")
+			return { nullptr, rightError };
+
+		return { new BinOp<float, float, float>(leftExpr, rightExpr, token.type), Error() };
 	}
 }

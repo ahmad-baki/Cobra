@@ -6,19 +6,25 @@
 #include "Error.h"
 #include "TokenType.cpp"
 
+
+struct LexReturn {
+	std::vector<Token> tokenString;
+	Error error;
+};
+
 class Lexer
 {
 public:
-	Lexer(std::string_view text, std::string_view fileName);
-	std::pair<std::vector<Token>, Error> lex();
+	Lexer(std::string_view text, std::string_view path);
+	LexReturn lex();
 
 private:
-	std::string_view _text;
-	std::string_view _fileName;
-	size_t _pos;
-	size_t _line;
-	size_t _column;
-	char _currentChar;
+	std::string_view text;
+	std::string_view path;
+	size_t pos;
+	size_t line;
+	size_t column;
+	char currentChar;
 
 	void advance();
 	void revert(size_t pos);
@@ -30,8 +36,30 @@ private:
 
 	void skipSpace();
 	
-	std::map<std::string, enum TokenType> operators;
-	std::map<std::string, enum TokenType> keywords;
+	std::map<std::string, enum TokenType> operators{
+		{"+", TokenType::PLUS},
+		{"-", TokenType::MINUS},
+		{"*", TokenType::MUL},
+		{"/", TokenType::DIV},
+		{"(", TokenType::LBRACKET},
+		{")", TokenType::RBRACKET},
+		{"{", TokenType::LCURLBRACKET},
+		{"}", TokenType::RCURLBRACKET},
+		{"!", TokenType::EXCLA},
+		{"=", TokenType::EQ},
+		{"==", TokenType::EQEQ},
+		{"!=", TokenType::EXCLAEQ},
+		{";", TokenType::SEMICOLON},
+	};
+
+	std::map<std::string, enum TokenType> keywords{
+		{"if", TokenType::IF},
+		{"else", TokenType::ELSE},
+		{"while", TokenType::WHILE},
+		{"int", TokenType::INTWORD},
+		{"float", TokenType::FLOATWORD},
+	};
+
 	//std::vector<std::string> tokenNames;
 	//std::vector<enum TokenType> tokenTypes;
 };

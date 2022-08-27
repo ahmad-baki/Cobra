@@ -15,8 +15,8 @@ public:
 	// the empty BlockNode
 	BlockNode();
 	BlockNode(std::vector<Statement*> statements, SymbTable* parentTable);
-	void contin();
-	void run();
+	Error contin();
+	Error run();
 	void add(Statement* statement);
 };
 

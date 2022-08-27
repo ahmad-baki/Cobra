@@ -24,28 +24,35 @@ std::string readFileIntoString(std::string path) {
 
 void execFromFile(std::string path) {
 	std::string input = readFileIntoString(path);
-	//std::string input = "int i = 1; while (i != 4) { print(i); i = i + 1;}";
-	Lexer lexer = Lexer(input, "<stdin>");
-	auto returnLex = lexer.lex();
-	if (returnLex.second.m_errorName != "NULL")
-		std::cout << returnLex.second;
-	else {
-		std::vector<Token> tokenStream = returnLex.first;
-		Parser parser = Parser();
-		BlockNode* blockNode = parser.parse(tokenStream);
-		blockNode->run();
+	Lexer lexer = Lexer(input, path);
+	auto [tokenString, lexError] = lexer.lex();
+
+	if (lexError.m_errorName != "NULL"){
+		std::cout << lexError << '\n' << std::endl;
+		return;
 	}
-	std::cout << "finished" << std::endl;
-	std::system("pause");
+
+	Parser parser = Parser(input, path);
+	auto [blockNode, parseError] = parser.parse(tokenString);
+
+	if (parseError.m_errorName != "NULL") {
+		std::cout << parseError << '\n' << std::endl;
+		return;
+	}
+
+	Error runtimeError = blockNode->run();
+	if (runtimeError.m_errorName != "NULL") {
+		std::cout << runtimeError << '\n' << std::endl;
+	}
 }
 
 void execFromCommandLine() {
-	Parser parser = Parser();
 	BlockNode blockNode = BlockNode();
 	while (true) {
 		std::cout << "> ";
 		std::string input = "";
 		getline(std::cin, input);
+
 		if (input == "exit") {
 			std::cout << "do you want to quit? (y/n)" << std::endl;
 			std::cin >> input;
@@ -53,14 +60,26 @@ void execFromCommandLine() {
 				return;
 			continue;
 		}
+
 		Lexer lexer = Lexer(input, "<stdin>");
-		auto returnLex = lexer.lex();
-		if (returnLex.second.m_errorName != "NULL")
-			std::cout << returnLex.second;
-		else {
-			std::vector<Token> tokenStream = returnLex.first;
-			parser.parse(tokenStream, &blockNode);
-			blockNode.contin();
+		auto [tokenString, lexError] = lexer.lex();
+		if (lexError.m_errorName != "NULL"){
+			std::cout << lexError << '\n' << std::endl;
+			return;
+		}
+
+		Parser parser = Parser(input, "<stdin>");
+		Error parseError = parser.parse(tokenString, &blockNode);
+
+		if (parseError.m_errorName != "NULL") {
+			std::cout << parseError << '\n' << std::endl;
+			return;
+		}
+
+		Error runtimeError = blockNode.contin();
+		if (runtimeError.m_errorName != "NULL") {
+			std::cout << runtimeError << '\n' << std::endl;
+			return;
 		}
 	}
 }
@@ -72,5 +91,7 @@ int main(int argc, char* argv[])
 	}
 	else {
 		execFromCommandLine();
-	}
+	}	
+	std::cout << "finished" << std::endl;
+	std::system("pause");
 }

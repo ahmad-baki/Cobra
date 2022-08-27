@@ -9,17 +9,20 @@ class Error
 public:
 	friend std::ostream& operator<<(std::ostream& output, const Error& e);
 	Error();
-	Error(std::string_view errorName, std::string_view desc, std::string_view text, size_t line, size_t column);
+	Error(std::string_view errorName, std::string_view desc, std::string_view path, std::string_view text, size_t line, size_t columnStart, size_t columnEnd);
 
 	std::string m_errorName;
 
-private:
-	std::string _desc;
-	std::string_view _text;
-	std::string errorLine;
-	size_t _lineIndex;
-	size_t _columnIndex;
+protected:
+	std::string desc;
+	std::string_view path;
+	std::string_view text;
+	//std::string errorLine;
+	size_t line;
+	size_t columnStart;
+	size_t columnEnd;
 
-	std::string getErrorLine();
+	std::string getErrorLine() const;
+	std::string getErrorPointerStr(size_t line) const;
 };
 

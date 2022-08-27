@@ -45,9 +45,9 @@ void DeclVar<T>::Init(SymbTable* table)
 }
 
 template<SuppType T>
-inline void DeclVar<T>::run()
+inline Error DeclVar<T>::run()
 {
-	table->declare<T>(name, 0);
+	return table->declare<T>(name, 0);
 }
 
 

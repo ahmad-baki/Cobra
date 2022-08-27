@@ -8,8 +8,13 @@ inline PrintState<T>::PrintState(Expression<T>* param)
 }
 
 template<SuppType T>
-void PrintState<T>::run() {
-	std::cout << param->run() << std::endl;
+Error PrintState<T>::run() {
+	auto [val, error] = param->run();
+
+	if (error.m_errorName != "NULL")
+		return error;
+
+	std::cout << val << std::endl;
 }
 
 template class PrintState<bool>;

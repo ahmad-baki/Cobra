@@ -2,9 +2,14 @@
 
 
 template<SuppType T>
-void SetVar<T>::run()
+Error SetVar<T>::run()
 {
-	table->set(name, value->run());
+	auto [val, error] = value->run();
+
+	if (error.m_errorName == "NULL")
+		return error;
+
+	return table->set(name, val);
 }
 
 template<SuppType T>

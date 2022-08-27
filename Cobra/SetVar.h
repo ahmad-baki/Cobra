@@ -3,6 +3,7 @@
 #include "Expression.h"
 #include "SuppType.h"
 #include "Statement.h"
+#include "Error.h"
 
 template<SuppType T>
 class SetVar : public Statement
@@ -14,6 +15,6 @@ private:
 
 public:
 
-	void run();
+	Error run();
 	SetVar(std::string name, Expression<T>* value, SymbTable* table);
 };

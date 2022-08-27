@@ -8,8 +8,8 @@ inline Literal<T>::Literal(T value)
 
 
 template<SuppType T>
-T Literal<T>::run() {
-	return value;
+std::pair<T, Error> Literal<T>::run() {
+	return { value, Error() };
 }
 
 

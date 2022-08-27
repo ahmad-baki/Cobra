@@ -16,5 +16,5 @@ private:
 public:
 	//IfCond(Expression<bool>& cond, BlockNode& block, std::vector<ElseCond> condElseBlocks = std::vector<ElseCond>());
 	IfCond(Expression<bool>* cond, Statement* statement, std::vector<ElseCond*> ifElseStates, Statement* elseState);
-	void run();
+	Error run();
 };

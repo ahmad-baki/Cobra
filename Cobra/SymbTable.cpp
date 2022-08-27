@@ -12,31 +12,33 @@ SymbTable::SymbTable(SymbTable* parent) : parent{ parent }{
 #pragma region DECLARATION
 
 template<SuppType T>
-void SymbTable::declare(std::string name, T value) {
+Error SymbTable::declare(std::string name, T value) {
 	throw std::exception("invalid type");
 }
 
 template<>
-void SymbTable::declare(std::string name, bool value) {
-	declare<int>(name, value);
+Error SymbTable::declare(std::string name, bool value) {
+	return declare<int>(name, value);
 }
 
 template<>
-void SymbTable::declare(std::string name, int value) {
+Error SymbTable::declare(std::string name, int value) {
 	auto elem = varNames.find(name);
 	if (elem != varNames.end())
 		throw std::invalid_argument("tried to declare" + name + "despite it already existing");
 	integers.insert(std::pair<std::string, int>(name, value));
 	varNames.insert(std::pair<std::string, int>(name, 0));
+	return Error();
 }
 
 template<>
-void SymbTable::declare(std::string name, float value) {
+Error SymbTable::declare(std::string name, float value) {
 	auto elem = floats.find(name);
 	if (elem != floats.end())
 		throw std::invalid_argument("tried to declare" + name + "despite it already existing");
 	floats.insert(std::pair<std::string, float>(name, value));
 	varNames.insert(std::pair<std::string, int>(name, 1));
+	return Error();
 }
 #pragma endregion
 
@@ -45,7 +47,7 @@ void SymbTable::declare(std::string name, float value) {
 #pragma region SET
 
 template<SuppType T>
-void SymbTable::set(std::string name, T value) {
+Error SymbTable::set(std::string name, T value) {
 	throw std::exception("invalid type");
 	//throw std::invalid_argument("invalid type");
 	//auto elem = varNames.find(name);
@@ -69,34 +71,61 @@ void SymbTable::set(std::string name, T value) {
 }
 
 template<>
-void SymbTable::set(std::string name, bool value) {
-	set<int>(name, value);
+Error SymbTable::set(std::string name, bool value) {
+	return set<int>(name, value);
 }
 
 
 template<>
-void SymbTable::set(std::string name, int value) {
+Error SymbTable::set(std::string name, int value) {
 	auto elem = integers.find(name);
-	if (elem == integers.end())
+	if (elem == integers.end()){
 		// then checks floats
 
-		parent->set(name, value);
+		Error intError = parent->set(name, value);
+		if (intError.m_errorName == "NULL")
+			return Error();
+
+		Error floatError = parent->set<float>(name, value);
+
+		if (floatError.m_errorName != "NULL")
+			return floatError;
+	}
 	else {
 		integers[name] = value;
 	}
+	return Error();
 }
 
 template<>
-void SymbTable::set(std::string name, float value) {
+Error SymbTable::set(std::string name, float value) {
 	auto elem = floats.find(name);
-	if (elem == floats.end())
-		parent->set(name, value);
-	floats[name] = value;
+	if (elem == floats.end()) {
+		// then checks floats
+
+		Error floatError = parent->set<float>(name, value);
+		if (floatError.m_errorName == "NULL")
+			return Error();
+
+		Error intError = parent->set<int>(name, value);
+
+		if (intError.m_errorName != "NULL")
+			return intError;
+	}
+	else {
+		floats[name] = value;
+	}
+	return Error();
 }
 
-void SymbTable::reg(std::string name, int type)
+Error SymbTable::reg(std::string name, int type)
 {
+	if (varReg.contains(name))
+		throw std::invalid_argument("tried to register already existing variablename");
+
 	varReg.insert(std::pair<std::string, int>(name, type));
+
+	return Error();
 }
 
 #pragma endregion
@@ -105,7 +134,7 @@ void SymbTable::reg(std::string name, int type)
 #pragma region GET
 
 template<SuppType T>
-T SymbTable::run(std::string name) {
+std::pair<T, Error> SymbTable::run(std::string name) {
 	throw std::exception("invalid type");
 	//auto elem = varNames.find(name);
 	//if (elem == varNames.end()) {
@@ -125,32 +154,55 @@ T SymbTable::run(std::string name) {
 }
 
 template<>
-bool SymbTable::run(std::string name) {
+std::pair<bool, Error> SymbTable::run(std::string name) {
 	return run<int>(name);
 }
 
 template<>
-int SymbTable::run(std::string name) {
+std::pair<int, Error> SymbTable::run(std::string name) {
 	auto elem = integers.find(name);
 	if (elem == integers.end()) {
-		return parent->run<int>(name);
+		// then checks floats
+
+		auto [intVal, intError] = parent->run<int>(name);
+
+		if (intError.m_errorName == "NULL")
+			return { intVal, Error() };
+
+		auto [floatVal, floatError] = parent->run<float>(name);
+
+		if (floatError.m_errorName != "NULL")
+			return { {}, floatError };
+
+		return { floatVal, Error() };
 	}
-	return elem->second;
+	return { elem->second, Error() };
 }
 
 template<>
-float SymbTable::run(std::string name) {
+std::pair<float, Error> SymbTable::run(std::string name) {
 	auto elem = floats.find(name);
 	if (elem == floats.end()) {
-		if (parent == nullptr)
-			throw std::invalid_argument(name + " not found");
-		return parent->run<float>(name);
+		// then checks floats
+
+		auto [floatVal, floatError] = parent->run<float>(name);
+
+		if (floatError.m_errorName == "NULL")
+			return { floatVal, Error() };
+
+		auto [intVal, intError] = parent->run<int>(name);
+
+		if (intError.m_errorName != "NULL")
+			return { {}, intError };
+
+		return { intVal, Error() };
 	}
-	return elem->second;
+	return { elem->second, Error() };
 }
 
 #pragma endregion
 
-void SymbTable::clearReg() {
+Error SymbTable::clearReg() {
 	varReg.clear();
+	return Error();
 }

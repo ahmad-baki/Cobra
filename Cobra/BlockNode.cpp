@@ -13,18 +13,24 @@ BlockNode::BlockNode(std::vector<Statement*> statements, SymbTable* parentTable)
 	table = new SymbTable(parentTable);
 }
 
-void BlockNode::contin() {
+Error BlockNode::contin() {
 	while (nextExecIndex < statements.size()){
-		statements[nextExecIndex]->run();
+		Error error = statements[nextExecIndex]->run();
+		if (error.m_errorName != "NULL")
+			return error;
 		nextExecIndex++;
 	}
+	return Error();
 }
 
-void BlockNode::run()
+Error BlockNode::run()
 {
 	for (Statement* statement : statements) {
-		statement->run();
+		Error error = statement->run();
+		if (error.m_errorName != "NULL")
+			return error;
 	}
+	return Error();
 }
 
 

@@ -1,33 +1,43 @@
 #include "BinOp.h"
 #include <stdexcept>
 #include "TokenType.CPP"
-#include <iostream>
+#include "RuntimeError.h"
+
 
 template<SuppType T1, SuppType T2, SuppType T3>
 inline BinOp<T1, T2, T3>::BinOp(Expression<T1>* expr1, Expression<T2>* expr2, enum TokenType op):
 	expr1{ expr1 }, expr2{ expr2 }, op{op} {}
 
 template<SuppType T1, SuppType T2, SuppType T3>
-T3 BinOp<T1, T2, T3>::run()
+std::pair<T3, Error> BinOp<T1, T2, T3>::run()
 {
-	T1 val1 = expr1->run();
-	T2 val2 = expr2->run();
+	auto [val1, val1Error] = expr1->run();
+
+	if (val1Error.m_errorName != "NULL")
+		return { {}, val1Error };
+
+	auto [val2, val2Error] = expr2->run();
+
+	if (val2Error.m_errorName != "NULL")
+		return { {}, val2Error };
+
 
 	switch (op)
 	{
 	case TokenType::PLUS:
-		return T3(val1 + val2);
+		return { T3(val1 + val2), Error() };
 	case TokenType::MINUS:
-		return T3(val1 - val2);
+		return { T3(val1 - val2), Error() };
 	case TokenType::DIV:
-		return T3(val1 / val2);
+		return { T3(val1 / val2), Error() };
 	case TokenType::MUL:
-		return T3(val1 * val2);
+		return { T3(val1 * val2), Error() };
 	case TokenType::EQEQ:
-		return T3(val1 == val2);
+		return { T3(val1 == val2), Error() };
 	case TokenType::EXCLAEQ:
-		return T3(val1 != val2);
+		return { T3(val1 != val2), Error() };
 	default:
+		//return { {}, RuntimeError("invalid operator") };
 		throw std::invalid_argument("invalid operator");
 	}
 }

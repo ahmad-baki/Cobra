@@ -1,6 +1,7 @@
 #pragma once
-#include "Expression.h"
 #include <concepts>
+#include "Expression.h"
+#include "Error.h"
 
 template<SuppType T>
 class Literal : public Expression<T>
@@ -10,5 +11,5 @@ private:
 
 public:
 	Literal(T value);
-	T run();
+	std::pair<T, Error> run();
 };

@@ -1,11 +1,13 @@
 #pragma once
 #include "SymbTable.h"
+#include "Error.h"
+
 
 class Statement
 {
 public:
 	SymbTable* table;
-	virtual void run() = 0;
+	virtual Error run() = 0;
 };
 
 
