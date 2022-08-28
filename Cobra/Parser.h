@@ -1,4 +1,5 @@
 #pragma once
+#include "IEASTNode.h"
 #include <vector>
 #include <functional>
 #include "BinOp.h"
@@ -19,18 +20,24 @@
 #include "Token.h"
 #include "TokenType.h"
 #include "SuppType.h"
-#include "IEASTNode.h"
 
 struct ParserReturn {
 	Statement* statement;
 	Error error;
 };
 
+
 class Parser
 {
-private:
+public:
+	Parser(std::string_view text, std::string_view path);
+	ParserReturn parse(std::vector<Token> tokens);
+	Error parse(std::vector<Token> tokens, BlockNode* block);
+
 	std::string_view text;
 	std::string_view path;
+
+private:
 	size_t currentPos;
 	Token currentToken;
 	std::vector<Token> tokenStream;
@@ -57,10 +64,5 @@ private:
 	std::vector<Token> getExprTokStream();
 	std::vector<Token> transExprTokStream(std::vector<Token> tokenStream);
 	std::vector<Token> addBrackets(std::vector<Token> tokenStream, std::vector<enum TokenType> op);
-
-public:
-	Parser(std::string_view text, std::string_view path);
-	ParserReturn parse(std::vector<Token> tokens);
-	Error parse(std::vector<Token> tokens, BlockNode* block);
 };
 

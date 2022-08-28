@@ -6,7 +6,7 @@ Error SetVar<T>::run()
 {
 	auto [val, error] = value->run();
 
-	if (error.m_errorName == "NULL")
+	if (error.m_errorName != "NULL")
 		return error;
 
 	return table->set(name, val);

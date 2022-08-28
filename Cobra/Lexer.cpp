@@ -15,13 +15,13 @@ LexReturn Lexer::lex()
 {
 	std::vector<Token> tokens{};
 	while (currentChar != 0) {
-		std::pair<Token, Error> returnValues = getNextToken();
+		auto [token, error] = getNextToken();
 
 		// when lexer throws error
-		if (returnValues.second.m_errorName != "NULL") {
-			return { tokens, returnValues.second };
+		if (error.m_errorName != "NULL") {
+			return { {}, error};
 		}
-		tokens.push_back(returnValues.first);
+		tokens.push_back(token);
 		skipSpace();
 	}
 	return {tokens, Error()};
@@ -166,7 +166,7 @@ std::pair<Token, Error> Lexer::getNextOperator()
 			}
 		}
 		return { Token(), 
-			InvChrError("Received Invalied Token", path, text, line, column, column+1)
+			InvChrError("Received Invalied Token: " + currentChar, path, text, line, column, column+1)
 		};
 	}
 
@@ -188,6 +188,13 @@ std::pair<Token, Error> Lexer::getNextWord() {
 	}
 	auto elem = keywords.find(tokenString);
 	if (elem == keywords.end()) {
+		if (tokenString.size() == 0) {
+			return { Token(),
+			InvChrError("Received Invalied Token", path, text, line, column, column + 1)
+			};
+		}
+
+
 		size_t startColumn = column + 1 - tokenString.size();
 		size_t endColumn = column + 1;
 		return { Token(TokenType::IDENTIFIER, line, startColumn, endColumn, tokenString), 

@@ -8,12 +8,13 @@
 #include "BinOp.h"
 #include "SyntaxError.h"
 
+
 int IEASTNode::getReturnType() { 
 	return returnType; 
 }
 
-IEASTNode::IEASTNode(SymbTable* table)
-	: table{table}, token{Token(TokenType::NONE)}
+IEASTNode::IEASTNode(SymbTable* table)//, Parser* parser
+	: table{table}, token{Token(TokenType::NONE)}//, parser{parser}
 {
 }
 
@@ -41,7 +42,7 @@ Error IEASTNode::setReturnType(SymbTable* table)
 		auto elem = table->varReg.find(token.value);
 
 		if (elem == table->varReg.end())
-			//return SyntaxError("Presumably Missing '('-Bracket", path, text, currentToken.line, currentToken.column - 1, currentToken.column + 1);
+			//return SyntaxError("Presumably Missing '('-Bracket", parser.path, parser.text, token.line, token.startColumn, token.endColumn);
 			throw std::invalid_argument("variable " + token.value + " is not declared");
 
 		returnType = table->varReg[token.value];

@@ -4,7 +4,8 @@
 #include "Expression.h"
 #include "Token.h"
 #include "SymbTable.h"
-#include "Error.h";
+#include "Error.h"
+//#include "Parser.h"
 
 
 class IEASTNode
@@ -15,12 +16,14 @@ public:
 	Token token;
 	IEASTNode* leftNode{nullptr};
 	IEASTNode* rightNode{nullptr};
+	//Parser* parser{nullptr};
+
+	
+	IEASTNode(SymbTable* table);// , Parser* parser)
+	~IEASTNode();
 
 	int getReturnType();
-	
-	IEASTNode(SymbTable* table);
-	~IEASTNode();
-	
+
 	Error setReturnType(SymbTable* table);
 
 	template<SuppType T>
@@ -31,5 +34,6 @@ public:
 
 	template<>
 	std::pair<Expression<float>*, Error> getExpr();
-};
 
+private:
+};
