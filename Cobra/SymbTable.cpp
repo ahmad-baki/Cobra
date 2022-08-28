@@ -117,17 +117,6 @@ Error SymbTable::set(std::string name, float value) {
 	}
 	return Error();
 }
-
-Error SymbTable::reg(std::string name, int type)
-{
-	if (varReg.contains(name))
-		throw std::invalid_argument("tried to register already existing variablename");
-
-	varReg.insert(std::pair<std::string, int>(name, type));
-
-	return Error();
-}
-
 #pragma endregion
 
 
@@ -201,6 +190,33 @@ std::pair<float, Error> SymbTable::run(std::string name) {
 }
 
 #pragma endregion
+
+Error SymbTable::reg(std::string name, int type)
+{
+	if (isVarReg(name))
+		throw std::invalid_argument("tried to register already existing variablename");
+
+	varReg.insert(std::pair<std::string, int>(name, type));
+
+	return Error();
+}
+
+bool SymbTable::isVarReg(std::string name) {
+	if (varReg.contains(name))
+		return true;
+	if (parent != nullptr)
+		return parent->isVarReg(name);
+	return false;
+}
+
+std::pair<int, Error> SymbTable::getRegVar(std::string name) {
+	auto elem = varReg.find(name);
+	if (elem != varReg.end())
+		return { elem->second, Error() };
+	if (parent != nullptr)
+		return parent->getRegVar(name);
+	throw std::invalid_argument("tried to get not existing variable " + name);
+}
 
 Error SymbTable::clearReg() {
 	varReg.clear();

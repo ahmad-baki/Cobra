@@ -13,4 +13,5 @@ Error Loop::run()
 	while (val) {
 		return statement->run();
 	}
+	return Error();
 }

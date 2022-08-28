@@ -50,6 +50,10 @@ private:
 		{"==", TokenType::EQEQ},
 		{"!=", TokenType::EXCLAEQ},
 		{";", TokenType::SEMICOLON},
+		{"<", TokenType::SMALL},
+		{"<=", TokenType::SMALLEQ},
+		{">", TokenType::BIG},
+		{">=", TokenType::BIGEQ},
 	};
 
 	std::map<std::string, enum TokenType> keywords{

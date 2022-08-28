@@ -36,6 +36,14 @@ std::pair<T3, Error> BinOp<T1, T2, T3>::run()
 		return { T3(val1 == val2), Error() };
 	case TokenType::EXCLAEQ:
 		return { T3(val1 != val2), Error() };
+	case TokenType::SMALL:
+		return { T3(val1 < val2), Error() };
+	case TokenType::SMALLEQ:
+		return { T3(val1 <= val2), Error() };
+	case TokenType::BIG:
+		return { T3(val1 > val2), Error() };
+	case TokenType::BIGEQ:
+		return { T3(val1 >= val2), Error() };
 	default:
 		//return { {}, RuntimeError("invalid operator") };
 		throw std::invalid_argument("invalid operator");

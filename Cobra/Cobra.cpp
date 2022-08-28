@@ -7,6 +7,9 @@
 #include "Parser.h"
 #include "Lexer.h"
 #include <cstdlib>
+#include <chrono>
+
+using namespace std::chrono;
 
 std::string readFileIntoString(std::string path) {
 	struct stat info;
@@ -22,14 +25,15 @@ std::string readFileIntoString(std::string path) {
 	}
 }
 
-void execFromFile(std::string path) {
+double execFromFile(std::string path) {
 	std::string input = readFileIntoString(path);
+
 	Lexer lexer = Lexer(input, path);
 	auto [tokenString, lexError] = lexer.lex();
 
 	if (lexError.m_errorName != "NULL"){
 		std::cout << lexError << '\n' << std::endl;
-		return;
+		return 0;
 	}
 
 	Parser parser = Parser(input, path);
@@ -37,13 +41,18 @@ void execFromFile(std::string path) {
 
 	if (parseError.m_errorName != "NULL") {
 		std::cout << parseError << '\n' << std::endl;
-		return;
+		return 0;
 	}
 
+	const auto startTime = system_clock::now();
 	Error runtimeError = blockNode->run();
+	const auto endTime = system_clock::now();
+	const double runTime = duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
+
 	if (runtimeError.m_errorName != "NULL") {
 		std::cout << runtimeError << '\n' << std::endl;
 	}
+	return runTime;
 }
 
 void execFromCommandLine() {
@@ -85,13 +94,14 @@ void execFromCommandLine() {
 }
 
 int main(int argc, char* argv[])
-{	
+{
 	if (argc > 1) {
-		execFromFile(argv[1]);
+		double runTime = execFromFile(argv[1]);
+		std::cout << "finished in: " << runTime << "ms" << std::endl;
 	}
 	else {
 		execFromCommandLine();
+		std::cout << "finished" << std::endl;
 	}	
-	std::cout << "finished" << std::endl;
 	std::system("pause");
 }

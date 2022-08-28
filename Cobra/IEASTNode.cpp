@@ -39,13 +39,16 @@ Error IEASTNode::setReturnType(SymbTable* table)
 		break;
 	case TokenType::IDENTIFIER:
 	{
-		auto elem = table->varReg.find(token.value);
-
-		if (elem == table->varReg.end())
+		if (!table->isVarReg(token.value))
 			//return SyntaxError("Presumably Missing '('-Bracket", parser.path, parser.text, token.line, token.startColumn, token.endColumn);
 			throw std::invalid_argument("variable " + token.value + " is not declared");
 
-		returnType = table->varReg[token.value];
+		auto [type, error] = table->getRegVar(token.value);
+		if (error.m_errorName != "NULL")
+			return error;
+
+		returnType = type;
+
 		break;
 	}
 

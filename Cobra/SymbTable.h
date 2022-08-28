@@ -49,6 +49,10 @@ public:
 
 	Error reg(std::string name, int type);
 
+	bool isVarReg(std::string name);
+
+	std::pair<int, Error> getRegVar(std::string name);
+
 	Error clearReg();
 };
 

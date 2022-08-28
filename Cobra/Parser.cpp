@@ -105,11 +105,11 @@ ParserReturn Parser::getBlockState(SymbTable* table)
 	auto blockNode = new BlockNode(std::vector<Statement*>{}, table);
 	while (currentToken.type != TokenType::RCURLBRACKET) {
 		auto [statement, error] = getStatement(blockNode->table);
-		if (statement == nullptr) {
-			revert(startPos);
-			return { nullptr, 
-				SyntaxError("Reached End of File while Parcing", path, text, currentToken.line, currentToken.startColumn, currentToken.endColumn) } ;
+
+		if (error.m_errorName != "NULL") {
+			return { nullptr, error } ;
 		}
+
 		blockNode->add(statement);
 	}
 
@@ -275,7 +275,11 @@ ParserReturn Parser::getSetState(SymbTable* table)
 	}
 	advance();
 	// get expr
-	int type = table->varReg[varName];
+	auto [type, error] = table->getRegVar(varName);
+
+	if (error.m_errorName != "NULL")
+		return { nullptr, error };
+
 	if (type == 0){
 		auto [expr, error] = getExpr<int>(table);
 
@@ -553,7 +557,8 @@ std::vector<Token> Parser::getExprTokStream() {
 	};
 	std::vector<enum TokenType> binOps{
 		TokenType::PLUS, TokenType::MINUS, TokenType::MUL,
-		TokenType::DIV, TokenType::EQEQ, TokenType::EXCLAEQ
+		TokenType::DIV, TokenType::EQEQ, TokenType::EXCLAEQ,
+		TokenType::BIG, TokenType::BIGEQ, TokenType::SMALL, TokenType::SMALLEQ,
 	};
 
 	while (returnType != TokenType::SEMICOLON &&
@@ -599,7 +604,7 @@ std::vector<Token> Parser::transExprTokStream(std::vector<Token> tokenStream) {
 	std::vector<enum TokenType> opClasses[]{
 		{TokenType::MUL, TokenType::DIV},
 		{TokenType::PLUS, TokenType::MINUS},
-		{TokenType::EQEQ, TokenType::EXCLAEQ},
+		{TokenType::EQEQ, TokenType::EXCLAEQ, TokenType::SMALL, TokenType::SMALLEQ, TokenType::BIG, TokenType::BIGEQ, },
 	};
 
 	for (auto opClass : opClasses)

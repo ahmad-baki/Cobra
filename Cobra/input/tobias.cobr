@@ -1,6 +1,6 @@
 int n = 10;
 int current = 2;
-pritn(1290);
+print(1290);
 while(current < n){
 	print(current);
 	if (n >= 1) {
@@ -9,10 +9,10 @@ while(current < n){
 		
 		while(temp1 < current) {
 			float res = current / temp1;
-			temp1 += 1;
+			temp1 = temp1 +1;
 			print(0);
 			print(temp1);
 		}
 	}
-	current += 1;
+	current = current + 1;
 }
