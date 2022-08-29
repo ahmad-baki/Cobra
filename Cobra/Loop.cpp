@@ -11,7 +11,17 @@ Error Loop::run()
 		return { condError };
 
 	while (val) {
-		return statement->run();
+		Error stateError = statement->run();
+
+		if (stateError.m_errorName != "NULL")
+			return stateError;
+
+		auto condReturn = cond->run();
+		val = condReturn.first;
+		condError = condReturn.second;
+
+		if (condError.m_errorName != "NULL")
+			return { condError };
 	}
 	return Error();
 }
