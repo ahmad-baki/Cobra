@@ -1,4 +1,5 @@
 #pragma once
+#include <list>
 #include <string_view>
 #include <vector>
 #include <map>
@@ -35,6 +36,8 @@ private:
 	bool isInt(int val);
 
 	void skipSpace();
+
+	size_t getMaxLen(std::list<std::string> input);
 	
 	std::map<std::string, enum TokenType> operators{
 		{"+", TokenType::PLUS},
@@ -54,6 +57,8 @@ private:
 		{"<=", TokenType::SMALLEQ},
 		{">", TokenType::BIG},
 		{">=", TokenType::BIGEQ},
+		{"&&", TokenType::AND},
+		{"||", TokenType::OR},
 	};
 
 	std::map<std::string, enum TokenType> keywords{

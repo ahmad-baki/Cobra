@@ -1,7 +1,6 @@
 #include "Lexer.h"
 #include "Error.h"
 #include "InvChrError.h"
-#include <list>
 
 
 Lexer::Lexer(std::string_view text, std::string_view path, size_t line) : 
@@ -127,7 +126,7 @@ std::pair<Token, Error> Lexer::getNextOperator()
 	// 2. advances as long there are mult poss. tokens, and it completly parsed tokenstring
 	int i = 1;
 	std::string opString{  };
-	while (possNextTokens.size() > 1) {
+	while (possNextTokens.size() != 0 && i < getMaxLen(possNextTokens)) {
 		opString += currentChar;
 		advance();
 
@@ -215,4 +214,14 @@ bool Lexer::isInt(int val) {
 void Lexer::skipSpace() {
 	while (isspace(currentChar))
 		advance();
+}
+
+size_t Lexer::getMaxLen(std::list<std::string> input) {
+	size_t maxLen = 0;
+	for (std::string str : input) {
+		if (str.size() > maxLen) {
+			maxLen = str.size();
+		}
+	}
+	return maxLen;
 }

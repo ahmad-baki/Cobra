@@ -55,6 +55,10 @@ std::pair<T3, Error> BinOp<T1, T2, T3>::run()
 		return { T3(val1 > val2), Error() };
 	case TokenType::BIGEQ:
 		return { T3(val1 >= val2), Error() };
+	case TokenType::AND:
+		return { T3(val1 && val2), Error() };
+	case TokenType::OR:
+		return { T3(val1 || val2), Error() };
 	default:
 		return { {},
 			RuntimeError("Invalid Operator: ", this->line, this->startColumn, this->endColumn)

@@ -572,7 +572,8 @@ std::vector<Token> Parser::getExprTokStream() {
 	std::vector<enum TokenType> binOps{
 		TokenType::PLUS, TokenType::MINUS, TokenType::MUL,
 		TokenType::DIV, TokenType::EQEQ, TokenType::EXCLAEQ,
-		TokenType::BIG, TokenType::BIGEQ, TokenType::SMALL, TokenType::SMALLEQ,
+		TokenType::BIG, TokenType::BIGEQ, TokenType::SMALL, 
+		TokenType::SMALLEQ, TokenType::AND, TokenType::OR,
 	};
 
 	while (returnType != TokenType::SEMICOLON &&
@@ -619,6 +620,7 @@ std::vector<Token> Parser::transExprTokStream(std::vector<Token> tokenStream) {
 	std::vector<enum TokenType> opClasses[]{
 		{TokenType::MUL, TokenType::DIV},
 		{TokenType::PLUS, TokenType::MINUS},
+		{TokenType::AND, TokenType::OR},
 		{TokenType::EQEQ, TokenType::EXCLAEQ, TokenType::SMALL, TokenType::SMALLEQ, TokenType::BIG, TokenType::BIGEQ, },
 	};
 
