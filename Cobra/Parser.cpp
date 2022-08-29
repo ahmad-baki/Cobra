@@ -574,6 +574,7 @@ std::vector<Token> Parser::getExprTokStream() {
 		TokenType::DIV, TokenType::EQEQ, TokenType::EXCLAEQ,
 		TokenType::BIG, TokenType::BIGEQ, TokenType::SMALL, 
 		TokenType::SMALLEQ, TokenType::AND, TokenType::OR,
+		TokenType::MOD,
 	};
 
 	while (returnType != TokenType::SEMICOLON &&
@@ -618,10 +619,10 @@ std::vector<Token> Parser::getExprTokStream() {
 std::vector<Token> Parser::transExprTokStream(std::vector<Token> tokenStream) {
 	// order decides op-binding-strength: strong -> weak 
 	std::vector<enum TokenType> opClasses[]{
-		{TokenType::MUL, TokenType::DIV},
+		{TokenType::MUL, TokenType::DIV, TokenType::MOD},
 		{TokenType::PLUS, TokenType::MINUS},
-		{TokenType::AND, TokenType::OR},
 		{TokenType::EQEQ, TokenType::EXCLAEQ, TokenType::SMALL, TokenType::SMALLEQ, TokenType::BIG, TokenType::BIGEQ, },
+		{TokenType::AND, TokenType::OR},
 	};
 
 	for (auto opClass : opClasses)

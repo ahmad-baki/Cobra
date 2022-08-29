@@ -207,6 +207,8 @@ std::pair<float, Error> SymbTable::run(std::string name) {
 
 #pragma endregion
 
+
+
 Error SymbTable::reg(std::string name, int type)
 {
 	if (isVarReg(name))

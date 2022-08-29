@@ -1,6 +1,7 @@
 #include <string>
 #include "BinOp.h"
 #include <stdexcept>
+#include <cmath>
 #include "TokenType.CPP"
 #include "RuntimeError.h"
 
@@ -59,6 +60,13 @@ std::pair<T3, Error> BinOp<T1, T2, T3>::run()
 		return { T3(val1 && val2), Error() };
 	case TokenType::OR:
 		return { T3(val1 || val2), Error() };
+	case TokenType::MOD:
+		if (val2 == 0) {
+			return { {},
+				RuntimeError("ZeroModError: " + std::to_string(val1) + '/' + '0', this->line, this->startColumn, this->endColumn)
+			};
+		}
+		return { std::fmod(val1, val2), Error() };
 	default:
 		return { {},
 			RuntimeError("Invalid Operator: ", this->line, this->startColumn, this->endColumn)

@@ -59,6 +59,7 @@ private:
 		{">=", TokenType::BIGEQ},
 		{"&&", TokenType::AND},
 		{"||", TokenType::OR},
+		{"%", TokenType::MOD},
 	};
 
 	std::map<std::string, enum TokenType> keywords{
