@@ -2,7 +2,7 @@ int n = 10;
 int current = 2;
 if (n >= 2) {
     while (current <= n) {
-        int temp1 = 2;
+        int temp1 = 2
         int prime = 1;
         print(current);
         while (temp1 < current) {

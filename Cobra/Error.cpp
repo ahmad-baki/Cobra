@@ -33,7 +33,7 @@ std::string Error::getErrorLine() const{
 			}
 		}
 		std::string subStr = std::string(text.substr(0, endStrIndex));
-		outString = "1:\t" + subStr + '\n' + getErrorPointerStr(1);
+		outString = "1:\t" + subStr + '\n' + getErrorPointerStr(subStr);
 
 		for (size_t i = endStrIndex + 1; i < text.size(); i++) {
 			if (text[i] == '\n') {
@@ -57,7 +57,9 @@ std::string Error::getErrorLine() const{
 					startStrIndex = i + 1;
 				}
 				else if (lineBreakCount == line) {
-					outString += std::to_string(line) + ":\t" + std::string(text.substr(startStrIndex, i - startStrIndex)) + '\n' + getErrorPointerStr(line);
+					std::string errorLine = std::string(text.substr(startStrIndex, i - startStrIndex));
+					std::string errorPointer = getErrorPointerStr(errorLine);
+					outString += std::to_string(line) + ":\t" + errorLine + '\n' + errorPointer;
 					endStrIndex = i + 1;
 				}
 				else if (lineBreakCount == line + 1) {
@@ -73,12 +75,23 @@ std::string Error::getErrorLine() const{
 	return outString;
 }
 
-std::string Error::getErrorPointerStr(size_t line) const {
+std::string Error::getErrorPointerStr(std::string errorLine) const {
 	int digits = std::to_string(line).size();
 	// for lineNumber + :, for example: "3: ..."
 	std::string output(digits+1, ' ');
-	output += '\t';
+	output += std::string(getNTabs(errorLine) + 1,'\t');
 	output += std::string(columnStart-1, ' ');
 	output += std::string(columnEnd-columnStart, '^');
 	return output;
+}
+
+size_t Error::getNTabs(std::string errorLine) const
+{
+	size_t count{ 0 };
+	for (size_t i = 0; i < columnStart; i++) {
+		if (errorLine[i] == '\t') {
+			count++;
+		}
+	}
+	return count;
 }

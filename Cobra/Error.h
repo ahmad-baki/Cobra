@@ -21,6 +21,7 @@ public:
 	size_t columnEnd;
 
 	std::string getErrorLine() const;
-	std::string getErrorPointerStr(size_t line) const;
+	std::string getErrorPointerStr(std::string errorLine) const;
+	size_t getNTabs(std::string errorLine) const;
 };
 
