@@ -9,7 +9,7 @@ class SymbTable
 {
 public:
 	SymbTable* parent;
-	std::map<std::string, int> varReg;
+	std::map<std::string, int> parseReg;
 	std::map<std::string, int> integers;
 	std::map<std::string, float> floats;
 
@@ -45,6 +45,8 @@ public:
 	Error set(std::string name, float value);
 
 	Error reg(std::string name, int type);
+
+	bool isVarDecl(std::string name);
 
 	bool isVarReg(std::string name);
 

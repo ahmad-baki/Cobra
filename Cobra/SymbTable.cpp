@@ -8,14 +8,14 @@ SymbTable::SymbTable(SymbTable* parent) : parent{ parent }{
 	floats = std::map<std::string, float>();
 	// 0=int, 1=float
 	varNames = std::map<std::string, int>();
-	varReg = std::map<std::string, int>();
+	parseReg = std::map<std::string, int>();
 };
 
 #pragma region DECLARATION
 
 template<SuppType T>
 Error SymbTable::declare(std::string name, T value) {
-	if (isVarReg(name)) {
+	if (isVarDecl(name)) {
 		return RuntimeError("Invalid type");
 	}
 }
@@ -27,7 +27,7 @@ Error SymbTable::declare(std::string name, bool value) {
 
 template<>
 Error SymbTable::declare(std::string name, int value) {
-	if (isVarReg(name)){
+	if (isVarDecl(name)){
 		return RuntimeError("tried to declare " + name + " despite it already existing");
 	}
 	integers.insert(std::pair<std::string, int>(name, value));
@@ -37,7 +37,7 @@ Error SymbTable::declare(std::string name, int value) {
 
 template<>
 Error SymbTable::declare(std::string name, float value) {
-	if (isVarReg(name)) {
+	if (isVarDecl(name)) {
 		return RuntimeError("tried to declare " + name + " despite it already existing");
 	}
 	floats.insert(std::pair<std::string, float>(name, value));
@@ -52,7 +52,7 @@ Error SymbTable::declare(std::string name, float value) {
 
 template<SuppType T>
 Error SymbTable::set(std::string name, T value) {
-	if (isVarReg(name)) {
+	if (isVarDecl(name)) {
 		return RuntimeError("invalid type");
 	}
 	//throw std::invalid_argument("invalid type");
@@ -211,16 +211,24 @@ std::pair<float, Error> SymbTable::run(std::string name) {
 
 Error SymbTable::reg(std::string name, int type)
 {
-	if (isVarReg(name))
+	if (isVarDecl(name))
 		return SyntaxError("tried to register already existing variablename");
 
-	varReg.insert(std::pair<std::string, int>(name, type));
+	parseReg.insert(std::pair<std::string, int>(name, type));
 
 	return Error();
 }
 
+bool SymbTable::isVarDecl(std::string name) {
+	if (varNames.contains(name))
+		return true;
+	if (parent != nullptr)
+		return parent->isVarDecl(name);
+	return false;
+}
+
 bool SymbTable::isVarReg(std::string name) {
-	if (varReg.contains(name))
+	if (parseReg.contains(name))
 		return true;
 	if (parent != nullptr)
 		return parent->isVarReg(name);
@@ -228,8 +236,8 @@ bool SymbTable::isVarReg(std::string name) {
 }
 
 std::pair<int, Error> SymbTable::getRegVar(std::string name) {
-	auto elem = varReg.find(name);
-	if (elem != varReg.end())
+	auto elem = parseReg.find(name);
+	if (elem != parseReg.end())
 		return { elem->second, Error() };
 	if (parent != nullptr)
 		return parent->getRegVar(name);
@@ -237,6 +245,6 @@ std::pair<int, Error> SymbTable::getRegVar(std::string name) {
 }
 
 Error SymbTable::clearReg() {
-	varReg.clear();
+	parseReg.clear();
 	return Error();
 }
