@@ -10,6 +10,6 @@ private:
 	T value;
 
 public:
-	Literal(T value);
+	Literal(T value, size_t line, size_t startColumn, size_t endColumn);
 	std::pair<T, Error> run();
 };

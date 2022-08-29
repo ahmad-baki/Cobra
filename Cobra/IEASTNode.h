@@ -7,6 +7,8 @@
 #include "Error.h"
 //#include "Parser.h"
 
+// forward decl.
+class Parser;
 
 class IEASTNode
 {
@@ -16,10 +18,11 @@ public:
 	Token token;
 	IEASTNode* leftNode{nullptr};
 	IEASTNode* rightNode{nullptr};
-	//Parser* parser{nullptr};
+	std::string_view path;
+	std::string_view text;
 
 	
-	IEASTNode(SymbTable* table);// , Parser* parser)
+	IEASTNode(SymbTable* table, std::string_view path, std::string_view text);
 	~IEASTNode();
 
 	int getReturnType();

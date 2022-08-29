@@ -1,5 +1,7 @@
 #include "SymbTable.h"
 #include <stdexcept>
+#include "RuntimeError.h"
+#include "SyntaxError.h"
 
 SymbTable::SymbTable(SymbTable* parent) : parent{ parent }{
 	integers = std::map<std::string, int>();
@@ -13,7 +15,9 @@ SymbTable::SymbTable(SymbTable* parent) : parent{ parent }{
 
 template<SuppType T>
 Error SymbTable::declare(std::string name, T value) {
-	throw std::exception("invalid type");
+	if (isVarReg(name)) {
+		return RuntimeError("Invalid type");
+	}
 }
 
 template<>
@@ -23,9 +27,9 @@ Error SymbTable::declare(std::string name, bool value) {
 
 template<>
 Error SymbTable::declare(std::string name, int value) {
-	auto elem = varNames.find(name);
-	if (elem != varNames.end())
-		throw std::invalid_argument("tried to declare" + name + "despite it already existing");
+	if (isVarReg(name)){
+		return RuntimeError("tried to declare " + name + " despite it already existing");
+	}
 	integers.insert(std::pair<std::string, int>(name, value));
 	varNames.insert(std::pair<std::string, int>(name, 0));
 	return Error();
@@ -33,9 +37,9 @@ Error SymbTable::declare(std::string name, int value) {
 
 template<>
 Error SymbTable::declare(std::string name, float value) {
-	auto elem = floats.find(name);
-	if (elem != floats.end())
-		throw std::invalid_argument("tried to declare" + name + "despite it already existing");
+	if (isVarReg(name)) {
+		return RuntimeError("tried to declare " + name + " despite it already existing");
+	}
 	floats.insert(std::pair<std::string, float>(name, value));
 	varNames.insert(std::pair<std::string, int>(name, 1));
 	return Error();
@@ -48,7 +52,9 @@ Error SymbTable::declare(std::string name, float value) {
 
 template<SuppType T>
 Error SymbTable::set(std::string name, T value) {
-	throw std::exception("invalid type");
+	if (isVarReg(name)) {
+		return RuntimeError("invalid type");
+	}
 	//throw std::invalid_argument("invalid type");
 	//auto elem = varNames.find(name);
 	//if (elem == varNames.end()) {
@@ -79,10 +85,12 @@ Error SymbTable::set(std::string name, bool value) {
 template<>
 Error SymbTable::set(std::string name, int value) {
 	auto elem = integers.find(name);
-	if (elem == integers.end()){
-		// then checks floats
+	if (elem == integers.end()){	
+		if (parent == nullptr) {
+			return RuntimeError("tried to set " + name + " despite it not existing");
+		}
 
-		Error intError = parent->set(name, value);
+		Error intError = parent->set<int>(name, value);
 		if (intError.m_errorName == "NULL")
 			return Error();
 
@@ -101,7 +109,9 @@ template<>
 Error SymbTable::set(std::string name, float value) {
 	auto elem = floats.find(name);
 	if (elem == floats.end()) {
-		// then checks floats
+		if (parent == nullptr) {
+			return RuntimeError("tried to set " + name + " despite it not existing");
+		}
 
 		Error floatError = parent->set<float>(name, value);
 		if (floatError.m_errorName == "NULL")
@@ -124,7 +134,8 @@ Error SymbTable::set(std::string name, float value) {
 
 template<SuppType T>
 std::pair<T, Error> SymbTable::run(std::string name) {
-	throw std::exception("invalid type");
+	return RuntimeError("invalid type");
+	
 	//auto elem = varNames.find(name);
 	//if (elem == varNames.end()) {
 	//	if (parent == nullptr)
@@ -151,7 +162,9 @@ template<>
 std::pair<int, Error> SymbTable::run(std::string name) {
 	auto elem = integers.find(name);
 	if (elem == integers.end()) {
-		// then checks floats
+		if (parent == nullptr) {
+			return { 0, RuntimeError("tried to get undeclared variable " + name) };
+		}
 
 		auto [intVal, intError] = parent->run<int>(name);
 
@@ -160,10 +173,10 @@ std::pair<int, Error> SymbTable::run(std::string name) {
 
 		auto [floatVal, floatError] = parent->run<float>(name);
 
-		if (floatError.m_errorName != "NULL")
-			return { {}, floatError };
+		if (floatError.m_errorName == "NULL")
+			return { floatVal, Error() };
 
-		return { floatVal, Error() };
+		return { {}, floatError };
 	}
 	return { elem->second, Error() };
 }
@@ -172,7 +185,10 @@ template<>
 std::pair<float, Error> SymbTable::run(std::string name) {
 	auto elem = floats.find(name);
 	if (elem == floats.end()) {
-		// then checks floats
+
+		if (parent == nullptr) {
+			return { 0, RuntimeError("tried to get undeclared variable " + name) };
+		}
 
 		auto [floatVal, floatError] = parent->run<float>(name);
 
@@ -181,10 +197,10 @@ std::pair<float, Error> SymbTable::run(std::string name) {
 
 		auto [intVal, intError] = parent->run<int>(name);
 
-		if (intError.m_errorName != "NULL")
-			return { {}, intError };
+		if (intError.m_errorName == "NULL")
+			return { intVal, Error() };
 
-		return { intVal, Error() };
+		return { {}, intError };
 	}
 	return { elem->second, Error() };
 }
@@ -194,7 +210,7 @@ std::pair<float, Error> SymbTable::run(std::string name) {
 Error SymbTable::reg(std::string name, int type)
 {
 	if (isVarReg(name))
-		throw std::invalid_argument("tried to register already existing variablename");
+		return SyntaxError("tried to register already existing variablename");
 
 	varReg.insert(std::pair<std::string, int>(name, type));
 
@@ -215,7 +231,7 @@ std::pair<int, Error> SymbTable::getRegVar(std::string name) {
 		return { elem->second, Error() };
 	if (parent != nullptr)
 		return parent->getRegVar(name);
-	throw std::invalid_argument("tried to get not existing variable " + name);
+	return { 0, SyntaxError("tried to get not existing variable " + name) };
 }
 
 Error SymbTable::clearReg() {

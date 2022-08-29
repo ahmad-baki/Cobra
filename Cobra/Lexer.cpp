@@ -4,8 +4,8 @@
 #include <list>
 
 
-Lexer::Lexer(std::string_view text, std::string_view path) : 
-	text{ text }, path{ path }, pos{ 0 }, line{1}, column{0}, currentChar{' '}
+Lexer::Lexer(std::string_view text, std::string_view path, size_t line) : 
+	text{ text }, path{ path }, pos{ 0 }, line{line}, column{0}, currentChar{' '}
 {	
 	if (text.size() > 0)
 		currentChar = text[0];
@@ -94,7 +94,7 @@ std::pair<Token, Error> Lexer::getNextNumber() {
 		if (currentChar == '.') {
 			if (containsPeriod) {
 				return { Token(), 
-					InvChrError("More than one '.' in decimal", path,  text, line, column, column+1)
+					InvChrError("More than one '.' in decimal", line, column, column+1, path, text)
 				};
 			}
 			containsPeriod = true;
@@ -139,7 +139,7 @@ std::pair<Token, Error> Lexer::getNextOperator()
 				return {Token(elem->second, line, startColumn, endColumn), Error()};
 			}
 			return { Token(), 
-				InvChrError("Received Invalied Token", path, text, line, column, column+1)
+				InvChrError("Received Invalied Token", line, column, column+1, path, text)
 			};
 		}
 
@@ -166,7 +166,7 @@ std::pair<Token, Error> Lexer::getNextOperator()
 			}
 		}
 		return { Token(), 
-			InvChrError("Received Invalied Token: " + currentChar, path, text, line, column, column+1)
+			InvChrError("Received Invalied Token: " + currentChar, line, column, column+1, path, text)
 		};
 	}
 
@@ -190,7 +190,7 @@ std::pair<Token, Error> Lexer::getNextWord() {
 	if (elem == keywords.end()) {
 		if (tokenString.size() == 0) {
 			return { Token(),
-			InvChrError("Received Invalied Token", path, text, line, column, column + 1)
+				InvChrError("Received Invalied Token", line, column, column + 1, path, text)
 			};
 		}
 

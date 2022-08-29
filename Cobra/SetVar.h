@@ -16,5 +16,5 @@ private:
 public:
 
 	Error run();
-	SetVar(std::string name, Expression<T>* value, SymbTable* table);
+	SetVar(std::string name, Expression<T>* value, SymbTable* table, size_t line, size_t startColumn, size_t endColumn);
 };

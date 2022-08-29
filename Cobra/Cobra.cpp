@@ -57,6 +57,7 @@ double execFromFile(std::string path) {
 
 void execFromCommandLine() {
 	BlockNode blockNode = BlockNode();
+	size_t line = 1;
 	while (true) {
 		std::cout << "> ";
 		std::string input = "";
@@ -70,7 +71,7 @@ void execFromCommandLine() {
 			continue;
 		}
 
-		Lexer lexer = Lexer(input, "<stdin>");
+		Lexer lexer = Lexer(input, "<stdin>", line);
 		auto [tokenString, lexError] = lexer.lex();
 		if (lexError.m_errorName != "NULL"){
 			std::cout << lexError << '\n' << std::endl;
@@ -87,9 +88,12 @@ void execFromCommandLine() {
 
 		Error runtimeError = blockNode.contin();
 		if (runtimeError.m_errorName != "NULL") {
+			runtimeError.path = "<stdin>";
+			runtimeError.text = input;
 			std::cout << runtimeError << '\n' << std::endl;
 			return;
 		}
+		line++;
 	}
 }
 

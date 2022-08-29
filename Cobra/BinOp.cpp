@@ -1,3 +1,4 @@
+#include <string>
 #include "BinOp.h"
 #include <stdexcept>
 #include "TokenType.CPP"
@@ -5,8 +6,13 @@
 
 
 template<SuppType T1, SuppType T2, SuppType T3>
-inline BinOp<T1, T2, T3>::BinOp(Expression<T1>* expr1, Expression<T2>* expr2, enum TokenType op):
-	expr1{ expr1 }, expr2{ expr2 }, op{op} {}
+inline BinOp<T1, T2, T3>::BinOp(Expression<T1>* expr1, Expression<T2>* expr2, enum TokenType op, size_t line, size_t startColumn, size_t endColumn):
+	expr1{ expr1 }, expr2{ expr2 }, op{op}
+{
+	this->line = line;
+	this->startColumn = startColumn;
+	this->endColumn = endColumn;
+}
 
 template<SuppType T1, SuppType T2, SuppType T3>
 std::pair<T3, Error> BinOp<T1, T2, T3>::run()
@@ -29,6 +35,11 @@ std::pair<T3, Error> BinOp<T1, T2, T3>::run()
 	case TokenType::MINUS:
 		return { T3(val1 - val2), Error() };
 	case TokenType::DIV:
+		if (val2 == 0) {
+			return { {},
+				RuntimeError("Division through 0: " + std::to_string(val1) + '/' + '0', this->line, this->startColumn, this->endColumn)
+			};
+		}
 		return { T3(val1 / val2), Error() };
 	case TokenType::MUL:
 		return { T3(val1 * val2), Error() };
@@ -45,8 +56,9 @@ std::pair<T3, Error> BinOp<T1, T2, T3>::run()
 	case TokenType::BIGEQ:
 		return { T3(val1 >= val2), Error() };
 	default:
-		//return { {}, RuntimeError("invalid operator") };
-		throw std::invalid_argument("invalid operator");
+		return { {},
+			RuntimeError("Invalid Operator: ", this->line, this->startColumn, this->endColumn)
+		};
 	}
 }
 

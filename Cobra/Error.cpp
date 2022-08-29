@@ -15,7 +15,7 @@ Error::Error()
 	: m_errorName{"NULL"}, desc{""}, text{""}, line{0}, columnStart{0}, columnEnd{0}
 {}
 
-Error::Error(std::string_view errorName, std::string_view desc, std::string_view path, std::string_view text, size_t line, size_t columnStart, size_t columnEnd) :
+Error::Error(std::string_view errorName, std::string_view text, size_t line, size_t columnStart, size_t columnEnd, std::string_view desc, std::string_view path) :
 	m_errorName{ errorName }, desc{ desc }, path{ path }, text{text}, line{line}, columnStart{columnStart}, columnEnd{columnEnd}
 {
 }
@@ -32,7 +32,8 @@ std::string Error::getErrorLine() const{
 				break;
 			}
 		}
-		outString = "1:\t" + std::string(text.substr(0, endStrIndex + 1)) + '\n' + getErrorPointerStr(1);
+		std::string subStr = std::string(text.substr(0, endStrIndex));
+		outString = "1:\t" + subStr + '\n' + getErrorPointerStr(1);
 
 		for (size_t i = endStrIndex + 1; i < text.size(); i++) {
 			if (text[i] == '\n') {

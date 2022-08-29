@@ -78,9 +78,6 @@
     <ClCompile Include="SetVar.cpp">
       <Filter>Source Files\Parser</Filter>
     </ClCompile>
-    <ClCompile Include="Statement.cpp">
-      <Filter>Source Files\Parser</Filter>
-    </ClCompile>
     <ClCompile Include="SymbTable.cpp">
       <Filter>Source Files\Parser</Filter>
     </ClCompile>
@@ -175,6 +172,9 @@
     </ClInclude>
     <ClInclude Include="SyntaxError.h">
       <Filter>Header Files\Error</Filter>
+    </ClInclude>
+    <ClInclude Include="Node.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

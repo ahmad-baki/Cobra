@@ -15,7 +15,7 @@ struct LexReturn {
 class Lexer
 {
 public:
-	Lexer(std::string_view text, std::string_view path);
+	Lexer(std::string_view text, std::string_view path, size_t line = 1);
 	LexReturn lex();
 
 private:

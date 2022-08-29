@@ -7,9 +7,6 @@
 
 class SymbTable
 {
-private:
-
-
 public:
 	SymbTable* parent;
 	std::map<std::string, int> varReg;

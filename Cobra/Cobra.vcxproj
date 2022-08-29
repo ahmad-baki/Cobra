@@ -38,7 +38,6 @@
     <ClCompile Include="Projekt2.cpp" />
     <ClCompile Include="RuntimeError.cpp" />
     <ClCompile Include="SetVar.cpp" />
-    <ClCompile Include="Statement.cpp" />
     <ClCompile Include="SymbTable.cpp" />
     <ClCompile Include="SyntaxError.cpp" />
     <ClCompile Include="Token.cpp" />
@@ -58,6 +57,7 @@
     <ClInclude Include="Lexer.h" />
     <ClInclude Include="Literal.h" />
     <ClInclude Include="Loop.h" />
+    <ClInclude Include="Node.h" />
     <ClInclude Include="Parser.h" />
     <ClInclude Include="PrintState.h" />
     <ClInclude Include="RuntimeError.h" />

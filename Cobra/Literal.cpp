@@ -1,9 +1,12 @@
 #include "Literal.h"
 
 template<SuppType T>
-inline Literal<T>::Literal(T value) 
+inline Literal<T>::Literal(T value, size_t line, size_t startColumn, size_t endColumn)
 	:value{value}
 {
+	this->line = line;
+	this->startColumn = startColumn;
+	this->endColumn = endColumn;
 }
 
 
