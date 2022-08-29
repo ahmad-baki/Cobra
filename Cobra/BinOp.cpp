@@ -37,7 +37,7 @@ std::pair<T3, Error> BinOp<T1, T2, T3>::run()
 	case TokenType::DIV:
 		if (val2 == 0) {
 			return { {},
-				RuntimeError("Division through 0: " + std::to_string(val1) + '/' + '0', this->line, this->startColumn, this->endColumn)
+				RuntimeError("ZeroDivisionError: " + std::to_string(val1) + '/' + '0', this->line, this->startColumn, this->endColumn)
 			};
 		}
 		return { T3(val1 / val2), Error() };
