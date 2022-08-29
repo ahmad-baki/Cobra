@@ -244,7 +244,13 @@ std::pair<int, Error> SymbTable::getRegVar(std::string name) {
 	return { 0, SyntaxError("tried to get not existing variable " + name) };
 }
 
-Error SymbTable::clearReg() {
+Error SymbTable::clearParseReg() {
 	parseReg.clear();
 	return Error();
+}
+
+void SymbTable::clearVarNames() {
+	varNames.clear();
+	integers.clear();
+	floats.clear();
 }

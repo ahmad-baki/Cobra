@@ -1,0 +1,20 @@
+int n = 10;
+int current = 2;
+if (n >= 2) {
+    while (current <= n) {
+        int temp1 = 2;
+        int prime = 1;
+        print(current);
+        while (temp1 < current) {
+            if (((current % temp1) + 1) % 2) {
+                prime = 0;
+                temp1 = current;
+            }
+            temp1 = temp1 + 1;
+        }
+        if (prime) {
+            print(current);
+        }
+        current = current + 1;
+    }
+}

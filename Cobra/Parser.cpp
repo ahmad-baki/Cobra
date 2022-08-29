@@ -17,7 +17,7 @@ ParserReturn Parser::parse(std::vector<Token> tokens)
 {
 	BlockNode* block = new BlockNode();
 	Error error = parse(tokens, block);
-	block->table->clearReg();
+	block->table->clearParseReg();
 	return { block, error };
 }
 
@@ -39,7 +39,7 @@ Error Parser::parse(std::vector<Token> tokens, BlockNode* block)
 	for (Statement* statement : statements) {
 		block->add(statement);
 	}
-
+	block->table->clearParseReg();
 	return Error();
 }
 
@@ -90,7 +90,6 @@ ParserReturn Parser::getStatement(SymbTable* table)
 			return { nullptr, error };
 		}
 	}
-
 	return {nullptr, SyntaxError("input doesnt fit any statement type", currentToken.line,
 		currentToken.startColumn, currentToken.endColumn, path, text) };
 }
@@ -115,7 +114,7 @@ ParserReturn Parser::getBlockState(SymbTable* table)
 	}
 
 	advance();
-	blockNode->table->clearReg();
+	blockNode->table->clearParseReg();
 	return { blockNode, Error() };
 }
 

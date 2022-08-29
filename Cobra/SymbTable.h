@@ -52,6 +52,8 @@ public:
 
 	std::pair<int, Error> getRegVar(std::string name);
 
-	Error clearReg();
+	Error clearParseReg();
+
+	void clearVarNames();
 };
 

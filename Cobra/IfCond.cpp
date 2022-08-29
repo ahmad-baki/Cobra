@@ -28,8 +28,10 @@ Error IfCond::run()
 				return Error();
 			}
 		}
-		if(elseState != nullptr)
+		if (elseState != nullptr) {
 			return elseState->run();
+		}
+		return Error();
 	}
 }
 
