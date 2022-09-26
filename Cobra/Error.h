@@ -7,10 +7,10 @@
 class Error
 {
 public:
-	friend std::ostream& operator<<(std::ostream& output, const Error& e);
 	Error();
 	Error(std::string_view errorName, std::string_view desc, size_t line = 0, size_t columnStart = 0, size_t columnEnd = 0, std::string_view path = "", std::string_view text = "");
 
+	friend std::ostream& operator<<(std::ostream& output, const Error& e);
 	std::string m_errorName;
 	std::string desc;
 	std::string_view path;

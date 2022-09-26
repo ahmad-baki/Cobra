@@ -4,20 +4,33 @@
 #include <functional>
 #include "SuppType.h"
 #include "Error.h"
+#include "Value.h"
 
 class SymbTable
 {
 public:
 	SymbTable* parent;
-	std::map<std::string, int> parseReg;
-	std::map<std::string, int> integers;
-	std::map<std::string, float> floats;
-
-	std::map<std::string, int> varNames;
+	std::map<std::string, Value*> variables;
 
 	SymbTable(SymbTable* parent = nullptr);
+	~SymbTable();
 
-	template<SuppType T>
+	Error declare(std::string name, Value* val, bool isConst = false, bool isStaticType = false);
+	Error declare(std::string name, int dataType, void* data = nullptr, bool isConst = false, bool isStaticType = false);
+	std::pair<Value*, Error> run(std::string name);
+	Error set(std::string name, Value* val);
+
+	bool isVarDecl(std::string name);
+
+
+#pragma region OLD-CODE
+	//std::map<std::string, int> parseReg;
+	//std::map<std::string, int> integers;
+	//std::map<std::string, float> floats;
+
+	//std::map<std::string, int> varNames;
+
+	/*template<SuppType T>
 	Error declare(std::string name, T value);
 
 	template<>
@@ -44,16 +57,15 @@ public:
 	template<>
 	Error set(std::string name, float value);
 
-	Error reg(std::string name, int type);
+	Error reg(std::string name, int type);*/
 
-	bool isVarDecl(std::string name);
+	//bool isVarReg(std::string name);
 
-	bool isVarReg(std::string name);
+	//std::pair<int, Error> getRegVar(std::string name);
 
-	std::pair<int, Error> getRegVar(std::string name);
+	//Error clearParseReg();
 
-	Error clearParseReg();
-
-	void clearVarNames();
+	//void clearVarNames();
+#pragma endregion
 };
 

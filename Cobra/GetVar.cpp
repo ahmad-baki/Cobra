@@ -2,8 +2,7 @@
 #include <string>
 #include "RuntimeError.h"
 
-template<SuppType T>
-GetVar<T>::GetVar(std::string varName, SymbTable* table, size_t line, size_t startColumn, size_t endColumn)
+GetVar::GetVar(std::string varName, SymbTable* table, size_t line, size_t startColumn, size_t endColumn)
 	: varName{varName}, table{table} 
 {
 	this->line = line;
@@ -12,14 +11,9 @@ GetVar<T>::GetVar(std::string varName, SymbTable* table, size_t line, size_t sta
 }
 
 
-template<SuppType T>
-std::pair<T, Error> GetVar<T>::run() {
-	auto [val, error] = table->run<T>(varName);
+std::pair<Value*, Error> GetVar::run() {
+	auto [val, error] = table->run(varName);
 	if (error.m_errorName != "NULL")
 		return { {}, RuntimeError(error.desc, this->line, this->startColumn, this->endColumn) };
 	return { val, Error() };
 }
-
-template class GetVar<bool>;
-template class GetVar<int>;
-template class GetVar<float>;

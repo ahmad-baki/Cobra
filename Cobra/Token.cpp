@@ -3,12 +3,12 @@
 #include "TokenType.cpp"
 
 Token::Token()
-	: type{ TokenType::NONE }, value{ "" }, line{ 0 }, startColumn{ 0 }, endColumn{ 0 }
+	: dataType{ TokenType::NONE }, value{ "" }, line{ 0 }, startColumn{ 0 }, endColumn{ 0 }
 {
 }
 
 Token::Token(enum TokenType returnType, size_t line, size_t startColumn, size_t endColumn, std::string value)
-	: type{ returnType }, value{ value }, line{ line }, startColumn{ startColumn }, endColumn{ endColumn }
+	: dataType{ returnType }, value{ value }, line{ line }, startColumn{ startColumn }, endColumn{ endColumn }
 {
 }
 
@@ -20,7 +20,7 @@ Token::Token(enum TokenType returnType, size_t line, size_t startColumn, size_t 
 std::ostream& operator<<(std::ostream& output, const Token& e)
 {
 	const std::string nameTT[] = { "NONE", "PLUS", "MINUS", "MUL", "DIV", "LBRACKET", "RBRACKET", "LCURLBRACKET", "RCURLBRACKET", "EQ", "EQEQ", "INTLIT", "DECLIT", "EXCLA", "IDENTIFIER"};
-	std::string typeName = nameTT[e.type];
+	std::string typeName = nameTT[e.dataType];
 	output << "Type: " << typeName << ", Value: " << e.value << std::endl;
 	return output;
 }

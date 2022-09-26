@@ -8,13 +8,13 @@
 class IfCond : public Statement
 {
 private:
-	Expression<bool>* cond;
+	Expression* cond;
 	Statement* statement;
 	std::vector<ElseCond*> ifElseStates;
 	Statement* elseState;
 
 public:
 	//IfCond(Expression<bool>& cond, BlockNode& block, std::vector<ElseCond> condElseBlocks = std::vector<ElseCond>());
-	IfCond(Expression<bool>* cond, Statement* statement, std::vector<ElseCond*> ifElseStates, Statement* elseState);
+	IfCond(Expression* cond, Statement* statement, std::vector<ElseCond*> ifElseStates, Statement* elseState);
 	Error run();
 };

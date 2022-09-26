@@ -1,23 +1,21 @@
 #include "PrintState.h"
 #include <iostream>
 
-template<SuppType T>
-inline PrintState<T>::PrintState(Expression<T>* param)
+PrintState::PrintState(Expression* param)
 	: param{param}
 {
 }
 
-template<SuppType T>
-Error PrintState<T>::run() {
+Error PrintState::run() {
 	auto [val, error] = param->run();
 
 	if (error.m_errorName != "NULL")
 		return error;
 
-	std::cout << val << std::endl;
+	std::cout << *val << std::endl;
 	return Error();
 }
-
-template class PrintState<bool>;
-template class PrintState<int>;
-template class PrintState<float>;
+//
+//template class PrintState<bool>;
+//template class PrintState<int>;
+//template class PrintState<float>;

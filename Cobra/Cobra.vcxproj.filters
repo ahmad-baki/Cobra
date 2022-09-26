@@ -102,6 +102,9 @@
     <ClCompile Include="SyntaxError.cpp">
       <Filter>Source Files\Error</Filter>
     </ClCompile>
+    <ClCompile Include="Value.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BinOp.h">
@@ -174,6 +177,9 @@
       <Filter>Header Files\Error</Filter>
     </ClInclude>
     <ClInclude Include="Node.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Value.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

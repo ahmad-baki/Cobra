@@ -2,8 +2,8 @@
 #include "RuntimeError.h"
 
 
-template<SuppType T>
-SetVar<T>::SetVar(std::string name, Expression<T>* value, SymbTable* table, size_t line, size_t startColumn, size_t endColumn)
+
+SetVar::SetVar(std::string name, Expression* value, SymbTable* table, size_t line, size_t startColumn, size_t endColumn)
 	: name{ name }, value{ value }
 {
 	this->table = table;
@@ -13,8 +13,7 @@ SetVar<T>::SetVar(std::string name, Expression<T>* value, SymbTable* table, size
 }
 
 
-template<SuppType T>
-Error SetVar<T>::run()
+Error SetVar::run()
 {
 	auto [val, getError] = value->run();
 
@@ -26,6 +25,3 @@ Error SetVar<T>::run()
 		return RuntimeError(setError.desc, line, startColumn, endColumn);
 	return Error();
 }
-
-template class SetVar<int>;
-template class SetVar<float>;

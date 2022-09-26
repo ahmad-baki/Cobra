@@ -17,7 +17,6 @@ ParserReturn Parser::parse(std::vector<Token> tokens)
 {
 	BlockNode* block = new BlockNode();
 	Error error = parse(tokens, block);
-	block->table->clearParseReg();
 	return { block, error };
 }
 
@@ -39,7 +38,6 @@ Error Parser::parse(std::vector<Token> tokens, BlockNode* block)
 	for (Statement* statement : statements) {
 		block->add(statement);
 	}
-	block->table->clearParseReg();
 	return Error();
 }
 
@@ -64,7 +62,7 @@ void Parser::revert(size_t pos) {
 
 ParserReturn Parser::getStatement(SymbTable* table)
 {
-	if (currentToken.type == TokenType::NONE) {
+	if (currentToken.dataType == TokenType::NONE) {
 		return { nullptr,
 			SyntaxError("Reached End of File while Parcing", currentToken.line,
 			currentToken.startColumn, currentToken.endColumn, path, text)
@@ -97,13 +95,13 @@ ParserReturn Parser::getStatement(SymbTable* table)
 // Code-Block
 ParserReturn Parser::getBlockState(SymbTable* table)
 {
-	if (currentToken.type != TokenType::LCURLBRACKET)
+	if (currentToken.dataType != TokenType::LCURLBRACKET)
 		return { nullptr, Error() };
 
 	size_t startPos = currentPos;
 	advance();
 	auto blockNode = new BlockNode(std::vector<Statement*>{}, table);
-	while (currentToken.type != TokenType::RCURLBRACKET) {
+	while (currentToken.dataType != TokenType::RCURLBRACKET) {
 		auto [statement, error] = getStatement(blockNode->table);
 
 		if (error.m_errorName != "NULL") {
@@ -114,31 +112,30 @@ ParserReturn Parser::getBlockState(SymbTable* table)
 	}
 
 	advance();
-	blockNode->table->clearParseReg();
 	return { blockNode, Error() };
 }
 
 // If-Statement
 ParserReturn Parser::getIfState(SymbTable* table)
 {
-	if (currentToken.type != TokenType::IF)
+	if (currentToken.dataType != TokenType::IF)
 		return { nullptr, Error() };
 	size_t startPos = currentPos;
 	advance();
 
-	if (currentToken.type != TokenType::LBRACKET) {
+	if (currentToken.dataType != TokenType::LBRACKET) {
 		revert(startPos);
 		return { nullptr, Error() };
 	}
 	advance();
 
-	auto [cond, exprError] = getExpr<bool>(table);
+	auto [cond, exprError] = getExpr(table);
 	if (exprError.m_errorName != "NULL") {
 		//revert(startPos);
 		return { nullptr, exprError };
 	}
 
-	if (currentToken.type != TokenType::RBRACKET)
+	if (currentToken.dataType != TokenType::RBRACKET)
 		return { nullptr,
 			SyntaxError("Presumably Missing ')'-Bracket", currentToken.line, 
 				currentToken.startColumn, currentToken.endColumn, path, text)
@@ -166,13 +163,13 @@ ParserReturn Parser::getIfState(SymbTable* table)
 // While-Loop
 ParserReturn Parser::getWhileState(SymbTable* table)
 {
-	if (currentToken.type != TokenType::WHILE)
+	if (currentToken.dataType != TokenType::WHILE)
 		return { nullptr, Error() };
 
 	size_t startPos = currentPos;
 	advance();
 
-	if (currentToken.type != TokenType::LBRACKET) {
+	if (currentToken.dataType != TokenType::LBRACKET) {
 		return { nullptr,
 			SyntaxError("Presumably Missing '('-Bracket", currentToken.line, 
 				currentToken.startColumn, currentToken.endColumn, path, text)
@@ -180,12 +177,12 @@ ParserReturn Parser::getWhileState(SymbTable* table)
 	}
 	advance();
 
-	auto [cond, exprError] = getExpr<bool>(table);
+	auto [cond, exprError] = getExpr(table);
 	if (exprError.m_errorName != "NULL") {
 		return { nullptr, exprError };
 	}
 
-	if (currentToken.type != TokenType::RBRACKET) {
+	if (currentToken.dataType != TokenType::RBRACKET) {
 		return { nullptr,
 			SyntaxError("Presumably Missing ')'-Bracket", currentToken.line, 
 				currentToken.startColumn, currentToken.endColumn, path, text)
@@ -206,15 +203,30 @@ ParserReturn Parser::getWhileState(SymbTable* table)
 // Decl (initialization)
 ParserReturn Parser::getDeclState(SymbTable* table)
 {
-	if (currentToken.type != TokenType::INTWORD && currentToken.type != TokenType::FLOATWORD) {
+	bool constVar{false};
+	size_t startPos = currentPos;
+
+	if (currentToken.dataType == TokenType::CONSTWORD) {
+		constVar = true;
+		advance();
+	}
+	if (currentToken.dataType != TokenType::INTWORD && 
+		currentToken.dataType != TokenType::FLOATWORD &&
+		currentToken.dataType != TokenType::VARWORD)
+	{
+		if (constVar) {
+			revert(startPos);
+			return { nullptr,
+				SyntaxError("No type-specifier found", currentToken.line,
+			currentToken.startColumn, currentToken.endColumn, path, text)
+			};
+		}
 		return { nullptr, Error() };
 	}
-	auto returnType = currentToken.type;
-
-	size_t startPos = currentPos;
+	auto returnType = currentToken.dataType;
 	advance();
 
-	if (currentToken.type != TokenType::IDENTIFIER) {
+	if (currentToken.dataType != TokenType::IDENTIFIER) {
 		return { nullptr,
 			SyntaxError("No variablename found", currentToken.line, 
 				currentToken.startColumn, currentToken.endColumn, path, text)
@@ -222,52 +234,58 @@ ParserReturn Parser::getDeclState(SymbTable* table)
 	}
 	std::string varName = currentToken.value;
 
-	Statement* decl;
-	if (returnType == TokenType::INTWORD) {
-		decl = new DeclVar<int>(varName, table, currentToken.line, tokenStream[startPos].startColumn, currentToken.endColumn);
-		advance();
-	}
-	else if (returnType == TokenType::FLOATWORD) {
-		decl = new DeclVar<float>(varName, table, currentToken.line, tokenStream[startPos].startColumn, currentToken.endColumn);
-		advance();
-	}
-	else {
+	int dataType;
+	switch (returnType)
+	{
+	case INTWORD:
+		dataType = 0;
+		break;
+	case FLOATWORD:
+		dataType = 1;
+		break;
+	case VARWORD:
+		dataType = -1;
+		break;
+	default:
+		revert(startPos);
 		return { nullptr,
-			SyntaxError("Invalid Datatype", currentToken.line, 
+			SyntaxError("Invalid Datatype", currentToken.line,
 				currentToken.startColumn, currentToken.endColumn, path, text)
 		};
 	}
 
+	advance();
+	Expression* expr{ nullptr };
 	// only decl
-	if (currentToken.type == TokenType::SEMICOLON) {
+	if (currentToken.dataType == TokenType::SEMICOLON) {
 		advance();
-		return { decl, Error() };
 	}
 	// decl + init
-	if (currentToken.type == TokenType::EQ) {
-		// not very clean, but does it job
-		revert(currentPos - 1);
+	else if (currentToken.dataType == TokenType::EQ) {
+		advance();
+		auto exprReturn = getExpr(table);
 
-		auto [setVar, error] = getSetState(table);
-
-		if (error.m_errorName != "NULL") {
-			return { nullptr, error };
+		if (exprReturn.second.m_errorName != "NULL") {
+			revert(startPos);
+			return { nullptr, exprReturn.second };
 		}
-
-		return { new BlockNode(std::vector<Statement*>{
-			decl, setVar
-		}, nullptr), Error() };
+		expr = exprReturn.first;
 	}
-	return { nullptr,
-		SyntaxError("Invalid Token", currentToken.line, 
-			currentToken.startColumn, currentToken.endColumn, path, text)
-	};
+	else {
+		revert(startPos);
+		return { nullptr,
+			SyntaxError("Invalid Token", currentToken.line,
+				currentToken.startColumn, currentToken.endColumn, path, text)
+		};
+	}
+	Statement* decl = new DeclVar(varName, table, currentToken.line, tokenStream[startPos].startColumn, currentToken.endColumn, constVar, true, dataType, expr);
+	return { decl, Error() };
 }
 
 // setVar
 ParserReturn Parser::getSetState(SymbTable* table)
 {
-	if (currentToken.type != TokenType::IDENTIFIER) {
+	if (currentToken.dataType != TokenType::IDENTIFIER) {
 		return { nullptr, Error() };
 	}
 	std::string varName = currentToken.value;
@@ -275,63 +293,35 @@ ParserReturn Parser::getSetState(SymbTable* table)
 	size_t startPos = currentPos;
 	advance();
 
-	if (currentToken.type != TokenType::EQ) {
+	if (currentToken.dataType != TokenType::EQ) {
 		revert(startPos);
 		return { nullptr, Error() };
 	}
 	advance();
 	// get expr
-	auto [type, error] = table->getRegVar(varName);
+	auto [expr, error] = getExpr(table);
+
 	if (error.m_errorName != "NULL")
-		return { 0, SyntaxError(error.desc, currentToken.line, 
-			tokenStream[startPos].startColumn, currentToken.endColumn, path, text) };
+		return { nullptr, error };
 
-	if (type == 0){
-		auto [expr, error] = getExpr<int>(table);
+	SetVar* setVar = new SetVar(varName, expr, table, currentToken.line, 
+		tokenStream[startPos].startColumn, currentToken.endColumn);
 
-		if (error.m_errorName != "NULL")
-			return { nullptr, error };
-
-		SetVar<int>* setVar = new SetVar<int>(varName, expr, table, currentToken.line, 
-			tokenStream[startPos].startColumn, currentToken.endColumn);
-
-		if (currentToken.type != TokenType::SEMICOLON) {
-			delete setVar;
-			return { nullptr,
-				SyntaxError("Presumably Missing ';'", currentToken.line, 
-					currentToken.startColumn, currentToken.endColumn, path, text)
-			};
-		}
-		advance();
-		return { setVar, Error()};
+	if (currentToken.dataType != TokenType::SEMICOLON) {
+		delete setVar;
+		return { nullptr,
+			SyntaxError("Presumably Missing ';'", currentToken.line, 
+				currentToken.startColumn, currentToken.endColumn, path, text)
+		};
 	}
-	if (type == 1) {
-		auto [expr, error] = getExpr<float>(table);
-
-		if (error.m_errorName != "NULL") 
-			return { nullptr, error };
-
-		SetVar<float>* setVar = new SetVar<float>(varName, expr, table, currentToken.line, 
-			tokenStream[startPos].startColumn, currentToken.endColumn);
-
-		if (currentToken.type != TokenType::SEMICOLON) {
-			delete setVar;
-			return { nullptr,
-				SyntaxError("Presumably Missing ';'", currentToken.line, currentToken.startColumn, currentToken.endColumn, path, text)
-			};
-		}
-		advance();
-		return { setVar, Error() };
-	}
-	return { nullptr,
-		SyntaxError("variable " + varName + " has invalid type", currentToken.line, currentToken.startColumn, currentToken.endColumn, path, text)
-	};
+	advance();
+	return { setVar, Error()};
 }
 
 // Empty statement
 ParserReturn Parser::getEmptyState(SymbTable* table)
 {
-	if (currentToken.type != TokenType::SEMICOLON)
+	if (currentToken.dataType != TokenType::SEMICOLON)
 		return { nullptr, Error() };
 	advance();
 	return { new BlockNode(), Error() };
@@ -340,79 +330,53 @@ ParserReturn Parser::getEmptyState(SymbTable* table)
 // Print statement
 ParserReturn Parser::getPrint(SymbTable* table) 
 {
-	if (currentToken.type != TokenType::IDENTIFIER || 
+	if (currentToken.dataType != TokenType::IDENTIFIER || 
 		currentToken.value != "print")
 		return { nullptr, Error() };
 
 	size_t startPos = currentPos;
 	advance();
 
-	if (currentToken.type != TokenType::LBRACKET) {
+	if (currentToken.dataType != TokenType::LBRACKET) {
 		return { nullptr,
 			SyntaxError("Presumably Missing '('-Bracket", currentToken.line, 
 				currentToken.startColumn, currentToken.endColumn, path, text)
 		};
 	}
 	advance();
-	auto [rootNode, error] = getIEAST(table);
+	auto [expr, exprError] = getExpr(table);
 
-	if (error.m_errorName != "NULL")
-		return { nullptr, error };
+	if (exprError.m_errorName != "NULL")
+		return { nullptr, exprError };
 
-	if (currentToken.type != TokenType::RBRACKET) {
-		delete rootNode;		
+	if (currentToken.dataType != TokenType::RBRACKET) {
+		delete expr;
 		return { nullptr,
 			SyntaxError("Presumably Missing ')'-Bracket", currentToken.line, 
 				currentToken.startColumn, currentToken.endColumn, path, text)
 		};
 	}
 	advance();
-	if (currentToken.type != TokenType::SEMICOLON) {
-		delete rootNode;
+	if (currentToken.dataType != TokenType::SEMICOLON) {
+		delete expr;
 		return { nullptr,
 			SyntaxError("Presumably Missing ';'", currentToken.line, 
 				currentToken.startColumn, currentToken.endColumn, path, text)
 		};
 	}
 	advance();
-
-	// int
-	if (rootNode->getReturnType() == 0) {
-		auto [expr, exprError] = rootNode->getExpr<int>();
-
-		if (exprError.m_errorName != "NULL")
-			return { nullptr, exprError };
-
-		return { new PrintState(expr), Error() };
-	}
-
-	// float
-	if (rootNode->getReturnType() == 1) {
-		auto [expr, exprError] = rootNode->getExpr<float>();
-
-		if (exprError.m_errorName != "NULL")
-			return { nullptr, exprError };
-
-		return { new PrintState(expr), Error() };
-	}
-
-	// its constructed on the heap
-	delete rootNode;
-	return { nullptr,
-			SyntaxError("Invalid type of expression", currentToken.line, 
-				currentToken.startColumn, currentToken.endColumn, path, text)
-	};
+	return { new PrintState(expr), Error() };
 }
 
 // list of else if statements
 std::pair<std::vector<ElseCond*>, Error> Parser::getIfElse(SymbTable* table)
 {
 	auto output = std::vector<ElseCond*>();
-	while (currentToken.type == TokenType::ELSE) {
+	while (currentToken.dataType == TokenType::ELSE) {
 		size_t startPos = currentPos;
 		advance();
 
-		if (currentToken.type != TokenType::IF)
+		if (currentToken.dataType != TokenType::IF)
 		{
 			revert(startPos);
 			break;
@@ -420,18 +384,18 @@ std::pair<std::vector<ElseCond*>, Error> Parser::getIfElse(SymbTable* table)
 
 		advance();
 
-		if (currentToken.type != TokenType::LBRACKET) {
+		if (currentToken.dataType != TokenType::LBRACKET) {
 			return { {},
 				SyntaxError("Presumably Missing '('-Bracket", currentToken.line, currentToken.startColumn, currentToken.endColumn, path, text)
 			};
 		}
 		advance();
 
-		auto [cond, exprError] = getExpr<bool>(table);
+		auto [cond, exprError] = getExpr(table);
 		if (exprError.m_errorName != "NULL") {
 			return { {}, exprError };
 		}
-		if (currentToken.type != TokenType::RBRACKET) {
+		if (currentToken.dataType != TokenType::RBRACKET) {
 			return { {},
 				SyntaxError("Presumably Missing ')'-Bracket", currentToken.line, currentToken.startColumn, currentToken.endColumn, path, text)
 			};
@@ -450,7 +414,7 @@ std::pair<std::vector<ElseCond*>, Error> Parser::getIfElse(SymbTable* table)
 
 // else statement
 ParserReturn Parser::getElse(SymbTable* table) {
-	if (currentToken.type != TokenType::ELSE)
+	if (currentToken.dataType != TokenType::ELSE)
 		return { nullptr, Error() };
 
 	size_t startPos = currentPos;
@@ -463,8 +427,7 @@ ParserReturn Parser::getElse(SymbTable* table) {
 	return { statement, Error()};
 }
 
-template<SuppType T>
-inline std::pair<Expression<T>*, Error> Parser::getExpr(SymbTable* table)
+inline std::pair<Expression*, Error> Parser::getExpr(SymbTable* table)
 {
 	std::vector<Token> tokenStream = getExprTokStream();
 	if (tokenStream.size() == 0)
@@ -478,7 +441,7 @@ inline std::pair<Expression<T>*, Error> Parser::getExpr(SymbTable* table)
 		return { nullptr, SyntaxError("Invalid Expression", currentToken.line,
 			currentToken.startColumn, currentToken.endColumn, path, text) };
 
-	auto [expr, error] = rootNode->getExpr<T>();
+	auto [expr, error] = rootNode->getExpr();
 	delete rootNode;
 	return { expr, error };
 }
@@ -502,7 +465,7 @@ std::pair<IEASTNode*, Error> Parser::streamToIEAST(std::vector<Token> tokenStrea
 	auto nodeStack = std::stack<IEASTNode*>();
 	nodeStack.push(rootNode);
 	for (size_t i = 0; i < tokenStream.size(); i++) {
-		switch (tokenStream[i].type)
+		switch (tokenStream[i].dataType)
 		{
 		case TokenType::LBRACKET:
 		{
@@ -553,7 +516,6 @@ std::pair<IEASTNode*, Error> Parser::streamToIEAST(std::vector<Token> tokenStrea
 			SyntaxError("IEASTNode - Stack has elements over", currentToken.line, 
 				currentToken.startColumn, currentToken.endColumn, path, text)
 		};
-	rootNode->setReturnType(table);
 	return { rootNode, Error() };
 }
 
@@ -563,7 +525,7 @@ std::vector<Token> Parser::getExprTokStream() {
 	size_t startPos = currentPos;
 	size_t bracketSur = 0;
 	bool mustValue = true;
-	TokenType returnType = currentToken.type;
+	TokenType returnType = currentToken.dataType;
 
 	std::vector<enum TokenType> valTypes{
 		TokenType::INTLIT, TokenType::DECLIT, TokenType::IDENTIFIER
@@ -578,7 +540,7 @@ std::vector<Token> Parser::getExprTokStream() {
 
 	while (returnType != TokenType::SEMICOLON &&
 		!(returnType == TokenType::RBRACKET && bracketSur == 0)
-		&& currentToken.type != TokenType::NONE) 
+		&& currentToken.dataType != TokenType::NONE) 
 	{
 
 		if (mustValue) {
@@ -606,7 +568,7 @@ std::vector<Token> Parser::getExprTokStream() {
 			}
 		}
 		advance();
-		returnType = currentToken.type;
+		returnType = currentToken.dataType;
 	}
 	if (bracketSur > 0)
 		return std::vector<Token>();
@@ -635,7 +597,7 @@ std::vector<Token> Parser::addBrackets(std::vector<Token> tokenStream, std::vect
 	auto valExpr = { TokenType::INTLIT, TokenType::DECLIT, TokenType::IDENTIFIER };
 	for (int i = 1; i < tokenStream.size(); i++) {
 		// if token is a strong-binding operator
-		if (std::find(op.begin(), op.end(), tokenStream[i].type) != op.end()) {
+		if (std::find(op.begin(), op.end(), tokenStream[i].dataType) != op.end()) {
 
 			size_t bracketSur = 0;
 			// places a LBracket
@@ -645,7 +607,7 @@ std::vector<Token> Parser::addBrackets(std::vector<Token> tokenStream, std::vect
 					// i know its useless, but it looks good
 					break;
 				}
-				else if (tokenStream[j].type == TokenType::LBRACKET) {
+				else if (tokenStream[j].dataType == TokenType::LBRACKET) {
 					if (bracketSur == 0) {
 						tokenStream.insert(tokenStream.begin() + j, Token(TokenType::LBRACKET));
 						bracketSur++;
@@ -653,10 +615,10 @@ std::vector<Token> Parser::addBrackets(std::vector<Token> tokenStream, std::vect
 					}
 					bracketSur--;
 				}
-				else if (tokenStream[j].type == TokenType::RBRACKET) {
+				else if (tokenStream[j].dataType == TokenType::RBRACKET) {
 					bracketSur++;
 				}
-				else if (std::find(valExpr.begin(), valExpr.end(), tokenStream[j].type) != valExpr.end()
+				else if (std::find(valExpr.begin(), valExpr.end(), tokenStream[j].dataType) != valExpr.end()
 					&& bracketSur == 0) {
 					tokenStream.insert(tokenStream.begin() + j, Token(TokenType::LBRACKET));
 					bracketSur++;
@@ -673,17 +635,17 @@ std::vector<Token> Parser::addBrackets(std::vector<Token> tokenStream, std::vect
 					tokenStream.insert(tokenStream.end(), Token(TokenType::RBRACKET));
 					break;
 				}
-				else if (tokenStream[j].type == TokenType::RBRACKET) {
+				else if (tokenStream[j].dataType == TokenType::RBRACKET) {
 					if (bracketSur == 0) {
 						tokenStream.insert(tokenStream.begin() + j, Token(TokenType::RBRACKET));
 						break;
 					}
 					bracketSur--;
 				}
-				else if (tokenStream[j].type == TokenType::LBRACKET) {
+				else if (tokenStream[j].dataType == TokenType::LBRACKET) {
 					bracketSur++;
 				}
-				else if (std::find(valExpr.begin(), valExpr.end(), tokenStream[j].type) != valExpr.end()
+				else if (std::find(valExpr.begin(), valExpr.end(), tokenStream[j].dataType) != valExpr.end()
 					&& bracketSur == 0) {
 					tokenStream.insert(tokenStream.begin() + j+1, Token(TokenType::RBRACKET));
 					break;

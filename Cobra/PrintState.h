@@ -3,13 +3,12 @@
 #include "SuppType.h"
 #include "Expression.h"
 
-template<SuppType T>
 class PrintState : public Statement
 {
 private:
-	Expression<T>* param;
+	Expression* param;
 public:
-	PrintState(Expression<T>* param);
+	PrintState(Expression* param);
 	Error run();
 };
 

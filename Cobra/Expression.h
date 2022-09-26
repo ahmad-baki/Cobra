@@ -1,13 +1,13 @@
 #pragma once
 #include <concepts>
-#include "SuppType.h"
 #include "Error.h"
 #include "Node.h"
+class Value;
 
-template<SuppType T>
+//template<SuppType T>
 class Expression : public Node
 {
 public:
-	virtual std::pair<T, Error> run() = 0;
+	virtual std::pair<Value*, Error> run() = 0;
 };
 

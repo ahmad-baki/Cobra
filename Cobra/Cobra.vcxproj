@@ -42,6 +42,7 @@
     <ClCompile Include="SyntaxError.cpp" />
     <ClCompile Include="Token.cpp" />
     <ClCompile Include="TokenType.cpp" />
+    <ClCompile Include="Value.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BinOp.h" />
@@ -68,6 +69,7 @@
     <ClInclude Include="SyntaxError.h" />
     <ClInclude Include="Token.h" />
     <ClInclude Include="TokenType.h" />
+    <ClInclude Include="Value.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

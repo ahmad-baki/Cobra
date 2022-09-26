@@ -1,7 +1,7 @@
 #include "IfCond.h"
 
 
-IfCond::IfCond(Expression<bool>* cond, Statement* statement, std::vector<ElseCond*> ifElseStates, Statement* elseState)
+IfCond::IfCond(Expression* cond, Statement* statement, std::vector<ElseCond*> ifElseStates, Statement* elseState)
 	: cond{ cond }, statement{ statement }, ifElseStates{ ifElseStates }, elseState{ elseState }
 {
 }
@@ -11,9 +11,14 @@ Error IfCond::run()
 	auto [condVal, condError] = cond->run();
 
 	if (condError.m_errorName != "NULL")
-		return { condError };
+		return condError;
 
-	if (condVal) {
+	auto [boolean, booleanError] = condVal->getBool();
+
+	if (booleanError.m_errorName != "NULL")
+		return booleanError;
+
+	if (boolean) {
 		return statement->run();
 	}
 	else {

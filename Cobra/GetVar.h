@@ -5,8 +5,7 @@
 #include "SuppType.h"
 #include "Error.h"
 
-template<SuppType T>
-class GetVar : public Expression<T>
+class GetVar : public Expression
 {
 private:
     std::string varName;
@@ -14,6 +13,6 @@ private:
 
 public:
     GetVar(std::string varName, SymbTable* table, size_t line, size_t startColumn, size_t endColumn);
-    std::pair<T, Error> run();
+    std::pair<Value*, Error> run();
 };
 

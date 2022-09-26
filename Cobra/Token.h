@@ -4,7 +4,7 @@
 
 class Token {
 public:
-	enum TokenType type;
+	enum TokenType dataType;
 	std::string value;
 	size_t line;
 	size_t startColumn;

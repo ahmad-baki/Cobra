@@ -30,7 +30,7 @@ Error BlockNode::run()
 		if (error.m_errorName != "NULL")
 			return error;
 	}
-	table->clearVarNames();
+	delete table;
 	return Error();
 }
 

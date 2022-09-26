@@ -57,8 +57,7 @@ private:
 	std::pair<std::vector<ElseCond*>, Error> getIfElse(SymbTable* table);
 	ParserReturn getElse(SymbTable* table);
 
-	template<SuppType T>
-	std::pair<Expression<T>*, Error> getExpr(SymbTable* table);
+	std::pair<Expression*, Error> getExpr(SymbTable* table);
 	std::pair<IEASTNode*, Error> getIEAST(SymbTable* table);
 	std::pair<IEASTNode*, Error> streamToIEAST(std::vector<Token> tokenStream, SymbTable* table);
 	std::vector<Token> getExprTokStream();
