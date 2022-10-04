@@ -8,7 +8,7 @@
 
 
 Parser::Parser(std::string_view text, std::string_view path)
-	: text{ text }, path{ path }, currentPos { 0 }, currentToken{ Token(NONE) }, 
+	: text{ text }, path{ path }, currentPos { 0 }, currentToken{ Token(TokenType::NONE) }, 
 	tokenStream{ std::vector<Token>() }
 {
 }
@@ -234,17 +234,17 @@ ParserReturn Parser::getDeclState(SymbTable* table)
 	}
 	std::string varName = currentToken.value;
 
-	int dataType;
+	Value::DataType dataType;
 	switch (returnType)
 	{
-	case INTWORD:
-		dataType = 0;
+	case TokenType::INTWORD:
+		dataType = Value::INTTYPE;
 		break;
-	case FLOATWORD:
-		dataType = 1;
+	case TokenType::FLOATWORD:
+		dataType = Value::DECTYPE;
 		break;
-	case VARWORD:
-		dataType = -1;
+	case TokenType::VARWORD:
+		dataType = Value::UNDEFINED;
 		break;
 	default:
 		revert(startPos);
@@ -427,7 +427,7 @@ ParserReturn Parser::getElse(SymbTable* table) {
 	return { statement, Error()};
 }
 
-inline std::pair<Expression*, Error> Parser::getExpr(SymbTable* table)
+std::pair<Expression*, Error> Parser::getExpr(SymbTable* table)
 {
 	std::vector<Token> tokenStream = getExprTokStream();
 	if (tokenStream.size() == 0)
@@ -538,7 +538,7 @@ std::vector<Token> Parser::getExprTokStream() {
 		TokenType::MOD,
 	};
 
-	while (returnType != TokenType::SEMICOLON &&
+	while (returnType != TokenType::SEMICOLON || returnType != TokenType::COMMA &&
 		!(returnType == TokenType::RBRACKET && bracketSur == 0)
 		&& currentToken.dataType != TokenType::NONE) 
 	{

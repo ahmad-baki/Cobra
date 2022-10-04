@@ -5,9 +5,10 @@ std::ostream& operator<<(std::ostream& output, const Error& e)
 {
 	output
 		<< "File: " << e.path << std::endl
-		<< e.m_errorName << " (line: " << e.line << ", column: " << e.columnStart << "): "
+		<< e.m_errorName << " (line: " << e.line << ", column: " 
+		<< e.columnStart << "-" << e.columnEnd << "): "
 		<< e.desc << std::endl 
-		<< e.getErrorLine();
+		/*<< e.getErrorLine()*/;
 	return output;
 }
 

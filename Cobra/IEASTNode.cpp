@@ -23,12 +23,16 @@ IEASTNode::~IEASTNode() {
 }
 
 std::pair <Expression*, Error> IEASTNode::getExpr() {
+	Value* val{nullptr};
+
 	switch (token.dataType)
 	{
 	case TokenType::INTLIT:
-		return { new Value(0, (void*)new int{ std::stoi(token.value) }, true, true), Error() };
+		val = new Value(Value::INTTYPE, (void*)new int{ std::stoi(token.value) }, true, true);
+		break;
 	case TokenType::DECLIT:
-		return { new Value(1, (void*)new float{ std::stof(token.value) }, true, true), Error() };
+		val = new Value(Value::DECTYPE, (void*)new float{ std::stof(token.value) }, true, true);
+		break;
 	case TokenType::IDENTIFIER:
 		return { new GetVar(token.value, table, token.line, token.startColumn, token.endColumn), Error() };
 
@@ -53,8 +57,13 @@ std::pair <Expression*, Error> IEASTNode::getExpr() {
 			return { nullptr, rightError };
 
 		return { new BinOp(leftExpr, rightExpr, token.dataType,
-				leftExpr->line, leftExpr->startColumn, rightExpr->endColumn), Error() };
+				token.line, token.startColumn, token.endColumn), Error() };
 	}
+
+	if (val->constrError.m_errorName != "NULL") {
+		return { nullptr, val->constrError };
+	}
+	return {val, Error()};
 }
 
 #pragma region OLD-CODE

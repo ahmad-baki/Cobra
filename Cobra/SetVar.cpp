@@ -9,7 +9,7 @@ SetVar::SetVar(std::string name, Expression* value, SymbTable* table, size_t lin
 	this->table = table;
 	this->line = line;
 	this->startColumn = startColumn;
-	this->endColumn;
+	this->endColumn = endColumn;
 }
 
 

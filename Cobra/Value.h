@@ -5,25 +5,34 @@
 class Value : public Expression
 {
 public:
+	enum DataType {
+		UNDEFINED, INTTYPE, DECTYPE 
+	};
+
 	Value();
-	Value(Value* other, bool isConst = false, bool isStaticType = false, int dataType = -1);
-	Value(int dataType, void* data, bool isConst = false, bool isStaticType = false);
+	Value(Value* other, enum DataType dataType = UNDEFINED, bool isConst = false, bool isStaticType = false, bool isIter = false);
+	Value(enum DataType dataType, void* data, bool isConst = false, bool isStaticType = false, bool isIter = false);
 	Value(Value& old_obj);
 	~Value();
 
-	static std::pair<void*, Error> Cast(void* data, int o_dataType, int t_dataType);
+	static std::pair<void*, Error> Cast(void* data, enum DataType o_dataType, enum DataType t_dataType);
 
 	std::pair<Value*, Error> run();
+	std::pair<Value*, Error> run(size_t index);
+	Error setVal(Value* val, size_t index);
 	Error setVal(Value* val);
 	std::pair<bool, Error> getBool();
-	int getType();
+	enum DataType getType();
 	std::pair<Value*, Error> doOp(Value& other, enum TokenType op);
 	void* getData();
 	friend std::ostream& operator<<(std::ostream& output, const Value& e);
 
+	Error constrError;
+	std::string dataTypeString[3] = {"undefined", "int", "decimal"};
 private:
-	int dataType;
+	enum DataType dataType;
 	void* data;
+	bool isIter;
 	bool isConst;
 	bool isStaticType;
 

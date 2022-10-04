@@ -16,7 +16,7 @@ public:
 	~SymbTable();
 
 	Error declare(std::string name, Value* val, bool isConst = false, bool isStaticType = false);
-	Error declare(std::string name, int dataType, void* data = nullptr, bool isConst = false, bool isStaticType = false);
+	Error declare(std::string name, enum Value::DataType dataType, void* data = nullptr, bool isConst = false, bool isStaticType = false);
 	std::pair<Value*, Error> run(std::string name);
 	Error set(std::string name, Value* val);
 

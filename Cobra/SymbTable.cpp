@@ -27,7 +27,7 @@ Error SymbTable::declare(std::string name, Value* val, bool isConst, bool isStat
 	return declare(name, val->getType(), val->getData(), isConst, isStaticType);
 }
 
-Error SymbTable::declare(std::string name, int dataType, void* data, bool isConst, bool isStaticType) {
+Error SymbTable::declare(std::string name, enum Value::DataType dataType, void* data, bool isConst, bool isStaticType) {
 	if (isVarDecl(name))
 		return RuntimeError(std::format("Tried to declar variable {}, despite it already existing", name));
 
@@ -43,7 +43,9 @@ Error SymbTable::set(std::string name, Value* tVal)
 	if (runError.m_errorName != "NULL")
 		return runError;
 
-	val->setVal(tVal);
+	Error setError = val->setVal(tVal);
+	if (setError.m_errorName != "NULL")
+		return setError;
 	return Error();
 }
 

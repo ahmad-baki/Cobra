@@ -4,7 +4,7 @@
 
 
 DeclVar::DeclVar(std::string name, SymbTable* table, size_t line, size_t startColumn, 
-	size_t endColumn, bool isConst, bool isStaticType, int dataType, Expression* expr)
+	size_t endColumn, bool isConst, bool isStaticType, enum Value::DataType dataType, Expression* expr)
 	: name{name}, isConst{isConst}, isStaticType{ isStaticType }, dataType{ dataType }, expr{ expr }
 {
 	this->table			= table;
@@ -25,12 +25,12 @@ DeclVar::DeclVar(std::string name, SymbTable* table, size_t line, size_t startCo
 
 Error DeclVar::run()
 {
-	int targetType{this->dataType};
+	enum Value::DataType targetType{this->dataType};
 	void* data{nullptr};
 	if (expr != nullptr) {
 		auto [val, valError] = expr->run();
 		if (valError.m_errorName != "NULL")
-			return RuntimeError(valError.desc, line, startColumn, endColumn);
+			return valError;
 		
 		if (targetType == -1) {
 			targetType	= val->getType();
@@ -40,16 +40,16 @@ Error DeclVar::run()
 		else if (targetType != val->getType()) {
 			auto [castVal, castError] = Value::Cast(val->getData(), val->getType(), targetType);
 			if (castError.m_errorName != "NULL")
-				return RuntimeError(castError.desc, line, startColumn, endColumn);
+				return castError;
 			data = castVal;
 		}
 		else {
 			data = val->getData();
 		}
 	}
-	Error error = table->declare(name, targetType, data, isConst, isStaticType);
-	if (error.m_errorName != "NULL")
-		return RuntimeError(error.desc, line, startColumn, endColumn);
+	Error declError = table->declare(name, targetType, data, isConst, isStaticType);
+	if (declError.m_errorName != "NULL")
+		return declError;
 	return Error();
 }
 

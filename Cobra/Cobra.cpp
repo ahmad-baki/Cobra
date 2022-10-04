@@ -50,6 +50,8 @@ double execFromFile(std::string path) {
 	const double runTime = duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
 
 	if (runtimeError.m_errorName != "NULL") {
+		runtimeError.path = path;
+		runtimeError.text = input;
 		std::cout << runtimeError << '\n' << std::endl;
 	}
 	return runTime;

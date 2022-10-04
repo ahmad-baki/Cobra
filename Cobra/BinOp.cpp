@@ -21,15 +21,19 @@ std::pair<Value*, Error> BinOp::run()
 	auto [val1, val1Error] = expr1->run();
 
 	if (val1Error.m_errorName != "NULL")
-		return { {}, val1Error };
+		return { {}, RuntimeError(val1Error.desc, this->line, this->startColumn, this->endColumn) };
 
 	auto [val2, val2Error] = expr2->run();
 
 	if (val2Error.m_errorName != "NULL")
-		return { {}, val2Error };
+		return { {}, RuntimeError(val2Error.desc, this->line, this->startColumn, this->endColumn) };
 
-	return val1->doOp(*val2, op);
+	auto [val, opError] = val1->doOp(*val2, op);
 
+	if (opError.m_errorName != "NULL") {
+		return { {}, RuntimeError(opError.desc, this->line, this->startColumn, this->endColumn)};
+	}
+	return {val, Error()};
 #pragma region OLD-CODE
 	//switch (op)
 	//{
