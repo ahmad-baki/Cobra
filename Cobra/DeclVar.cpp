@@ -32,7 +32,7 @@ Error DeclVar::run()
 		if (valError.m_errorName != "NULL")
 			return valError;
 		
-		if (targetType == -1) {
+		if (targetType == Value::UNDEFINED) {
 			targetType	= val->getType();
 			data		= val->getData();
 		}

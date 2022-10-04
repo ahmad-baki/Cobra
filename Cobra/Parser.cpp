@@ -525,7 +525,7 @@ std::vector<Token> Parser::getExprTokStream() {
 	size_t startPos = currentPos;
 	size_t bracketSur = 0;
 	bool mustValue = true;
-	TokenType returnType = currentToken.dataType;
+	TokenType tokType = currentToken.dataType;
 
 	std::vector<enum TokenType> valTypes{
 		TokenType::INTLIT, TokenType::DECLIT, TokenType::IDENTIFIER
@@ -538,14 +538,14 @@ std::vector<Token> Parser::getExprTokStream() {
 		TokenType::MOD,
 	};
 
-	while (returnType != TokenType::SEMICOLON || returnType != TokenType::COMMA &&
-		!(returnType == TokenType::RBRACKET && bracketSur == 0)
+	while (tokType != TokenType::SEMICOLON && tokType != TokenType::COMMA &&
+		!(tokType == TokenType::RBRACKET && bracketSur == 0)
 		&& currentToken.dataType != TokenType::NONE) 
 	{
 
 		if (mustValue) {
-			if (returnType != TokenType::LBRACKET) {
-				if (std::find(valTypes.begin(), valTypes.end(), returnType) == valTypes.end()) {
+			if (tokType != TokenType::LBRACKET) {
+				if (std::find(valTypes.begin(), valTypes.end(), tokType) == valTypes.end()) {
 					revert(startPos);
 					return std::vector<Token>();
 				}
@@ -556,8 +556,8 @@ std::vector<Token> Parser::getExprTokStream() {
 			}
 		}
 		else {
-			if (returnType != TokenType::RBRACKET) {
-				if (std::find(binOps.begin(), binOps.end(), returnType) == binOps.end()) {
+			if (tokType != TokenType::RBRACKET) {
+				if (std::find(binOps.begin(), binOps.end(), tokType) == binOps.end()) {
 					revert(startPos);
 					return std::vector<Token>();
 				}
@@ -568,7 +568,7 @@ std::vector<Token> Parser::getExprTokStream() {
 			}
 		}
 		advance();
-		returnType = currentToken.dataType;
+		tokType = currentToken.dataType;
 	}
 	if (bracketSur > 0)
 		return std::vector<Token>();

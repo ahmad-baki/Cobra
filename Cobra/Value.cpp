@@ -228,7 +228,7 @@ std::pair<Value*, Error> Value::doOp(Value& other, enum TokenType op)
 	if (runError.m_errorName != "NULL")
 		return { nullptr, runError };
 
-	auto [castVal, castError] = Cast(otherData->data, dataType, this->dataType);
+	auto [castVal, castError] = Cast(otherData->data, otherData->dataType, this->dataType);
 	if (castError.m_errorName != "NULL")
 		return { nullptr, castError };
 
