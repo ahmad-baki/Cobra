@@ -13,15 +13,22 @@ SetVar::SetVar(std::string name, Expression* value, SymbTable* table, size_t lin
 }
 
 
-Error SetVar::run()
+void SetVar::run(Error& outError)
 {
-	auto [val, getError] = value->run();
+	Value* val = value->run(outError);
 
-	if (getError.m_errorName != "NULL")
-		return getError;
+	if (val == nullptr) {
+		//outError.line			= line;
+		//outError.startColumn	= startColumn;
+		//outError.endColumn		= endColumn;
+		return;
+	}
 
-	Error setError = table->set(name, val);
-	if (setError.m_errorName != "NULL")
-		return RuntimeError(setError.desc, line, startColumn, endColumn);
-	return Error();
+	table->set(name, val, outError);
+	if (outError.errorName != "NULL") {
+		outError.line			= line;
+		outError.startColumn	= startColumn;
+		outError.endColumn		= endColumn;
+	}
+	return;
 }

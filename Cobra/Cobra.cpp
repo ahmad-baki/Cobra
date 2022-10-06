@@ -29,30 +29,31 @@ double execFromFile(std::string path) {
 	std::string input = readFileIntoString(path);
 
 	Lexer lexer = Lexer(input, path);
-	auto [tokenString, lexError] = lexer.lex();
+	Error error{};
+	std::vector<Token> tokenString = lexer.lex(error);
 
-	if (lexError.m_errorName != "NULL"){
-		std::cout << lexError << '\n' << std::endl;
+	if (error.errorName != "NULL"){
+		std::cout << error << '\n' << std::endl;
 		return 0;
 	}
 
 	Parser parser = Parser(input, path);
-	auto [blockNode, parseError] = parser.parse(tokenString);
+	Statement* blockNode = parser.parse(tokenString, error);
 
-	if (parseError.m_errorName != "NULL") {
-		std::cout << parseError << '\n' << std::endl;
+	if (error.errorName != "NULL") {
+		std::cout << error << '\n' << std::endl;
 		return 0;
 	}
 
 	const auto startTime = system_clock::now();
-	Error runtimeError = blockNode->run();
+	blockNode->run(error);
 	const auto endTime = system_clock::now();
 	const double runTime = duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
 
-	if (runtimeError.m_errorName != "NULL") {
-		runtimeError.path = path;
-		runtimeError.text = input;
-		std::cout << runtimeError << '\n' << std::endl;
+	if (error.errorName != "NULL") {
+		error.path = path;
+		error.text = input;
+		std::cout << error << '\n' << std::endl;
 	}
 	return runTime;
 }
@@ -60,6 +61,7 @@ double execFromFile(std::string path) {
 void execFromCommandLine() {
 	BlockNode blockNode = BlockNode();
 	size_t line = 1;
+	Error error{};
 	while (true) {
 		std::cout << "> ";
 		std::string input = "";
@@ -74,25 +76,25 @@ void execFromCommandLine() {
 		}
 
 		Lexer lexer = Lexer(input, "<stdin>", line);
-		auto [tokenString, lexError] = lexer.lex();
-		if (lexError.m_errorName != "NULL"){
-			std::cout << lexError << '\n' << std::endl;
+		std::vector<Token> tokenString = lexer.lex(error);
+		if (error.errorName != "NULL"){
+			std::cout << error << '\n' << std::endl;
 			return;
 		}
 
 		Parser parser = Parser(input, "<stdin>");
-		Error parseError = parser.parse(tokenString, &blockNode);
+		parser.parse(tokenString, &blockNode, error);
 
-		if (parseError.m_errorName != "NULL") {
-			std::cout << parseError << '\n' << std::endl;
+		if (error.errorName != "NULL") {
+			std::cout << error << '\n' << std::endl;
 			return;
 		}
 
-		Error runtimeError = blockNode.contin();
-		if (runtimeError.m_errorName != "NULL") {
-			runtimeError.path = "<stdin>";
-			runtimeError.text = input;
-			std::cout << runtimeError << '\n' << std::endl;
+		blockNode.contin(error);
+		if (error.errorName != "NULL") {
+			error.path = "<stdin>";
+			error.text = input;
+			std::cout << error << '\n' << std::endl;
 			return;
 		}
 		line++;

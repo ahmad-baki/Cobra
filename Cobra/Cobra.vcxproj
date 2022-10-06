@@ -29,6 +29,7 @@
     <ClCompile Include="GetVar.cpp" />
     <ClCompile Include="IEASTNode.cpp" />
     <ClCompile Include="IfCond.cpp" />
+    <ClCompile Include="Interpreter.cpp" />
     <ClCompile Include="InvChrError.cpp" />
     <ClCompile Include="Lexer.cpp" />
     <ClCompile Include="Literal.cpp" />
@@ -54,6 +55,7 @@
     <ClInclude Include="GetVar.h" />
     <ClInclude Include="IEASTNode.h" />
     <ClInclude Include="IfCond.h" />
+    <ClInclude Include="Interpreter.h" />
     <ClInclude Include="InvChrError.h" />
     <ClInclude Include="Lexer.h" />
     <ClInclude Include="Literal.h" />

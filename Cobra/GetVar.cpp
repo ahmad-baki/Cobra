@@ -11,9 +11,14 @@ GetVar::GetVar(std::string varName, SymbTable* table, size_t line, size_t startC
 }
 
 
-std::pair<Value*, Error> GetVar::run() {
-	auto [val, error] = table->run(varName);
-	if (error.m_errorName != "NULL")
-		return { {}, RuntimeError(error.desc, this->line, this->startColumn, this->endColumn) };
-	return { val, Error() };
+Value* GetVar::run(Error& outError) {
+	Value* val = table->run(varName, outError);
+	if (val == nullptr)
+	{
+		outError.line			= line;
+		outError.startColumn	= startColumn;
+		outError.endColumn		= endColumn;
+		return nullptr;
+	}
+	return val;
 }

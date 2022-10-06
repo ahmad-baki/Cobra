@@ -19,6 +19,6 @@ private:
 	enum TokenType op;
 
 public:
-	BinOp(Expression* expr1, Expression* expr2, enum TokenType op, size_t line, size_t startColumn, size_t endColumn);
-	std::pair<Value*, Error> run();
+	BinOp(Expression* expr1, Expression* expr2, enum TokenType op);
+	Value* run(Error& outError);
 };

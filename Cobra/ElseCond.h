@@ -12,6 +12,6 @@ private:
 
 public:
 	ElseCond(Expression* cond, Statement* statement, size_t line, size_t startColumn, size_t endColumn);
-	std::pair<bool, Error> run();
+	bool run(Error& outerror);
 };
 

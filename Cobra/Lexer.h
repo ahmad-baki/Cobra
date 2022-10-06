@@ -8,16 +8,12 @@
 #include "TokenType.cpp"
 
 
-struct LexReturn {
-	std::vector<Token> tokenString;
-	Error error;
-};
 
 class Lexer
 {
 public:
 	Lexer(std::string_view text, std::string_view path, size_t line = 1);
-	LexReturn lex();
+	std::vector<Token> lex(Error& outError);
 
 private:
 	std::string_view text;
@@ -29,10 +25,10 @@ private:
 
 	void advance();
 	void revert(size_t pos);
-	std::pair<Token, Error> getNextToken();
-	std::pair<Token, Error> getNextNumber();
-	std::pair<Token, Error> getNextOperator();
-	std::pair<Token, Error> getNextWord();
+	Token getNextToken(Error& outError);
+	Token getNextNumber(Error& outError);
+	Token getNextOperator(Error& outError);
+	Token getNextWord(Error& outError);
 	bool isInt(int val);
 
 	void skipSpace();
@@ -48,6 +44,8 @@ private:
 		{")",		TokenType::RBRACKET},
 		{"[",		TokenType::LSQBRACKET},
 		{"]",		TokenType::RSQBRACKET},
+		{"{",		TokenType::LCURLBRACKET},
+		{"}",		TokenType::RCURLBRACKET},
 		{"!",		TokenType::EXCLA},
 		{"=",		TokenType::EQ},
 		{"==",		TokenType::EQEQ},

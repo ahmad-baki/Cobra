@@ -13,6 +13,6 @@ private:
 
 public:
     GetVar(std::string varName, SymbTable* table, size_t line, size_t startColumn, size_t endColumn);
-    std::pair<Value*, Error> run();
+    Value* run(Error& outError);
 };
 

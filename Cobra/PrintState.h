@@ -9,6 +9,6 @@ private:
 	Expression* param;
 public:
 	PrintState(Expression* param);
-	Error run();
+	void run(Error& outError);
 };
 

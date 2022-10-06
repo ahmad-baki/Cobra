@@ -2,41 +2,39 @@
 
 // empty code
 BlockNode::BlockNode() 
-	: statements{std::vector<Statement*>()}, nextExecIndex{0}
+	: blockNode{std::vector<Statement*>()}, nextExecIndex{0}
 {
 	table = new SymbTable();
 }
 
-BlockNode::BlockNode(std::vector<Statement*> statements, SymbTable* parentTable) :
-	statements{statements}, nextExecIndex{ 0 }
+BlockNode::BlockNode(std::vector<Statement*> blockNode, SymbTable* parentTable) :
+	blockNode{blockNode}, nextExecIndex{ 0 }
 {
 	table = new SymbTable(parentTable);
 }
 
-Error BlockNode::contin() {
-	while (nextExecIndex < statements.size()){
-		Error error = statements[nextExecIndex]->run();
-		if (error.m_errorName != "NULL")
-			return error;
+void BlockNode::contin(Error& outError) {
+	while (nextExecIndex < blockNode.size()){
+		blockNode[nextExecIndex]->run(outError);
+		if (outError.errorName != "NULL")
+			return;
 		nextExecIndex++;
 	}
-	return Error();
 }
 
-Error BlockNode::run()
+void BlockNode::run(Error& outError)
 {
-	for (Statement* statement : statements) {
-		Error error = statement->run();
-		if (error.m_errorName != "NULL")
-			return error;
+	for (Statement* statement : blockNode) {
+		statement->run(outError);
+		if (outError.errorName != "NULL")
+			return;
 	}
 	delete table;
-	return Error();
 }
 
 
 void BlockNode::add(Statement* statement)
 {
-	statements.push_back(statement);
+	blockNode.push_back(statement);
 	//statement->table = table;
 }

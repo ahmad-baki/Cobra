@@ -6,14 +6,14 @@ PrintState::PrintState(Expression* param)
 {
 }
 
-Error PrintState::run() {
-	auto [val, error] = param->run();
+void PrintState::run(Error& outError) {
+	Value* val = param->run(outError);
 
-	if (error.m_errorName != "NULL")
-		return error;
+	if (val == nullptr)
+		return;
 
 	std::cout << *val << std::endl;
-	return Error();
+	return;
 }
 //
 //template class PrintState<bool>;

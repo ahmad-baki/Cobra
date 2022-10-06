@@ -23,45 +23,47 @@ SymbTable::~SymbTable()
 	}
 }
 
-Error SymbTable::declare(std::string name, Value* val, bool isConst, bool isStaticType) {
-	return declare(name, val->getType(), val->getData(), isConst, isStaticType);
+void SymbTable::declare(std::string name, Value* val, Error& outError, bool isConst, bool isStaticType) {
+	declare(name, val->getType(), outError, val->getData(), isConst, isStaticType);
 }
 
-Error SymbTable::declare(std::string name, enum Value::DataType dataType, void* data, bool isConst, bool isStaticType) {
-	if (isVarDecl(name))
-		return RuntimeError(std::format("Tried to declar variable {}, despite it already existing", name));
+void SymbTable::declare(std::string name, enum Value::DataType dataType, Error& outError, void* data, bool isConst, bool isStaticType) {
+	if (isVarDecl(name)) {
+		RuntimeError targetError = RuntimeError(std::format("Tried to declar variable {}, despite it already existing"
+			, name));
+		outError.copy(targetError);
+	}
 
-	Value* newVal = new Value{ dataType, data, isConst, isStaticType };
+	Value* newVal = new Value{ dataType, data, outError, isConst, isStaticType };
 	variables.emplace(name, newVal);
-	return Error();
 }
 
-Error SymbTable::set(std::string name, Value* tVal) 
+void SymbTable::set(std::string name, Value* tVal, Error& outError)
 {
-	auto [val, runError] = this->run(name);
+	Value* val = this->run(name, outError);
 
-	if (runError.m_errorName != "NULL")
-		return runError;
+	if (val == nullptr)
+		return;
 
-	Error setError = val->setVal(tVal);
-	if (setError.m_errorName != "NULL")
-		return setError;
-	return Error();
+	val->setVal(tVal, outError);
+	if (outError.errorName != "NULL")
+		return;
 }
 
-std::pair<Value*, Error> SymbTable::run(std::string name) 
+Value* SymbTable::run(std::string name, Error& outError)
 {
 	auto elem = variables.find(name);
 	if (elem == variables.end()) {
 		if (parent != nullptr) {
-			return parent->run(name);
+			parent->run(name, outError);
 		}
 
-		return { nullptr,
-			RuntimeError(std::format("Tried to get variable {}, despite it not existing", name)) 
-		};
+		RuntimeError targetError = RuntimeError(std::format("Tried to get variable {}, despite it not existing"
+			, name));
+		outError.copy(targetError);
+		return nullptr;
 	}
-	return { (*elem).second, Error() };
+	return elem->second;
 }
 
 bool SymbTable::isVarDecl(std::string name) {

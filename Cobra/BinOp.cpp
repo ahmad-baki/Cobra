@@ -7,33 +7,30 @@
 
 
 //template<SuppType T1, SuppType T2, SuppType T3>
-BinOp::BinOp(Expression* expr1, Expression* expr2, enum TokenType op, size_t line, size_t startColumn, size_t endColumn):
+BinOp::BinOp(Expression* expr1, Expression* expr2, enum TokenType op):
 	expr1{ expr1 }, expr2{ expr2 }, op{op}
 {
-	this->line = line;
-	this->startColumn = startColumn;
-	this->endColumn = endColumn;
 }
 
 //template<SuppType T1, SuppType T2, SuppType T3>
-std::pair<Value*, Error> BinOp::run()
+Value* BinOp::run(Error& outError)
 {
-	auto [val1, val1Error] = expr1->run();
+	Value* val1 = expr1->run(outError);
 
-	if (val1Error.m_errorName != "NULL")
-		return { {}, RuntimeError(val1Error.desc, this->line, this->startColumn, this->endColumn) };
+	if (val1 == nullptr)
+		return nullptr;
 
-	auto [val2, val2Error] = expr2->run();
+	Value* val2 = expr2->run(outError);
 
-	if (val2Error.m_errorName != "NULL")
-		return { {}, RuntimeError(val2Error.desc, this->line, this->startColumn, this->endColumn) };
+	if (val2 == nullptr)
+		return nullptr;
 
-	auto [val, opError] = val1->doOp(*val2, op);
+	Value* result = val1->doOp(*val2, op, outError);
 
-	if (opError.m_errorName != "NULL") {
-		return { {}, RuntimeError(opError.desc, this->line, this->startColumn, this->endColumn)};
+	if (result == nullptr) {
+		return nullptr;
 	}
-	return {val, Error()};
+	return result;
 #pragma region OLD-CODE
 	//switch (op)
 	//{

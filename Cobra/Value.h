@@ -10,34 +10,34 @@ public:
 	};
 
 	Value();
-	Value(Value* other, enum DataType dataType = UNDEFINED, bool isConst = false, bool isStaticType = false, bool isIter = false);
-	Value(enum DataType dataType, void* data, bool isConst = false, bool isStaticType = false, bool isIter = false);
+	Value(Value* other, Error& outError, enum DataType dataType = UNDEFINED, 
+		bool isConst = false, bool isStaticType = false);
+	Value(enum DataType dataType, void* data, Error& outError, 
+		bool isConst = false, bool isStaticType = false);
 	Value(Value& old_obj);
 	~Value();
 
-	static std::pair<void*, Error> Cast(void* data, enum DataType o_dataType, enum DataType t_dataType);
+	static void* Cast(void* data, enum DataType o_dataType, 
+		enum DataType t_dataType, Error& outError);
 
-	std::pair<Value*, Error> run();
-	std::pair<Value*, Error> run(size_t index);
-	Error setVal(Value* val, size_t index);
-	Error setVal(Value* val);
-	std::pair<bool, Error> getBool();
+	Value* run(Error& outError);
+	void setVal(Value* val, size_t index, Error& outError);
+	void setVal(Value* val, Error& outError);
+	bool getBool(Error& outError);
 	enum DataType getType();
-	std::pair<Value*, Error> doOp(Value& other, enum TokenType op);
+	Value* doOp(Value& other, enum TokenType op, Error& outError);
 	void* getData();
 	friend std::ostream& operator<<(std::ostream& output, const Value& e);
 
-	Error constrError;
 	std::string dataTypeString[3] = {"undefined", "int", "decimal"};
 private:
 	enum DataType dataType;
 	void* data;
-	bool isIter;
 	bool isConst;
 	bool isStaticType;
 
 
 	template<SuppType T>
-	std::pair<Value*, Error> calcOp(T* val1, T* val2, enum TokenType op);
+	Value* calcOp(T* val1, T* val2, enum TokenType op, Error& outError);
 };
 

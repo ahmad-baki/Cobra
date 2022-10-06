@@ -15,10 +15,10 @@ public:
 	SymbTable(SymbTable* parent = nullptr);
 	~SymbTable();
 
-	Error declare(std::string name, Value* val, bool isConst = false, bool isStaticType = false);
-	Error declare(std::string name, enum Value::DataType dataType, void* data = nullptr, bool isConst = false, bool isStaticType = false);
-	std::pair<Value*, Error> run(std::string name);
-	Error set(std::string name, Value* val);
+	void declare(std::string name, Value* val, Error& outError, bool isConst = false, bool isStaticType = false);
+	void declare(std::string name, enum Value::DataType dataType, Error& outError, void* data = nullptr, bool isConst = false, bool isStaticType = false);
+	Value* run(std::string name, Error& outError);
+	void set(std::string name, Value* val, Error& outError);
 
 	bool isVarDecl(std::string name);
 

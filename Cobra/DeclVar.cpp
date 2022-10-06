@@ -23,14 +23,18 @@ DeclVar::DeclVar(std::string name, SymbTable* table, size_t line, size_t startCo
 #pragma endregion 
 }
 
-Error DeclVar::run()
+void DeclVar::run(Error& outError)
 {
 	enum Value::DataType targetType{this->dataType};
 	void* data{nullptr};
 	if (expr != nullptr) {
-		auto [val, valError] = expr->run();
-		if (valError.m_errorName != "NULL")
-			return valError;
+		Value* val = expr->run(outError);
+		if (val == nullptr) {
+			//outError.line			= line;
+			//outError.startColumn	= startColumn;
+			//outError.endColumn		= endColumn;
+			return;
+		}
 		
 		if (targetType == Value::UNDEFINED) {
 			targetType	= val->getType();
@@ -38,19 +42,26 @@ Error DeclVar::run()
 		}
 
 		else if (targetType != val->getType()) {
-			auto [castVal, castError] = Value::Cast(val->getData(), val->getType(), targetType);
-			if (castError.m_errorName != "NULL")
-				return castError;
+			void* castVal = Value::Cast(val->getData(), val->getType(), targetType, outError);
+			if (castVal == nullptr) {
+				outError.line			= line;
+				outError.startColumn	= startColumn;
+				outError.endColumn		= endColumn;
+				return;
+			}
 			data = castVal;
 		}
 		else {
 			data = val->getData();
 		}
 	}
-	Error declError = table->declare(name, targetType, data, isConst, isStaticType);
-	if (declError.m_errorName != "NULL")
-		return declError;
-	return Error();
+	table->declare(name, targetType, outError, data, isConst, isStaticType);
+	if (outError.errorName != "NULL") {
+		outError.line			= line;
+		outError.startColumn	= startColumn;
+		outError.endColumn		= endColumn;
+		return;
+	}
 }
 
 #pragma region OLD-CODE

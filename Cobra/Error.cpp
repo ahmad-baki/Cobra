@@ -5,19 +5,19 @@ std::ostream& operator<<(std::ostream& output, const Error& e)
 {
 	output
 		<< "File: " << e.path << std::endl
-		<< e.m_errorName << " (line: " << e.line << ", column: " 
-		<< e.columnStart << "-" << e.columnEnd << "): "
+		<< e.errorName << " (line: " << e.line << ", column: " 
+		<< e.startColumn << "-" << e.endColumn << "): "
 		<< e.desc << std::endl 
 		/*<< e.getErrorLine()*/;
 	return output;
 }
 
 Error::Error() 
-	: m_errorName{"NULL"}, desc{""}, text{""}, line{0}, columnStart{0}, columnEnd{0}
+	: errorName{"NULL"}, desc{""}, text{""}, line{0}, startColumn{0}, endColumn{0}
 {}
 
-Error::Error(std::string_view errorName, std::string_view text, size_t line, size_t columnStart, size_t columnEnd, std::string_view desc, std::string_view path) :
-	m_errorName{ errorName }, desc{ desc }, path{ path }, text{text}, line{line}, columnStart{columnStart}, columnEnd{columnEnd}
+Error::Error(std::string_view errorName, std::string_view text, size_t line, size_t startColumn, size_t endColumn, std::string_view desc, std::string_view path) :
+	errorName{ errorName }, desc{ desc }, path{ path }, text{text}, line{line}, startColumn{startColumn}, endColumn{endColumn}
 {
 }
 
@@ -81,18 +81,27 @@ std::string Error::getErrorPointerStr(std::string errorLine) const {
 	// for lineNumber + :, for example: "3: ..."
 	std::string output(digits+1, ' ');
 	output += std::string(getNTabs(errorLine) + 1,'\t');
-	output += std::string(columnStart-1, ' ');
-	output += std::string(columnEnd-columnStart, '^');
+	output += std::string(startColumn-1, ' ');
+	output += std::string(endColumn-startColumn, '^');
 	return output;
 }
 
 size_t Error::getNTabs(std::string errorLine) const
 {
 	size_t count{ 0 };
-	for (size_t i = 0; i < columnStart; i++) {
+	for (size_t i = 0; i < startColumn; i++) {
 		if (errorLine[i] == '\t') {
 			count++;
 		}
 	}
 	return count;
+}
+
+void Error::copy(Error& outError) {
+	path		= outError.path;
+	errorName	= outError.errorName;
+	line		= outError.line;
+	startColumn	= outError.startColumn;
+	endColumn	= outError.endColumn;
+	desc		= outError.desc;
 }

@@ -3,33 +3,32 @@
 Loop::Loop(Expression* cond, Statement* statement) 
 	: cond{cond}, statement{ statement } {}
 
-Error Loop::run()
+void Loop::run(Error& outError)
 {
-	auto [condVal, condError] = cond->run();
+	Value* condVal = cond->run(outError);
 
-	if (condError.m_errorName != "NULL")
-		return condError;
+	if (condVal == nullptr)
+		return;
 
-	auto [boolean, booleanError] = condVal->getBool();
+	bool condBool = condVal->getBool(outError);
 
-	if (booleanError.m_errorName != "NULL")
-		return booleanError;
+	if (outError.errorName != "NULL")
+		return;
 
-	while (boolean) {
-		Error stateError = statement->run();
+	while (condBool) {
+		statement->run(outError);
 
-		if (stateError.m_errorName != "NULL")
-			return stateError;
+		if (outError.errorName != "NULL")
+			return;
 
-		auto [condVal, condError] = cond->run();
+		condVal = cond->run(outError);
 
-		if (condError.m_errorName != "NULL")
-			return condError;
+		if (outError.errorName != "NULL")
+			return;
 
-		auto [boolean, booleanError] = condVal->getBool();
+		condBool = condVal->getBool(outError);
 
-		if (booleanError.m_errorName != "NULL")
-			return booleanError;
+		if (outError.errorName != "NULL")
+			return;
 	}
-	return Error();
 }

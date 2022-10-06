@@ -22,48 +22,51 @@ IEASTNode::~IEASTNode() {
 		delete rightNode;
 }
 
-std::pair <Expression*, Error> IEASTNode::getExpr() {
-	Value* val{nullptr};
+Expression* IEASTNode::getExpr(Error& outError) {
+	Expression* expr{nullptr};
 
 	switch (token.dataType)
 	{
 	case TokenType::INTLIT:
-		val = new Value(Value::INTTYPE, (void*)new int{ std::stoi(token.value) }, true, true);
+		expr = new Value(Value::INTTYPE, (void*)new int{ std::stoi(token.value) }, outError, true, true);
 		break;
 	case TokenType::DECLIT:
-		val = new Value(Value::DECTYPE, (void*)new float{ std::stof(token.value) }, true, true);
+		expr = new Value(Value::DECTYPE, (void*)new float{ std::stof(token.value) }, outError, true, true);
 		break;
 	case TokenType::IDENTIFIER:
-		return { new GetVar(token.value, table, token.line, token.startColumn, token.endColumn), Error() };
-
+		expr = new GetVar(token.value, table, token.line, token.startColumn, token.endColumn);
+		break;
 	default:
 		if (leftNode == nullptr) {
-			return { nullptr,
-				SyntaxError("Operator Node has no child-elements", token.line, token.startColumn, token.endColumn, path, text)
-			};
+			SyntaxError targetError = SyntaxError("Operator Node has no child-elements", token.line,
+				token.startColumn, token.endColumn, path, text);
+			outError.copy(targetError);
+			return nullptr;
 		}
 
-		auto [leftExpr, leftError] = leftNode->getExpr();
+		Expression* leftExpr = leftNode->getExpr(outError);
 
-		if (leftError.m_errorName != "NULL")
-			return { nullptr, leftError };
+		if (leftExpr == nullptr)
+			return nullptr;
 
 		if (rightNode == nullptr)
-			return { leftExpr, Error() };
+			return leftExpr;
 
-		auto [rightExpr, rightError] = rightNode->getExpr();
+		Expression* rightExpr = rightNode->getExpr(outError);
 
-		if (rightError.m_errorName != "NULL")
-			return { nullptr, rightError };
+		if (rightExpr == nullptr)
+			return nullptr;
 
-		return { new BinOp(leftExpr, rightExpr, token.dataType,
-				token.line, token.startColumn, token.endColumn), Error() };
+		expr = new BinOp(leftExpr, rightExpr, token.dataType);
 	}
 
-	if (val->constrError.m_errorName != "NULL") {
-		return { nullptr, val->constrError };
+	if (outError.errorName != "NULL") {
+		return nullptr;
 	}
-	return {val, Error()};
+	expr->line			= token.line;
+	expr->startColumn	= token.startColumn;
+	expr->endColumn		= token.endColumn;
+	return expr;
 }
 
 #pragma region OLD-CODE

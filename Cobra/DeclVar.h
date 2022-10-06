@@ -10,7 +10,7 @@ class DeclVar : public Statement
 public:
 	DeclVar(std::string name, SymbTable* table, size_t line, size_t startColumn, 
 		size_t endColumn, bool isConst = false, bool isStaticType = false, Value::DataType dataType = Value::UNDEFINED, Expression* expr = nullptr);
-	Error run();
+	void run(Error& outError);
 
 private:
 	std::string name;

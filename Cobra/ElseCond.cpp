@@ -8,25 +8,33 @@ ElseCond::ElseCond(Expression* cond, Statement* statement, size_t line, size_t s
 	this->endColumn;
 }
 
-std::pair<bool, Error> ElseCond::run()
+bool ElseCond::run(Error& outError)
 {
-	auto [condVal, condError] = cond->run();
+	Value* condVal = cond->run(outError);
 
-	if (condError.m_errorName != "NULL")
-		return { {}, condError };
-
-	auto [boolean, booleanError] = condVal->getBool();
-
-	if (booleanError.m_errorName != "NULL")
-		return { {}, booleanError };
-
-	if (boolean) {
-		Error stateError = statement->run();
-
-		if (stateError.m_errorName != "NULL")
-			return { {}, stateError };
-
-		return { true, Error() };
+	if (outError.errorName != "NULL") {
+		//outError.line = line;
+		//outError.startColumn = startColumn;
+		//outError.endColumn = endColumn;
+		return false;
 	}
-	return { false, Error() };
+
+	bool condBol = condVal->getBool(outError);
+
+	if (outError.errorName != "NULL") {
+		//outError.line = line;
+		//outError.startColumn = startColumn;
+		//outError.endColumn = endColumn;
+		return false;
+	}
+
+	if (condBol) {
+		statement->run(outError);
+
+		if (outError.errorName != "NULL")
+			return false;
+
+		return true;
+	}
+	return false;
 }

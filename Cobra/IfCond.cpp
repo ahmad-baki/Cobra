@@ -6,37 +6,39 @@ IfCond::IfCond(Expression* cond, Statement* statement, std::vector<ElseCond*> if
 {
 }
 
-Error IfCond::run()
+void IfCond::run(Error& outError)
 {
-	auto [condVal, condError] = cond->run();
+	Value* condVal = cond->run(outError);
 
-	if (condError.m_errorName != "NULL")
-		return condError;
+	if (condVal == nullptr) {
+		return;
+	}
 
-	auto [boolean, booleanError] = condVal->getBool();
+	bool boolean = condVal->getBool(outError);
 
-	if (booleanError.m_errorName != "NULL")
-		return booleanError;
+	if (outError.errorName != "NULL")
+		return;
 
 	if (boolean) {
-		return statement->run();
+		statement->run(outError);
+		return;
 	}
 	else {
 		for (int i = 0; i < ifElseStates.size(); i++)
 		{
-			auto [ifElseVal, ifElseError] = ifElseStates[i]->run();
+			bool ifElseBool = ifElseStates[i]->run(outError);
 
-			if (ifElseError.m_errorName != "NULL")
-				return { ifElseError };
+			if (outError.errorName != "NULL")
+				return;
 
-			if (ifElseVal) {
-				return Error();
+			if (ifElseBool) {
+				return;
 			}
 		}
 		if (elseState != nullptr) {
-			return elseState->run();
+			elseState->run(outError);
 		}
-		return Error();
+		return;
 	}
 }
 

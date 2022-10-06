@@ -23,5 +23,5 @@ public:
 	
 	IEASTNode(SymbTable* table, std::string_view path, std::string_view text);
 	~IEASTNode();
-	std::pair<Expression*, Error> getExpr();
+	Expression* getExpr(Error& outError);
 };

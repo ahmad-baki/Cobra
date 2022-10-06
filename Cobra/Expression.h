@@ -8,6 +8,6 @@ class Value;
 class Expression : public Node
 {
 public:
-	virtual std::pair<Value*, Error> run() = 0;
+	virtual Value* run(Error& outError) = 0;
 };
 
