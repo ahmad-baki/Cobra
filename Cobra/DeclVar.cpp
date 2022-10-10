@@ -41,7 +41,7 @@ void DeclVar::run(Error& outError)
 			data		= val->getData();
 		}
 
-		else if (targetType != val->getType()) {
+		else{
 			void* castVal = Value::Cast(val->getData(), val->getType(), targetType, outError);
 			if (castVal == nullptr) {
 				outError.line			= line;
@@ -50,9 +50,6 @@ void DeclVar::run(Error& outError)
 				return;
 			}
 			data = castVal;
-		}
-		else {
-			data = val->getData();
 		}
 	}
 	Interpreter::getSingelton()->declareVar(name, targetType, outError, data, isConst, isStaticType);

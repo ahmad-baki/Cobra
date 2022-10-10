@@ -1,12 +1,23 @@
-if(1){
-	var counter = 0;
-	var state = 1;
-	while(state){
-		counter = counter + 1;
-		print(counter);
-		if(counter == 4){
-			state = 0;
-		}
-	}
-	print(state);
+int primestotal = 10;
+int primes = 0;
+int n = 0;
+while (primes < primestotal) {
+    if (n == 2) {
+        print(n);
+    }
+    else {
+        int c = 2;
+        int prime = 1;
+        while (c * c <= n && prime == 1) {
+            if (n % c == 0) {
+                prime = 0;
+            }
+            c = c + 1;
+        }
+        if (prime) {
+            print(n);
+            primes = primes + 1;
+        }
+    }
+    n = n + 1;
 }

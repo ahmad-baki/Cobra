@@ -62,26 +62,33 @@ void Value::setVal(Value* val, Error& outError) {
 			line, startColumn, endColumn };
 		outError.copy(targetError);
 	}
-	else if (this->typeId == 0) {
-		if(data != nullptr)
-			delete this->data;
-		this->data = val->getData();
-		this->typeId = val->getType();
-	}
-	else if (isStaticType && typeId != val->getType()) {
-		void* castVal = Cast(val->getData(), val->getType(), this->typeId, outError);
-		if (castVal == nullptr)
-			return;
+	void* castVal = Cast(val->getData(), val->getType(), this->typeId, outError);
+	if (castVal == nullptr)
+		return;
 
-		delete this->data;
-		this->data = castVal;
-	}
-	else {
-		if (data != nullptr)
-			delete this->data;
-		this->data = val->getData();
-		this->typeId = val->getType();
-	}
+	delete this->data;
+	this->data = castVal;
+
+	//else if (this->typeId == 0) {
+	//	if(data != nullptr)
+	//		delete this->data;
+	//	this->data = val->getData();
+	//	this->typeId = val->getType();
+	//}
+	//else if (isStaticType && typeId != val->getType()) {
+	//	void* castVal = Cast(val->getData(), val->getType(), this->typeId, outError);
+	//	if (castVal == nullptr)
+	//		return;
+
+	//	delete this->data;
+	//	this->data = castVal;
+	//}
+	//else {
+	//	if (data != nullptr)
+	//		delete this->data;
+	//	this->data = val->getData();
+	//	this->typeId = val->getType();
+	//}
 }
 
 bool Value::getBool(Error& outError)
