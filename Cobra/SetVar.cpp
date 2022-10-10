@@ -1,12 +1,12 @@
 #include "SetVar.h"
 #include "RuntimeError.h"
+#include "Interpreter.h"
 
 
 
-SetVar::SetVar(std::string name, Expression* value, SymbTable* table, size_t line, size_t startColumn, size_t endColumn)
+SetVar::SetVar(std::string name, Expression* value, size_t line, size_t startColumn, size_t endColumn)
 	: name{ name }, value{ value }
 {
-	this->table = table;
 	this->line = line;
 	this->startColumn = startColumn;
 	this->endColumn = endColumn;
@@ -24,7 +24,7 @@ void SetVar::run(Error& outError)
 		return;
 	}
 
-	table->set(name, val, outError);
+	Interpreter::getSingelton()->setVar(name, val, outError);
 	if (outError.errorName != "NULL") {
 		outError.line			= line;
 		outError.startColumn	= startColumn;

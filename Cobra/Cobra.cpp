@@ -8,6 +8,7 @@
 #include "Lexer.h"
 #include <cstdlib>
 #include <chrono>
+#include "Interpreter.h"
 
 using namespace std::chrono;
 
@@ -37,16 +38,20 @@ double execFromFile(std::string path) {
 		return 0;
 	}
 
+	// neccesary to be before the parsing, so that std-types get loaded
+	Interpreter* interpreter = Interpreter::getSingelton();
+
 	Parser parser = Parser(input, path);
-	Statement* blockNode = parser.parse(tokenString, error);
+	std::vector<Statement*> statements = parser.parse(tokenString, error);
 
 	if (error.errorName != "NULL") {
 		std::cout << error << '\n' << std::endl;
 		return 0;
 	}
+	interpreter->setStatements(statements);
 
 	const auto startTime = system_clock::now();
-	blockNode->run(error);
+	interpreter->run(error);
 	const auto endTime = system_clock::now();
 	const double runTime = duration_cast<std::chrono::milliseconds>(endTime - startTime).count();
 
@@ -59,9 +64,9 @@ double execFromFile(std::string path) {
 }
 
 void execFromCommandLine() {
-	BlockNode blockNode = BlockNode();
 	size_t line = 1;
 	Error error{};
+	Interpreter* interpreter = Interpreter::getSingelton();
 	while (true) {
 		std::cout << "> ";
 		std::string input = "";
@@ -83,14 +88,14 @@ void execFromCommandLine() {
 		}
 
 		Parser parser = Parser(input, "<stdin>");
-		parser.parse(tokenString, &blockNode, error);
+		std::vector<Statement*> statements = parser.parse(tokenString, error);
 
 		if (error.errorName != "NULL") {
 			std::cout << error << '\n' << std::endl;
 			return;
 		}
-
-		blockNode.contin(error);
+		interpreter->addStatements(statements);
+		interpreter->contin(error);
 		if (error.errorName != "NULL") {
 			error.path = "<stdin>";
 			error.text = input;

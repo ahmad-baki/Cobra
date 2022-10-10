@@ -4,6 +4,7 @@
 #include "Parser.h"
 #include "printState.h"
 #include "SyntaxError.h"
+#include "Interpreter.h"
 
 
 
@@ -13,31 +14,22 @@ Parser::Parser(std::string_view text, std::string_view path)
 {
 }
 
-Statement* Parser::parse(std::vector<Token> tokens, Error& outError)
-{
-	BlockNode* block = new BlockNode();
-	parse(tokens, block, outError);
-	return block;
-}
-
-void Parser::parse(std::vector<Token> tokens, BlockNode* block, Error& outError)
+std::vector<Statement*> Parser::parse(std::vector<Token> tokens, Error& outError)
 {
 	tokenStream = tokens;
 	currentToken = tokenStream[0];
 	revert(0);
 
-	std::vector<Statement*> blockNode{};
+	std::vector<Statement*> statements{};
 	// main-parser loop
 	while (currentPos < tokens.size()) {
-		Statement* statement = getStatement(block->table, outError);
+		Statement* statement = getStatement(outError);
 		if (statement == nullptr) {
-			return;
+			return {};
 		}
-		blockNode.push_back(statement);
+		statements.push_back(statement);
 	}
-	for (Statement* statement : blockNode) {
-		block->add(statement);
-	}
+	return statements;
 }
 
 void Parser::advance()
@@ -59,7 +51,7 @@ void Parser::revert(size_t pos) {
 		currentToken = tokenStream[currentPos];
 }
 
-Statement* Parser::getStatement(SymbTable* table, Error& outError)
+Statement* Parser::getStatement(Error& outError)
 {
 	if (currentToken.dataType == TokenType::NONE) {
 		
@@ -69,7 +61,7 @@ Statement* Parser::getStatement(SymbTable* table, Error& outError)
 		return nullptr;
 	}
 
-	Statement*(Parser:: *getStateFuncs[])(SymbTable* table, Error& outError) = {
+	Statement*(Parser:: *getStateFuncs[])(Error& outError) = {
 		&Parser::getBlockState, 
 		&Parser::getIfState,
 		&Parser::getWhileState,
@@ -80,15 +72,13 @@ Statement* Parser::getStatement(SymbTable* table, Error& outError)
 	};
 
 	for (auto getStateFunc : getStateFuncs) {
-		Error getStateError{};
-		Statement* statement = (this->*getStateFunc)(table, getStateError);
+		Statement* statement = (this->*getStateFunc)(outError);
 		// when tere is a statement, that matches syntax
 		if (statement != nullptr)
 			return statement;
 
 		// if there is a syntax-error
 		if (outError.errorName != "NULL") {
-			outError.copy(getStateError);
 			return nullptr;
 		}
 	}
@@ -99,16 +89,16 @@ Statement* Parser::getStatement(SymbTable* table, Error& outError)
 }
 
 // Code-Block
-Statement* Parser::getBlockState(SymbTable* table, Error& outError)
+Statement* Parser::getBlockState(Error& outError)
 {
 	if (currentToken.dataType != TokenType::LCURLBRACKET)
 		return nullptr;
 
 	size_t startPos = currentPos;
 	advance();
-	auto blockNode = new BlockNode(std::vector<Statement*>{}, table);
+	auto blockNode = new BlockNode(std::vector<Statement*>{});
 	while (currentToken.dataType != TokenType::RCURLBRACKET) {
-		Statement* statement = getStatement(blockNode->table, outError);
+		Statement* statement = getStatement(outError);
 
 		if (outError.errorName != "NULL") {
 			return nullptr;
@@ -122,7 +112,7 @@ Statement* Parser::getBlockState(SymbTable* table, Error& outError)
 }
 
 // If-Statement
-Statement* Parser::getIfState(SymbTable* table, Error& outError)
+Statement* Parser::getIfState(Error& outError)
 {
 	if (currentToken.dataType != TokenType::IF)
 		return nullptr;
@@ -135,7 +125,7 @@ Statement* Parser::getIfState(SymbTable* table, Error& outError)
 	}
 	advance();
 
-	Expression* cond = getExpr(table, outError);
+	Expression* cond = getExpr(outError);
 	if (cond == nullptr) {
 		return nullptr;
 	}
@@ -151,21 +141,21 @@ Statement* Parser::getIfState(SymbTable* table, Error& outError)
 
 	advance();
 
-	Statement* statement = getStatement(table, outError);
+	Statement* statement = getStatement(outError);
 	if (statement == nullptr) {
 		delete cond;
 		return nullptr;
 	}
 
-	std::vector<ElseCond*> ifElseStates = getIfElse(table, outError);
+	std::vector<ElseCond*> ifElseStates = getIfElse(outError);
 
-	Statement* elseState = getElse(table, outError);
+	Statement* elseState = getElse(outError);
 
 	return new IfCond(cond, statement, ifElseStates, elseState);
 }
 
 // While-Loop
-Statement* Parser::getWhileState(SymbTable* table, Error& outError)
+Statement* Parser::getWhileState(Error& outError)
 {
 	if (currentToken.dataType != TokenType::WHILE)
 		return nullptr;
@@ -181,7 +171,7 @@ Statement* Parser::getWhileState(SymbTable* table, Error& outError)
 	}
 	advance();
 
-	Expression* cond = getExpr(table, outError);
+	Expression* cond = getExpr(outError);
 	if (cond == nullptr) {
 		return nullptr;
 	}
@@ -196,7 +186,7 @@ Statement* Parser::getWhileState(SymbTable* table, Error& outError)
 
 	advance();
 
-	Statement* statement = getStatement(table, outError);
+	Statement* statement = getStatement(outError);
 
 	if (statement == nullptr) {
 		delete cond;
@@ -207,7 +197,7 @@ Statement* Parser::getWhileState(SymbTable* table, Error& outError)
 }
 
 // Decl (initialization)
-Statement* Parser::getDeclState(SymbTable* table, Error& outError)
+Statement* Parser::getDeclState(Error& outError)
 {
 	bool constVar{false};
 	size_t startPos = currentPos;
@@ -240,17 +230,17 @@ Statement* Parser::getDeclState(SymbTable* table, Error& outError)
 	}
 	std::string varName = currentToken.value;
 
-	Value::DataType dataType;
+	int typeId{0};
 	switch (returnType)
 	{
 	case TokenType::INTWORD:
-		dataType = Value::INTTYPE;
+		typeId = Interpreter::getSingelton()->getTypeId("int", outError);
 		break;
 	case TokenType::FLOATWORD:
-		dataType = Value::DECTYPE;
+		typeId = Interpreter::getSingelton()->getTypeId("float", outError);
 		break;
 	case TokenType::VARWORD:
-		dataType = Value::UNDEFINED;
+		typeId = 0;
 		break;
 	default:
 		SyntaxError targetError = SyntaxError("Invalid Datatype", currentToken.line,
@@ -268,7 +258,7 @@ Statement* Parser::getDeclState(SymbTable* table, Error& outError)
 	// decl + init
 	else if (currentToken.dataType == TokenType::EQ) {
 		advance();
-		expr = getExpr(table, outError);
+		expr = getExpr(outError);
 
 		if (expr == nullptr) {
 			return nullptr;
@@ -281,13 +271,23 @@ Statement* Parser::getDeclState(SymbTable* table, Error& outError)
 		outError.copy(targetError);
 		return nullptr;
 	}
-	Statement* decl = new DeclVar(varName, table, currentToken.line, 
-		tokenStream[startPos].startColumn, currentToken.endColumn, constVar, true, dataType, expr);
+	
+	if (currentToken.dataType != TokenType::SEMICOLON)
+	{
+		delete expr;
+		SyntaxError targetError = SyntaxError("Presumably Missing ';'", currentToken.line,
+			currentToken.startColumn, currentToken.endColumn, path, text);
+		outError.copy(targetError);
+		return nullptr;
+	}
+	advance();
+	Statement* decl = new DeclVar(varName, currentToken.line,
+		tokenStream[startPos].startColumn, currentToken.endColumn, constVar, true, typeId, expr);
 	return decl;
 }
 
 // setVar
-Statement* Parser::getSetState(SymbTable* table, Error& outError)
+Statement* Parser::getSetState(Error& outError)
 {
 	if (currentToken.dataType != TokenType::IDENTIFIER) {
 		return nullptr;
@@ -302,8 +302,8 @@ Statement* Parser::getSetState(SymbTable* table, Error& outError)
 		return nullptr;
 	}
 	advance();
-	// get expr
-	Expression* expr = getExpr(table, outError);
+	// run expr
+	Expression* expr = getExpr(outError);
 
 	if (expr == nullptr)
 		return nullptr;
@@ -318,7 +318,7 @@ Statement* Parser::getSetState(SymbTable* table, Error& outError)
 		return nullptr;
 	}
 
-	SetVar* setVar = new SetVar(varName, expr, table, currentToken.line,
+	SetVar* setVar = new SetVar(varName, expr, currentToken.line,
 		tokenStream[startPos].startColumn, currentToken.endColumn);
 
 	advance();
@@ -326,7 +326,7 @@ Statement* Parser::getSetState(SymbTable* table, Error& outError)
 }
 
 // Empty statement
-Statement* Parser::getEmptyState(SymbTable* table, Error& outError)
+Statement* Parser::getEmptyState(Error& outError)
 {
 	if (currentToken.dataType != TokenType::SEMICOLON)
 		return nullptr;
@@ -335,7 +335,7 @@ Statement* Parser::getEmptyState(SymbTable* table, Error& outError)
 }
 
 // Print statement
-Statement* Parser::getPrint(SymbTable* table, Error& outError) 
+Statement* Parser::getPrint(Error& outError) 
 {
 	if (currentToken.dataType != TokenType::IDENTIFIER || 
 		currentToken.value != "print")
@@ -351,7 +351,7 @@ Statement* Parser::getPrint(SymbTable* table, Error& outError)
 		return nullptr;
 	}
 	advance();
-	Expression* expr = getExpr(table, outError);
+	Expression* expr = getExpr(outError);
 
 	if (expr == nullptr)
 		return nullptr;
@@ -376,7 +376,7 @@ Statement* Parser::getPrint(SymbTable* table, Error& outError)
 }
 
 // list of else if statements
-std::vector<ElseCond*> Parser::getIfElse(SymbTable* table, Error& outError)
+std::vector<ElseCond*> Parser::getIfElse(Error& outError)
 {
 	auto output = std::vector<ElseCond*>();
 	while (currentToken.dataType == TokenType::ELSE) {
@@ -399,7 +399,7 @@ std::vector<ElseCond*> Parser::getIfElse(SymbTable* table, Error& outError)
 		}
 		advance();
 
-		Expression* cond = getExpr(table, outError);
+		Expression* cond = getExpr(outError);
 		if (cond == nullptr){
 			return {};
 		}
@@ -413,7 +413,7 @@ std::vector<ElseCond*> Parser::getIfElse(SymbTable* table, Error& outError)
 
 		advance();
 
-		Statement* statement = getStatement(table, outError);
+		Statement* statement = getStatement(outError);
 		if (statement == nullptr) {
 			delete cond;
 			return {};
@@ -425,21 +425,21 @@ std::vector<ElseCond*> Parser::getIfElse(SymbTable* table, Error& outError)
 }
 
 // else statement
-Statement* Parser::getElse(SymbTable* table, Error& outError) {
+Statement* Parser::getElse(Error& outError) {
 	if (currentToken.dataType != TokenType::ELSE)
 		return nullptr;
 
 	size_t startPos = currentPos;
 	advance();
 
-	Statement* statement = getStatement(table, outError);
+	Statement* statement = getStatement(outError);
 	if (statement == nullptr) {
 		return nullptr;
 	}
 	return statement;
 }
 
-Expression* Parser::getExpr(SymbTable* table, Error& outError)
+Expression* Parser::getExpr(Error& outError)
 {
 	std::vector<Token> tokenStream = getExprTokStream();
 	if (tokenStream.size() == 0) {
@@ -450,8 +450,8 @@ Expression* Parser::getExpr(SymbTable* table, Error& outError)
 	}
 
 	tokenStream = transExprTokStream(tokenStream);
-	IEASTNode rootNode = IEASTNode(table, path, text);
-	streamToIEAST(tokenStream, table, rootNode, outError);
+	IEASTNode rootNode = IEASTNode(path, text);
+	streamToIEAST(tokenStream, rootNode, outError);
 
 	if (outError.errorName != "NULL") {
 		SyntaxError targetError = SyntaxError("Invalid Expression", currentToken.line,
@@ -465,7 +465,7 @@ Expression* Parser::getExpr(SymbTable* table, Error& outError)
 }
 
 // delete the node, becouse its constructed on the heap
-void Parser::getIEAST(SymbTable* table, IEASTNode& rootNode, Error& outError) {
+void Parser::getIEAST(IEASTNode& rootNode, Error& outError) {
 	std::vector<Token> tokenStream = getExprTokStream();
 	if (tokenStream.size() == 0){
 		SyntaxError targetError = SyntaxError("Invalid Expression", currentToken.line,
@@ -475,11 +475,11 @@ void Parser::getIEAST(SymbTable* table, IEASTNode& rootNode, Error& outError) {
 	}
 
 	tokenStream = transExprTokStream(tokenStream);
-	streamToIEAST(tokenStream, table, rootNode, outError);
+	streamToIEAST(tokenStream, rootNode, outError);
 }
 
 // delete the node, becouse its constructed on the heap
-void Parser::streamToIEAST(std::vector<Token> tokenStream, SymbTable* table, IEASTNode& rootNode, Error& outError)
+void Parser::streamToIEAST(std::vector<Token> tokenStream, IEASTNode& rootNode, Error& outError)
 {
 	auto nodeStack = std::stack<IEASTNode*>();
 	nodeStack.push(&rootNode);
@@ -488,7 +488,7 @@ void Parser::streamToIEAST(std::vector<Token> tokenStream, SymbTable* table, IEA
 		{
 		case TokenType::LBRACKET:
 		{
-			IEASTNode* lNode = new IEASTNode(table, path, text);
+			IEASTNode* lNode = new IEASTNode(path, text);
 			nodeStack.top()->leftNode = lNode;
 			nodeStack.push(lNode);
 			break;
@@ -524,7 +524,7 @@ void Parser::streamToIEAST(std::vector<Token> tokenStream, SymbTable* table, IEA
 		default:
 			IEASTNode* topNode = nodeStack.top();
 			topNode->token = tokenStream[i];
-			IEASTNode* rightNode = new IEASTNode(table, path, text);
+			IEASTNode* rightNode = new IEASTNode(path, text);
 			topNode->rightNode = rightNode;
 			nodeStack.push(rightNode);
 			break;

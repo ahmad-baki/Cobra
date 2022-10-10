@@ -1,5 +1,6 @@
 #include "PrintState.h"
 #include <iostream>
+#include "Value.h"
 
 PrintState::PrintState(Expression* param)
 	: param{param}

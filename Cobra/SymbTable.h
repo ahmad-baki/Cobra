@@ -15,10 +15,10 @@ public:
 	SymbTable(SymbTable* parent = nullptr);
 	~SymbTable();
 
-	void declare(std::string name, Value* val, Error& outError, bool isConst = false, bool isStaticType = false);
-	void declare(std::string name, enum Value::DataType dataType, Error& outError, void* data = nullptr, bool isConst = false, bool isStaticType = false);
+	void declareVar(std::string name, Value* val, Error& outError, bool isConst = false, bool isStaticType = false);
+	void declareVar(std::string name, int typeId, Error& outError, void* data = nullptr, bool isConst = false, bool isStaticType = false);
 	Value* run(std::string name, Error& outError);
-	void set(std::string name, Value* val, Error& outError);
+	void setVar(std::string name, Value* val, Error& outError);
 
 	bool isVarDecl(std::string name);
 
@@ -31,13 +31,13 @@ public:
 	//std::map<std::string, int> varNames;
 
 	/*template<SuppType T>
-	Error declare(std::string name, T value);
+	Error declareVar(std::string name, T value);
 
 	template<>
-	Error declare(std::string name, int value);
+	Error declareVar(std::string name, int value);
 
 	template<>
-	Error declare(std::string name, float value);
+	Error declareVar(std::string name, float value);
 
 	template<SuppType T>
 	std::pair<T, Error> run(std::string name);
@@ -49,13 +49,13 @@ public:
 	std::pair<int, Error> run(std::string name);
 
 	template<SuppType T>
-	Error set(std::string name, T value);
+	Error setVar(std::string name, T value);
 
 	template<>
-	Error set(std::string name, int value);
+	Error setVar(std::string name, int value);
 
 	template<>
-	Error set(std::string name, float value);
+	Error setVar(std::string name, float value);
 
 	Error reg(std::string name, int type);*/
 

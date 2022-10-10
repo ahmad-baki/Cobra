@@ -13,7 +13,6 @@ class Parser;
 class IEASTNode
 {
 public:
-	SymbTable* table;
 	Token token;
 	IEASTNode* leftNode{nullptr};
 	IEASTNode* rightNode{nullptr};
@@ -21,7 +20,7 @@ public:
 	std::string_view text;
 
 	
-	IEASTNode(SymbTable* table, std::string_view path, std::string_view text);
+	IEASTNode(std::string_view path, std::string_view text);
 	~IEASTNode();
 	Expression* getExpr(Error& outError);
 };

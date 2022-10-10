@@ -23,22 +23,21 @@ SymbTable::~SymbTable()
 	}
 }
 
-void SymbTable::declare(std::string name, Value* val, Error& outError, bool isConst, bool isStaticType) {
-	declare(name, val->getType(), outError, val->getData(), isConst, isStaticType);
+void SymbTable::declareVar(std::string name, Value* val, Error& outError, bool isConst, bool isStaticType) {
+	declareVar(name, val->getType(), outError, val->getData(), isConst, isStaticType);
 }
 
-void SymbTable::declare(std::string name, enum Value::DataType dataType, Error& outError, void* data, bool isConst, bool isStaticType) {
+void SymbTable::declareVar(std::string name, int typeId, Error& outError, void* data, bool isConst, bool isStaticType) {
 	if (isVarDecl(name)) {
-		RuntimeError targetError = RuntimeError(std::format("Tried to declar variable {}, despite it already existing"
-			, name));
+		RuntimeError targetError = RuntimeError("Tried to declar variable " + name + ", despite it already existing");
 		outError.copy(targetError);
 	}
 
-	Value* newVal = new Value{ dataType, data, outError, isConst, isStaticType };
+	Value* newVal = new Value{ typeId, data, outError, isConst, isStaticType };
 	variables.emplace(name, newVal);
 }
 
-void SymbTable::set(std::string name, Value* tVal, Error& outError)
+void SymbTable::setVar(std::string name, Value* tVal, Error& outError)
 {
 	Value* val = this->run(name, outError);
 
@@ -58,8 +57,7 @@ Value* SymbTable::run(std::string name, Error& outError)
 			parent->run(name, outError);
 		}
 
-		RuntimeError targetError = RuntimeError(std::format("Tried to get variable {}, despite it not existing"
-			, name));
+		RuntimeError targetError = RuntimeError("Tried to run variable " + name +", despite it not existing");
 		outError.copy(targetError);
 		return nullptr;
 	}
@@ -67,7 +65,8 @@ Value* SymbTable::run(std::string name, Error& outError)
 }
 
 bool SymbTable::isVarDecl(std::string name) {
-	if (variables.contains(name))
+	auto elem = variables.find(name);
+	if (elem == variables.end())
 		return true;
 	if (parent != nullptr)
 		return parent->isVarDecl(name);
@@ -75,21 +74,21 @@ bool SymbTable::isVarDecl(std::string name) {
 }
 #pragma region OLD-CODE
 //template<SuppType T>
-//Error SymbTable::declare(std::string name, T value) {
+//Error SymbTable::declareVar(std::string name, T value) {
 //	if (isVarDecl(name)) {
 //		return RuntimeError("Invalid type");
 //	}
 //}
 //
 //template<>
-//Error SymbTable::declare(std::string name, bool value) {
-//	return declare<int>(name, value);
+//Error SymbTable::declareVar(std::string name, bool value) {
+//	return declareVar<int>(name, value);
 //}
 //
 //template<>
-//Error SymbTable::declare(std::string name, int value) {
+//Error SymbTable::declareVar(std::string name, int value) {
 //	if (isVarDecl(name)){
-//		return RuntimeError("tried to declare " + name + " despite it already existing");
+//		return RuntimeError("tried to declareVar " + name + " despite it already existing");
 //	}
 //	integers.insert(std::pair<std::string, int>(name, value));
 //	varNames.insert(std::pair<std::string, int>(name, 0));
@@ -97,9 +96,9 @@ bool SymbTable::isVarDecl(std::string name) {
 //}
 //
 //template<>
-//Error SymbTable::declare(std::string name, float value) {
+//Error SymbTable::declareVar(std::string name, float value) {
 //	if (isVarDecl(name)) {
-//		return RuntimeError("tried to declare " + name + " despite it already existing");
+//		return RuntimeError("tried to declareVar " + name + " despite it already existing");
 //	}
 //	floats.insert(std::pair<std::string, float>(name, value));
 //	varNames.insert(std::pair<std::string, int>(name, 1));
@@ -112,7 +111,7 @@ bool SymbTable::isVarDecl(std::string name) {
 //#pragma region SET
 //
 //template<SuppType T>
-//Error SymbTable::set(std::string name, T value) {
+//Error SymbTable::setVar(std::string name, T value) {
 //	if (isVarDecl(name)) {
 //		return RuntimeError("invalid type");
 //	}
@@ -120,9 +119,9 @@ bool SymbTable::isVarDecl(std::string name) {
 //	//auto elem = varNames.find(name);
 //	//if (elem == varNames.end()) {
 //	//	if(parent == nullptr)
-//	//		(*parent).set(name, value);
+//	//		(*parent).setVar(name, value);
 //	//	else
-//	//		throw std::invalid_argument("tried to set" + name + "despite it not existing");
+//	//		throw std::invalid_argument("tried to setVar" + name + "despite it not existing");
 //	//}
 //	//switch ((*elem).second)
 //	//{
@@ -138,24 +137,24 @@ bool SymbTable::isVarDecl(std::string name) {
 //}
 //
 //template<>
-//Error SymbTable::set(std::string name, bool value) {
-//	return set<int>(name, value);
+//Error SymbTable::setVar(std::string name, bool value) {
+//	return setVar<int>(name, value);
 //}
 //
 //
 //template<>
-//Error SymbTable::set(std::string name, int value) {
+//Error SymbTable::setVar(std::string name, int value) {
 //	auto elem = integers.find(name);
 //	if (elem == integers.end()){	
 //		if (parent == nullptr) {
-//			return RuntimeError("tried to set " + name + " despite it not existing");
+//			return RuntimeError("tried to setVar " + name + " despite it not existing");
 //		}
 //
-//		Error intError = parent->set<int>(name, value);
+//		Error intError = parent->setVar<int>(name, value);
 //		if (intError.m_errorName == "NULL")
 //			return Error();
 //
-//		Error floatError = parent->set<float>(name, value);
+//		Error floatError = parent->setVar<float>(name, value);
 //
 //		if (floatError.m_errorName != "NULL")
 //			return floatError;
@@ -167,18 +166,18 @@ bool SymbTable::isVarDecl(std::string name) {
 //}
 //
 //template<>
-//Error SymbTable::set(std::string name, float value) {
+//Error SymbTable::setVar(std::string name, float value) {
 //	auto elem = floats.find(name);
 //	if (elem == floats.end()) {
 //		if (parent == nullptr) {
-//			return RuntimeError("tried to set " + name + " despite it not existing");
+//			return RuntimeError("tried to setVar " + name + " despite it not existing");
 //		}
 //
-//		Error floatError = parent->set<float>(name, value);
+//		Error floatError = parent->setVar<float>(name, value);
 //		if (floatError.m_errorName == "NULL")
 //			return Error();
 //
-//		Error intError = parent->set<int>(name, value);
+//		Error intError = parent->setVar<int>(name, value);
 //
 //		if (intError.m_errorName != "NULL")
 //			return intError;
@@ -201,7 +200,7 @@ bool SymbTable::isVarDecl(std::string name) {
 //	//if (elem == varNames.end()) {
 //	//	if (parent == nullptr)
 //	//		return (*parent).run<T>(name);
-//	//	throw std::invalid_argument("tried to set" + name + "despite it not existing");
+//	//	throw std::invalid_argument("tried to setVar" + name + "despite it not existing");
 //	//}
 //	//switch ((*elem).second)
 //	//{
@@ -224,7 +223,7 @@ bool SymbTable::isVarDecl(std::string name) {
 //	auto elem = integers.find(name);
 //	if (elem == integers.end()) {
 //		if (parent == nullptr) {
-//			return { 0, RuntimeError("tried to get undeclared variable " + name) };
+//			return { 0, RuntimeError("tried to run undeclared variable " + name) };
 //		}
 //
 //		auto [intVal, intError] = parent->run<int>(name);
@@ -248,7 +247,7 @@ bool SymbTable::isVarDecl(std::string name) {
 //	if (elem == floats.end()) {
 //
 //		if (parent == nullptr) {
-//			return { 0, RuntimeError("tried to get undeclared variable " + name) };
+//			return { 0, RuntimeError("tried to run undeclared variable " + name) };
 //		}
 //
 //		auto [floatVal, floatError] = parent->run<float>(name);
@@ -296,7 +295,7 @@ bool SymbTable::isVarDecl(std::string name) {
 //		return { elem->second, Error() };
 //	if (parent != nullptr)
 //		return parent->getRegVar(name);
-//	return { 0, SyntaxError("tried to get not existing variable " + name) };
+//	return { 0, SyntaxError("tried to run not existing variable " + name) };
 //}
 //
 //Error SymbTable::clearParseReg() {

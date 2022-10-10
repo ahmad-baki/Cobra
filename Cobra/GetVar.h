@@ -9,10 +9,9 @@ class GetVar : public Expression
 {
 private:
     std::string varName;
-    SymbTable* table;
 
 public:
-    GetVar(std::string varName, SymbTable* table, size_t line, size_t startColumn, size_t endColumn);
+    GetVar(std::string varName, size_t line, size_t startColumn, size_t endColumn);
     Value* run(Error& outError);
 };
 

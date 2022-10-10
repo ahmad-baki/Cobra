@@ -16,7 +16,6 @@
 #include "Statement.h"
 #include <string_view>
 #include "SetVar.h"
-#include "SymbTable.h"
 #include "Token.h"
 #include "TokenType.h"
 #include "SuppType.h"
@@ -26,8 +25,7 @@ class Parser
 {
 public:
 	Parser(std::string_view text, std::string_view path);
-	Statement* parse(std::vector<Token> tokens, Error& outError);
-	void parse(std::vector<Token> tokens, BlockNode* block, Error& outError);
+	std::vector<Statement*> parse(std::vector<Token> tokens, Error& outError);
 
 	std::string_view text;
 	std::string_view path;
@@ -39,22 +37,22 @@ private:
 
 	void advance();
 	void revert(size_t pos);
-	Statement* getStatement(SymbTable* table, Error& outError);
-	Statement* getBlockState(SymbTable* table, Error& outError);
-	Statement* getIfState(SymbTable* table, Error& outError);
-	Statement* getWhileState(SymbTable* table, Error& outError);
-	Statement* getDeclState(SymbTable* table, Error& outError);
-	Statement* getSetState(SymbTable* table, Error& outError);
-	Statement* getEmptyState(SymbTable* table, Error& outError);
+	Statement* getStatement(Error& outError);
+	Statement* getBlockState(Error& outError);
+	Statement* getIfState(Error& outError);
+	Statement* getWhileState(Error& outError);
+	Statement* getDeclState(Error& outError);
+	Statement* getSetState(Error& outError);
+	Statement* getEmptyState(Error& outError);
 
-	Statement* getPrint(SymbTable* table, Error& outError);
+	Statement* getPrint(Error& outError);
 
-	std::vector<ElseCond*> getIfElse(SymbTable* table, Error& outError);
-	Statement* getElse(SymbTable* table, Error& outError);
+	std::vector<ElseCond*> getIfElse(Error& outError);
+	Statement* getElse(Error& outError);
 
-	Expression* getExpr(SymbTable* table, Error& outError);
-	void getIEAST(SymbTable* table, IEASTNode& rootNode, Error& outError);
-	void streamToIEAST(std::vector<Token> tokenStream, SymbTable* table, IEASTNode& rootNode, Error& outError);
+	Expression* getExpr(Error& outError);
+	void getIEAST(IEASTNode& rootNode, Error& outError);
+	void streamToIEAST(std::vector<Token> tokenStream, IEASTNode& rootNode, Error& outError);
 	std::vector<Token> getExprTokStream();
 	std::vector<Token> transExprTokStream(std::vector<Token> tokenStream);
 	std::vector<Token> addBrackets(std::vector<Token> tokenStream, std::vector<enum TokenType> op);

@@ -10,11 +10,12 @@ private:
 	//SymbTable table;
 	std::vector<Statement*> blockNode;
 	size_t nextExecIndex;
+	std::string name;
 
 public:
 	// the empty BlockNode
 	BlockNode();
-	BlockNode(std::vector<Statement*> blockNode, SymbTable* parentTable);
+	BlockNode(std::vector<Statement*> blockNode, std::string name = "CodeBlock");
 	void contin(Error& outError);
 	void run(Error& outError);
 	void add(Statement* statement);

@@ -3,71 +3,53 @@
 #include <format>
 #include "TokenType.cpp"
 #include <vector>
+#include <string>
+#include "Interpreter.h"
+
+
 
 Value::Value()
-	: dataType{ UNDEFINED }, data{ nullptr }, isConst{ false }, 
+	: typeId{ 0 }, data{ nullptr }, isConst{ false },
 	isStaticType{ false }
 {
 }
 
-Value::Value(enum DataType dataType, void* data, Error& outError, bool isConst, bool isStaticType)
-	: dataType{ dataType }, data{ data }, isConst{ isConst }, 
+Value::Value(int typeId, void* data, Error& outError, bool isConst, bool isStaticType)
+	: typeId{ typeId }, data{ data }, isConst{ isConst },
 	isStaticType{ isStaticType }
 {
-	if (data == nullptr || dataType == -1) {
-		this->dataType = dataType;
-		this->data = nullptr;
-		return;
-	}
-	void* castVal = Cast(data, dataType, this->dataType, outError);
-
-	if (castVal == nullptr) {
-		return;
-	}
-
-	this->dataType = dataType;
-	this->data = castVal;
+	this->typeId = typeId;
+	//this->data = castVal;
+	this->data = data;
 }
 
-Value::Value(Value* other, Error& outError, enum DataType dataType, bool isConst, bool isStaticType)
+Value::Value(Value* other, Error& outError, int typeId, bool isConst, bool isStaticType)
 	: isConst{ isConst }, isStaticType{ isStaticType }
 {
 	if (other == nullptr) {
-		this->dataType	= dataType;
+		this->typeId	= typeId;
 		this->data		= nullptr;
 		return;
 	}
-	if (dataType == -1 || dataType == other->getType()) {
-		this->dataType	= other->getType();
+	if (typeId == 0 || typeId == other->getType()) {
+		this->typeId	= other->getType();
 		this->data		= other->data;
 		return;
 	}
-	void* castVal = Cast(other->data, dataType, this->dataType, outError);
+	void* castVal = Cast(other->data, typeId, this->typeId, outError);
 
 	if (castVal == nullptr) {
 		return;
 	}
 
-	this->dataType	= dataType;
+	this->typeId	= typeId;
 	this->data		= castVal;
 }
 
-Value::Value(Value& old_obj) {
-	dataType		= old_obj.dataType;
-	data			= old_obj.data;
-	isConst			= old_obj.isConst;
-	isStaticType	= old_obj.isStaticType;
-}
-
 Value::~Value() {
-	//if (isIter) {
-	//	std::vector<Value*> arr = *(std::vector<Value*>*)data;
-	//	for (Value* valP : arr) {
-	//		delete valP;
-	//	}
-
-	//}
-	delete data;
+	if (data != nullptr) {
+		delete data;
+	}
 }
 
 Value* Value::run(Error& outError) {
@@ -76,17 +58,18 @@ Value* Value::run(Error& outError) {
 
 void Value::setVal(Value* val, Error& outError) {
 	if (isConst) {
-		RuntimeError targetError = RuntimeError("Tried to write in const Variable", line, startColumn, endColumn);
+		RuntimeError targetError{ "Tried to write in const Variable", 
+			line, startColumn, endColumn };
 		outError.copy(targetError);
 	}
-	if (this->dataType == UNDEFINED) {
+	else if (this->typeId == 0) {
 		if(data != nullptr)
 			delete this->data;
 		this->data = val->getData();
-		this->dataType = val->getType();
+		this->typeId = val->getType();
 	}
-	else if (isStaticType && dataType != val->getType()) {
-		void* castVal = Cast(val->getData(), val->getType(), this->dataType, outError);
+	else if (isStaticType && typeId != val->getType()) {
+		void* castVal = Cast(val->getData(), val->getType(), this->typeId, outError);
 		if (castVal == nullptr)
 			return;
 
@@ -97,133 +80,133 @@ void Value::setVal(Value* val, Error& outError) {
 		if (data != nullptr)
 			delete this->data;
 		this->data = val->getData();
-		this->dataType = val->getType();
+		this->typeId = val->getType();
 	}
 }
 
 bool Value::getBool(Error& outError)
 {
 	Error targetError{};
-	switch (dataType)
-	{
-	case 0:
+	Interpreter* interpr = Interpreter::getSingelton();
+	if (typeId == interpr->getTypeId("int", outError)) {
 		return bool(*(int*)data);
-	case 1:
+	}
+	if (typeId == interpr->getTypeId("int", outError)) {
 		return bool(*(float*)data);
-	case -1:
-		targetError = RuntimeError("Cannot acces data of variable which is not defined", 
+	}
+	if (typeId == 0) {
+		targetError = RuntimeError("Cannot acces data of variable which is not defined",
 			line, startColumn, endColumn);
 		outError.copy(targetError);
 		return false;
-	default:
-		targetError = RuntimeError("Invalid DataType", line, startColumn, endColumn);
-		outError.copy(targetError);
-		return false;
 	}
+	targetError = RuntimeError("Invalid DataType", line, startColumn, endColumn);
+	outError.copy(targetError);
+	return false;
 }
 
-Value::DataType Value::getType()
+int Value::getType()
 {
-	return dataType;
+	return typeId;
 }
 
-template<>
-Value* Value::calcOp(int* val1, int* val2, enum TokenType op, Error& outError) {
+template<SuppType T>
+Value* Value::calcOp(T* val1, T* val2, enum TokenType op, int typeId, Error& outError) {
 	switch (op)
 	{
 	case TokenType::PLUS:
-		new Value(Value::INTTYPE, new int{*val1 + *val2}, outError);
+		return new Value(typeId, new T( *val1 + *val2 ), outError);
 	case TokenType::MINUS:
-		new Value(Value::INTTYPE, new int{ *val1 - *val2 }, outError);
+		return new Value(typeId, new T( *val1 - *val2 ), outError);
 	case TokenType::DIV:
 		if (*val2 == 0) {
-			RuntimeError targetError = RuntimeError(std::format("ZeroDivisionError: {}/{}",
-				std::to_string(*val1), "0"), line, startColumn, endColumn);
+			RuntimeError targetError = RuntimeError("ZeroDivisionError: " + 
+				std::to_string(*val1) + "/0 ", line, startColumn, endColumn);
 			outError.copy(targetError);
 			return nullptr;
 		}
-		new Value(Value::INTTYPE, new int{ *val1 / *val2 }, outError);
+		return new Value(typeId, new T( *val1 / *val2 ), outError);
 	case TokenType::MUL:
-		new Value(Value::INTTYPE, new int{ *val1 * *val2 }, outError);
+		return new Value(typeId, new T( *val1 * *val2 ), outError);
 	case TokenType::EQEQ:
-		new Value(Value::INTTYPE, new int{ *val1 == *val2 }, outError);
+		return new Value(typeId, new T( *val1 == *val2 ), outError);
 	case TokenType::EXCLAEQ:
-		new Value(Value::INTTYPE, new int{ *val1 != *val2 }, outError);
+		return new Value(typeId, new T( *val1 != *val2 ), outError);
 	case TokenType::SMALL:
-		new Value(Value::INTTYPE, new int{ *val1 < *val2 }, outError);
+		return new Value(typeId, new T( *val1 < *val2 ), outError);
 	case TokenType::SMALLEQ:
-		new Value(Value::INTTYPE, new int{ *val1 <= *val2 }, outError);
+		return new Value(typeId, new T( *val1 <= *val2 ), outError);
 	case TokenType::BIG:
-		new Value(Value::INTTYPE, new int{ *val1 > *val2 }, outError);
+		return new Value(typeId, new T( *val1 > *val2 ), outError);
 	case TokenType::BIGEQ:
-		new Value(Value::INTTYPE, new int{ *val1 >= *val2 }, outError);
+		return new Value(typeId, new T( *val1 >= *val2 ), outError);
 	case TokenType::AND:
-		new Value(Value::INTTYPE, new int{ *val1 && *val2 }, outError);
+		return new Value(typeId, new T( *val1 && *val2 ), outError);
 	case TokenType::OR:
-		new Value(Value::INTTYPE, new int{ *val1 || *val2 }, outError);
+		return new Value(typeId, new T( *val1 || *val2 ), outError);
 	case TokenType::MOD:
 		if (val2 == 0) {
-			RuntimeError targetError = RuntimeError(std::format("ZeroModError: {}/{}",
-				std::to_string(*val1), "0"), line, startColumn, endColumn);
+			RuntimeError targetError = RuntimeError("ZeroModError: " + 
+				std::to_string(*val1) + "/0", line, startColumn, endColumn);
 			return nullptr;
 		}
-		return new Value(Value::INTTYPE, new int(std::fmod(*val1, *val2)), outError);
+		return new Value(typeId, new T(std::fmod(*val1, *val2)), outError);
 	}
 
-	RuntimeError targetError = RuntimeError(std::format("Invalid Operator: {}",
-		std::to_string(op)), line, startColumn, endColumn);
+	RuntimeError targetError = RuntimeError("Invalid Operator: " + std::to_string(op),
+		line, startColumn, endColumn);
 	outError.copy(targetError);
 	return nullptr;
 }
 
-template<>
-Value* Value::calcOp(float* val1, float* val2, enum TokenType op, Error& outError) {
-	switch (op)
-	{
-	case TokenType::PLUS:
-		return new Value(Value::DECTYPE, new float{*val1 + *val2}, outError);
-	case TokenType::MINUS:
-		return new Value(Value::DECTYPE, new float{ *val1 - *val2 }, outError);
-	case TokenType::DIV:
-		if (val2 == 0) {
-			RuntimeError targetError = RuntimeError(std::format("ZeroDivisionError: {}/{}", std::to_string(*val1), '0'), 
-				line, startColumn, endColumn);
-			outError.copy(targetError);
-			return nullptr;
-		}
-		return new Value(Value::DECTYPE, new float{ *val1 / *val2 }, outError);
-	case TokenType::MUL:
-		return new Value(Value::DECTYPE, new float{ *val1 * *val2 }, outError);
-	case TokenType::EQEQ:
-		return new Value(Value::DECTYPE, new float(*val1 == *val2), outError);
-	case TokenType::EXCLAEQ:
-		return new Value(Value::DECTYPE, new float(*val1 != *val2), outError);
-	case TokenType::SMALL:
-		return new Value(Value::DECTYPE, new float(*val1 < *val2), outError);
-	case TokenType::SMALLEQ:
-		return new Value(Value::DECTYPE, new float(*val1 <= *val2), outError);
-	case TokenType::BIG:
-		return new Value(Value::DECTYPE, new float(*val1 > *val2), outError);
-	case TokenType::BIGEQ:
-		return new Value(Value::DECTYPE, new float(*val1 >= *val2), outError);
-	case TokenType::AND:
-		return new Value(Value::DECTYPE, new float(*val1 && *val2), outError);
-	case TokenType::OR:
-		return new Value(Value::DECTYPE, new float(*val1 || *val2), outError);
-	case TokenType::MOD:
-		if (val2 == 0) {
-			RuntimeError targetError = RuntimeError(std::format("ZeroModError: {}/{}", std::to_string(*val1), "0"), 
-				line, startColumn, endColumn);
-			outError.copy(targetError);
-			return nullptr;
-		}
-		return new Value(Value::DECTYPE, new float{ std::fmod(*val1, *val2) }, outError);
-	}
-
-	RuntimeError targetError = RuntimeError("Invalid Operator: ", line, startColumn, endColumn);
-	outError.copy(targetError);
-	return nullptr;
-}
+////template<>
+//Value* Value::calcOp(float* val1, float* val2, enum TokenType op, Error& outError) {
+//	switch (op)
+//	{
+//	case TokenType::PLUS:
+//		return new Value(Value::DECTYPE, new float{*val1 + *val2}, outError);
+//	case TokenType::MINUS:
+//		return new Value(Value::DECTYPE, new float{ *val1 - *val2 }, outError);
+//	case TokenType::DIV:
+//		if (val2 == 0) {
+//			RuntimeError targetError = RuntimeError("ZeroDivisionError: " + std::to_string(*val1) + "/0",
+//				line, startColumn, endColumn);
+//			outError.copy(targetError);
+//			return nullptr;
+//		}
+//		return new Value(Value::DECTYPE, new float{ *val1 / *val2 }, outError);
+//	case TokenType::MUL:
+//		return new Value(Value::DECTYPE, new float{ *val1 * *val2 }, outError);
+//	case TokenType::EQEQ:
+//		return new Value(Value::DECTYPE, new float(*val1 == *val2), outError);
+//	case TokenType::EXCLAEQ:
+//		return new Value(Value::DECTYPE, new float(*val1 != *val2), outError);
+//	case TokenType::SMALL:
+//		return new Value(Value::DECTYPE, new float(*val1 < *val2), outError);
+//	case TokenType::SMALLEQ:
+//		return new Value(Value::DECTYPE, new float(*val1 <= *val2), outError);
+//	case TokenType::BIG:
+//		return new Value(Value::DECTYPE, new float(*val1 > *val2), outError);
+//	case TokenType::BIGEQ:
+//		return new Value(Value::DECTYPE, new float(*val1 >= *val2), outError);
+//	case TokenType::AND:
+//		return new Value(Value::DECTYPE, new float(*val1 && *val2), outError);
+//	case TokenType::OR:
+//		return new Value(Value::DECTYPE, new float(*val1 || *val2), outError);
+//	case TokenType::MOD:
+//		if (val2 == 0) {
+//			RuntimeError targetError = RuntimeError("ZeroModError: " + std::to_string(*val1) +"/{}",
+//				line, startColumn, endColumn);
+//			outError.copy(targetError);
+//			return nullptr;
+//		}
+//		return new Value(Value::DECTYPE, new float{ std::fmod(*val1, *val2) }, outError);
+//	}
+//
+//	RuntimeError targetError = RuntimeError("Invalid Operator: ", line, startColumn, endColumn);
+//	outError.copy(targetError);
+//	return nullptr;
+//}
 
 Value* Value::doOp(Value& other, enum TokenType op, Error& outError)
 {
@@ -233,91 +216,83 @@ Value* Value::doOp(Value& other, enum TokenType op, Error& outError)
 		outError.copy(targetError);
 		return nullptr;
 	}
-	Value* otherData = other.run(outError);
-	if (otherData == nullptr)
-		return nullptr;
 
-	void* castVal = Cast(otherData->data, otherData->dataType, this->dataType, outError);
+	void* castVal = Cast(other.data, other.typeId, this->typeId, outError);
 	if (castVal == nullptr)
 		return nullptr;
+	Value* result{ nullptr };
 
-	switch (this->dataType)
-	{
-	case INTTYPE:
-		return calcOp<int>((int*)data, (int*)castVal, op, outError);
-	case DECTYPE:
-		return calcOp<float>((float*)data, (float*)castVal, op, outError);
-	default:
+	Interpreter* interpreter = Interpreter::getSingelton();
+	int intTypeId = interpreter->getTypeId("int", outError);
+	int floatTypeId = interpreter->getTypeId("float", outError);
+	if (this->typeId == intTypeId) {
+		result = calcOp((int*)data, (int*)castVal, op, intTypeId, outError);
+	}
+	else if (this->typeId == floatTypeId) {
+		result = calcOp((float*)data, (float*)castVal, op, floatTypeId, outError);
+	}
+	else{
 		RuntimeError targetError = RuntimeError("Invalid DataType", line, startColumn, endColumn);
 		outError.copy(targetError);
-		return nullptr;
 	}
+	delete castVal;
+	return result;
 }
 
 void* Value::getData() {
 	return data;
 }
 
+
+void* Value::Cast(void* data, int o_typeId, int t_typeId, Error& outError) {
+	// checks viable conversions
+	void* returnValue{ nullptr };
+	Interpreter* interpreter = Interpreter::getSingelton();
+	int intTypeId = interpreter->getTypeId("int", outError);
+	int floatTypeId = interpreter->getTypeId("float", outError);
+
+	if (t_typeId == intTypeId) {
+		if (o_typeId == intTypeId){
+			returnValue = (void*)new int{ *(int*)data };
+		}
+		else if (o_typeId == floatTypeId) {
+			returnValue = (void*)new int(*(float*)data);
+		}
+	}
+	else if (t_typeId == floatTypeId) {
+		if (o_typeId == intTypeId) {
+			returnValue = (void*)new float(*(int*)data);
+		}
+		else if (o_typeId == floatTypeId) {
+			returnValue = (void*)new float{ *(float*)data };
+		}
+	}
+	if (returnValue == nullptr) {
+		RuntimeError targetError = RuntimeError("Couldnt cast " + 
+			std::to_string(o_typeId) + " to {}" + std::to_string(t_typeId));
+		return nullptr;
+	}
+	return returnValue;
+}
+
 std::ostream& operator<<(std::ostream& output, const Value& e)
 {
-	if(e.data == nullptr)
+	if (e.data == nullptr)
 	{
 		output << "NULL";
 	}
 	else {
-		switch (e.dataType)
-		{
-		case Value::INTTYPE:
+		Error outError{};
+		Interpreter* interpr = Interpreter::getSingelton();
+		if		(e.typeId == interpr->getTypeId("int", outError)) {
 			output << *(int*)e.data;
-			break;
-		case Value::DECTYPE:
+		}
+		else if (e.typeId == interpr->getTypeId("float", outError)) {
 			output << *(float*)e.data;
-			break;
-		case Value::UNDEFINED:
+		}
+		else if (e.typeId == 0) {
 			output << "undefined";
-			break;
-		default:
-			break;
 		}
 	}
 	return output;
-}
-
-void* Value::Cast(void* data, enum DataType o_type, enum DataType t_type, Error& outError) {
-	// checks viable conversions
-	void* returnValue{ nullptr };
-	switch (t_type)
-	{
-	case INTTYPE:
-		switch (o_type)
-		{
-		case INTTYPE:
-			returnValue = (void*)new int{ *(int*)data };
-			break;
-		case DECTYPE:
-			returnValue = (void*)new int(*(float*)data);
-			break;
-		}
-		break;
-	case DECTYPE:
-		switch (o_type)
-		{
-		case INTTYPE:
-			returnValue = (void*)new float(*(int*)data);
-			break;
-		case DECTYPE:
-			returnValue = (void*)new float{ *(float*)data };
-			break;
-		}
-		break;
-
-	default:
-		break;
-	}
-	if (returnValue == nullptr) {
-		RuntimeError targetError = RuntimeError(std::format("Couldnt cast {} to {}", std::to_string(o_type),
-			std::to_string(t_type)));
-		return nullptr;
-	}
-	return returnValue;
 }

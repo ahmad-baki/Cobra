@@ -7,10 +7,11 @@
 #include "GetVar.h"
 #include "BinOp.h"
 #include "SyntaxError.h"
+#include "Interpreter.h"
 
 
-IEASTNode::IEASTNode(SymbTable* table, std::string_view path, std::string_view text)
-	: table{table}, token{Token(TokenType::NONE)}, path{path}, text{text}
+IEASTNode::IEASTNode(std::string_view path, std::string_view text)
+	: token{Token(TokenType::NONE)}, path{path}, text{text}
 {
 }
 
@@ -24,17 +25,17 @@ IEASTNode::~IEASTNode() {
 
 Expression* IEASTNode::getExpr(Error& outError) {
 	Expression* expr{nullptr};
-
+	Interpreter* interp = Interpreter::getSingelton();
 	switch (token.dataType)
 	{
 	case TokenType::INTLIT:
-		expr = new Value(Value::INTTYPE, (void*)new int{ std::stoi(token.value) }, outError, true, true);
+		expr = new Value(interp->getTypeId("int", outError), (void*)new int{std::stoi(token.value)}, outError, true, true);
 		break;
 	case TokenType::DECLIT:
-		expr = new Value(Value::DECTYPE, (void*)new float{ std::stof(token.value) }, outError, true, true);
+		expr = new Value(interp->getTypeId("float", outError), (void*)new float{ std::stof(token.value) }, outError, true, true);
 		break;
 	case TokenType::IDENTIFIER:
-		expr = new GetVar(token.value, table, token.line, token.startColumn, token.endColumn);
+		expr = new GetVar(token.value, token.line, token.startColumn, token.endColumn);
 		break;
 	default:
 		if (leftNode == nullptr) {
@@ -157,7 +158,7 @@ Expression* IEASTNode::getExpr(Error& outError) {
 //
 //		int leftType = leftNode->getReturnType();
 //		if (leftType == 0) {
-//			// nodes get filled from left->right
+//			// nodes run filled from left->right
 //			if (rightNode == nullptr)
 //				return leftNode->getExpr<bool>();
 //
@@ -192,7 +193,7 @@ Expression* IEASTNode::getExpr(Error& outError) {
 //			}
 //		}
 //		if (leftType == 1) {
-//			// nodes get filled from left->right
+//			// nodes run filled from left->right
 //			if (rightNode == nullptr)
 //				return leftNode->getExpr<bool>();
 //

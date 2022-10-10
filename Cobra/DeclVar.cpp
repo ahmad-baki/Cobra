@@ -1,13 +1,13 @@
 #include "DeclVar.h"
 #include "RuntimeError.h"
 #include "SyntaxError.h"
+#include "Interpreter.h"
 
 
-DeclVar::DeclVar(std::string name, SymbTable* table, size_t line, size_t startColumn, 
-	size_t endColumn, bool isConst, bool isStaticType, enum Value::DataType dataType, Expression* expr)
-	: name{name}, isConst{isConst}, isStaticType{ isStaticType }, dataType{ dataType }, expr{ expr }
+DeclVar::DeclVar(std::string name, size_t line, size_t startColumn, 
+	size_t endColumn, bool isConst, bool isStaticType, int typeId, Expression* expr)
+	: name{name}, isConst{isConst}, isStaticType{ isStaticType }, typeId{ typeId }, expr{ expr }
 {
-	this->table			= table;
 	this->line			= line;
 	this->startColumn	= startColumn;
 	this->endColumn		= endColumn;
@@ -25,7 +25,7 @@ DeclVar::DeclVar(std::string name, SymbTable* table, size_t line, size_t startCo
 
 void DeclVar::run(Error& outError)
 {
-	enum Value::DataType targetType{this->dataType};
+	int targetType{ this->typeId };
 	void* data{nullptr};
 	if (expr != nullptr) {
 		Value* val = expr->run(outError);
@@ -36,7 +36,7 @@ void DeclVar::run(Error& outError)
 			return;
 		}
 		
-		if (targetType == Value::UNDEFINED) {
+		if (targetType == 0) {
 			targetType	= val->getType();
 			data		= val->getData();
 		}
@@ -55,7 +55,7 @@ void DeclVar::run(Error& outError)
 			data = val->getData();
 		}
 	}
-	table->declare(name, targetType, outError, data, isConst, isStaticType);
+	Interpreter::getSingelton()->declareVar(name, targetType, outError, data, isConst, isStaticType);
 	if (outError.errorName != "NULL") {
 		outError.line			= line;
 		outError.startColumn	= startColumn;

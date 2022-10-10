@@ -1,16 +1,17 @@
 #include "BlockNode.h"
+#include "Interpreter.h"
 
 // empty code
 BlockNode::BlockNode() 
 	: blockNode{std::vector<Statement*>()}, nextExecIndex{0}
 {
-	table = new SymbTable();
+	//table = new SymbTable();
 }
 
-BlockNode::BlockNode(std::vector<Statement*> blockNode, SymbTable* parentTable) :
-	blockNode{blockNode}, nextExecIndex{ 0 }
+BlockNode::BlockNode(std::vector<Statement*> blockNode, std::string name) :
+	blockNode{blockNode}, name{ name }, nextExecIndex{0}
 {
-	table = new SymbTable(parentTable);
+	//table = new SymbTable(parentTable);
 }
 
 void BlockNode::contin(Error& outError) {
@@ -24,12 +25,13 @@ void BlockNode::contin(Error& outError) {
 
 void BlockNode::run(Error& outError)
 {
+	Interpreter::getSingelton()->EnterScope(outError, nullptr, name);
 	for (Statement* statement : blockNode) {
 		statement->run(outError);
 		if (outError.errorName != "NULL")
 			return;
 	}
-	delete table;
+	Interpreter::getSingelton()->ExitScope();
 }
 
 
