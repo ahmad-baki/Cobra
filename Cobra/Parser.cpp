@@ -604,8 +604,9 @@ std::vector<Token> Parser::transExprTokStream(std::vector<Token> tokenStream) {
 		{TokenType::AND, TokenType::OR},
 	};
 
-	for (auto opClass : opClasses)
+	for (auto opClass : opClasses) {
 		tokenStream = addBrackets(tokenStream, opClass);
+	}
 	return tokenStream;
 }
 
@@ -626,12 +627,12 @@ std::vector<Token> Parser::addBrackets(std::vector<Token> tokenStream, std::vect
 					break;
 				}
 				else if (tokenStream[j].dataType == TokenType::LBRACKET) {
+					bracketSur--;
 					if (bracketSur == 0) {
 						tokenStream.insert(tokenStream.begin() + j, Token(TokenType::LBRACKET));
 						bracketSur++;
 						break;
 					}
-					bracketSur--;
 				}
 				else if (tokenStream[j].dataType == TokenType::RBRACKET) {
 					bracketSur++;
@@ -659,6 +660,10 @@ std::vector<Token> Parser::addBrackets(std::vector<Token> tokenStream, std::vect
 						break;
 					}
 					bracketSur--;
+					if (bracketSur == 0) {
+						tokenStream.insert(tokenStream.begin() + j + 1, Token(TokenType::RBRACKET));
+						break;
+					}
 				}
 				else if (tokenStream[j].dataType == TokenType::LBRACKET) {
 					bracketSur++;
