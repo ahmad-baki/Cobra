@@ -25,34 +25,18 @@ DeclVar::DeclVar(std::string name, size_t line, size_t startColumn,
 
 void DeclVar::run(Error& outError)
 {
-	int targetType{ this->typeId };
-	void* data{nullptr};
 	if (expr != nullptr) {
 		Value* val = expr->run(outError);
 		if (val == nullptr) {
-			//outError.line			= line;
-			//outError.startColumn	= startColumn;
-			//outError.endColumn		= endColumn;
 			return;
 		}
-		
-		if (targetType == 0) {
-			targetType	= val->getType();
-			data		= val->getData();
-		}
-
-		else{
-			void* castVal = Value::Cast(val->getData(), val->getType(), targetType, outError);
-			if (castVal == nullptr) {
-				outError.line			= line;
-				outError.startColumn	= startColumn;
-				outError.endColumn		= endColumn;
-				return;
-			}
-			data = castVal;
-		}
+		Interpreter::getSingelton()->declareVar(name, val, this->typeId, 
+			outError, isConst, isStaticType);
 	}
-	Interpreter::getSingelton()->declareVar(name, targetType, outError, data, isConst, isStaticType);
+	else {
+		Interpreter::getSingelton()->declareVar(name, this->typeId,
+			outError, isConst, isStaticType);
+	}
 	if (outError.errorName != "NULL") {
 		outError.line			= line;
 		outError.startColumn	= startColumn;

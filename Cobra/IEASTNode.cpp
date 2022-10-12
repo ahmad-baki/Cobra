@@ -4,10 +4,11 @@
 #include "IEASTNode.h"
 #include "TokenType.cpp"
 #include "Literal.h"
-#include "GetVar.h"
+#include "GetVal.h"
 #include "BinOp.h"
 #include "SyntaxError.h"
 #include "Interpreter.h"
+#include "PrimValue.h"
 
 
 IEASTNode::IEASTNode(std::string_view path, std::string_view text)
@@ -29,13 +30,13 @@ Expression* IEASTNode::getExpr(Error& outError) {
 	switch (token.dataType)
 	{
 	case TokenType::INTLIT:
-		expr = new Value(interp->getTypeId("int", outError), (void*)new int{std::stoi(token.value)}, outError, true, true);
+		expr = new PrimValue(interp->getTypeId("int", outError), (void*)new int{std::stoi(token.value)}, outError);
 		break;
 	case TokenType::DECLIT:
-		expr = new Value(interp->getTypeId("float", outError), (void*)new float{ std::stof(token.value) }, outError, true, true);
+		expr = new PrimValue(interp->getTypeId("float", outError), (void*)new float{ std::stof(token.value) }, outError);
 		break;
 	case TokenType::IDENTIFIER:
-		expr = new GetVar(token.value, token.line, token.startColumn, token.endColumn);
+		expr = new GetVal(token.value, token.line, token.startColumn, token.endColumn);
 		break;
 	default:
 		if (leftNode == nullptr) {

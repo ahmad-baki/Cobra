@@ -5,10 +5,10 @@
 #include <random>
 
 Scope::Scope(std::string name, Error& outError, Value* thisRef)
-	: name{name}, variables { std::map<std::string, Value*>() }
+	: name{name}, variables { std::map<std::string, Variable*>() }
 {
 	 //to stop user from using "this" as a variable
-	std::pair<std::string, Value*> elem{ "this", new Value(thisRef, outError, 0, true)};
+	std::pair<std::string, Variable*> elem{ "this", new Variable(thisRef, outError, 0, true)};
 	variables.emplace(elem);
 }
 
@@ -26,7 +26,8 @@ void Scope::exit()
 	}
 }
 
-bool Scope::declareVar(std::string name, int typeId, Error& outError, void* data, bool isConst, bool isStaticType) {
+bool Scope::declareVar(std::string name, int typeId, Error& outError, 
+	bool isConst, bool isStaticType) {
 	if (isVarDecl(name)) {
 		RuntimeError targetError = RuntimeError(
 			"Tried to declar variable" + name + ", despite it already existing");
@@ -34,28 +35,43 @@ bool Scope::declareVar(std::string name, int typeId, Error& outError, void* data
 		return false;
 	}
 
-	Value* newVal = new Value{ typeId, data, outError, isConst, isStaticType };
-	variables.emplace(name, newVal);
+	Variable* newVar = new Variable{ nullptr, outError, typeId, isConst, isStaticType };
+	variables.emplace(name, newVar);
+	return true;
+}
+
+bool Scope::declareVar(std::string name, Value* val, int typeId, 
+	Error& outError, bool isConst, bool isStaticType)
+{
+	if (isVarDecl(name)) {
+		RuntimeError targetError = RuntimeError(
+			"Tried to declar variable" + name + ", despite it already existing");
+		outError.copy(targetError);
+		return false;
+	}
+
+	Variable* newVar = new Variable{ val, outError, typeId, isConst, isStaticType };
+	variables.emplace(name, newVar);
 	return true;
 }
 
 bool Scope::setVar(std::string name, Value* tVal, Error& outError)
 {
-	Value* val = this->getVar(name, outError);
+	Variable* var= this->getVar(name, outError);
 
-	if (val == nullptr) {
+	if (var == nullptr) {
 		Error targetError = RuntimeError("Tried to set variable: " + name + ", despite it not existing");
 		outError.copy(targetError);
 		return false;
 	}
 
-	val->setVal(tVal, outError);
+	var->setVar(tVal, outError);
 	if (outError.errorName != "NULL")
 		return false;
 	return true;
 }
 
-Value* Scope::getVar(std::string name, Error& outError)
+Variable* Scope::getVar(std::string name, Error& outError)
 {
 	auto elem = variables.find(name);
 	if (elem == variables.end()) {

@@ -3,76 +3,77 @@
 #include "RuntimeError.h"
 #include "SyntaxError.h"
 #include <format>
+#include "Variable.h"
 
-SymbTable::SymbTable(SymbTable* parent) 
-	: parent{ parent }, variables{ std::map<std::string, Value*>() }
-{
 #pragma region OLD-CODE
-	//integers = std::map<std::string, int>();
-	//floats = std::map<std::string, float>();
-	//// 0=int, 1=float
-	//varNames = std::map<std::string, int>();
-	//parseReg = std::map<std::string, int>();
-#pragma endregion
-};
-
-SymbTable::~SymbTable()
-{
-	for (auto const& [key, val] : variables) {
-		delete val;
-	}
-}
-
-void SymbTable::declareVar(std::string name, Value* val, Error& outError, bool isConst, bool isStaticType) {
-	declareVar(name, val->getType(), outError, val->getData(), isConst, isStaticType);
-}
-
-void SymbTable::declareVar(std::string name, int typeId, Error& outError, void* data, bool isConst, bool isStaticType) {
-	if (isVarDecl(name)) {
-		RuntimeError targetError = RuntimeError("Tried to declar variable " + name + ", despite it already existing");
-		outError.copy(targetError);
-	}
-
-	Value* newVal = new Value{ typeId, data, outError, isConst, isStaticType };
-	variables.emplace(name, newVal);
-}
-
-void SymbTable::setVar(std::string name, Value* tVal, Error& outError)
-{
-	Value* val = this->run(name, outError);
-
-	if (val == nullptr)
-		return;
-
-	val->setVal(tVal, outError);
-	if (outError.errorName != "NULL")
-		return;
-}
-
-Value* SymbTable::run(std::string name, Error& outError)
-{
-	auto elem = variables.find(name);
-	if (elem == variables.end()) {
-		if (parent != nullptr) {
-			parent->run(name, outError);
-		}
-
-		RuntimeError targetError = RuntimeError("Tried to run variable " + name +", despite it not existing");
-		outError.copy(targetError);
-		return nullptr;
-	}
-	return elem->second;
-}
-
-bool SymbTable::isVarDecl(std::string name) {
-	auto elem = variables.find(name);
-	if (elem == variables.end())
-		return true;
-	if (parent != nullptr)
-		return parent->isVarDecl(name);
-	return false;
-}
-#pragma region OLD-CODE
+//SymbTable::SymbTable(SymbTable* parent) 
+//	: parent{ parent }, variables{ std::map<std::string, Value*>() }
+//{
+//#pragma region OLD-CODE
+//	//integers = std::map<std::string, int>();
+//	//floats = std::map<std::string, float>();
+//	//// 0=int, 1=float
+//	//varNames = std::map<std::string, int>();
+//	//parseReg = std::map<std::string, int>();
+//#pragma endregion
+//};
+//
+//SymbTable::~SymbTable()
+//{
+//	for (auto const& [key, val] : variables) {
+//		delete val;
+//	}
+//}
+//
+//void SymbTable::declareVar(std::string name, Value* val, Error& outError, bool isConst, bool isStaticType) {
+//	declareVar(name, val->getTypeId(), outError, val->getData(), isConst, isStaticType);
+//}
+//
+//void SymbTable::declareVar(std::string name, int typeId, Error& outError, void* data, bool isConst, bool isStaticType) {
+//	if (isVarDecl(name)) {
+//		RuntimeError targetError = RuntimeError("Tried to declar variable " + name + ", despite it already existing");
+//		outError.copy(targetError);
+//	}
+//
+//	Variable* newVal = new Variable{ typeId, data, outError, isConst, isStaticType };
+//	variables.emplace(name, newVal);
+//}
+//
+//void SymbTable::setVar(std::string name, Value* tVal, Error& outError)
+//{
+//	Value* val = this->run(name, outError);
+//
+//	if (val == nullptr)
+//		return;
+//
+//	val->setVal(tVal, outError);
+//	if (outError.errorName != "NULL")
+//		return;
+//}
+//
+//Value* SymbTable::run(std::string name, Error& outError)
+//{
+//	auto elem = variables.find(name);
+//	if (elem == variables.end()) {
+//		if (parent != nullptr) {
+//			parent->run(name, outError);
+//		}
+//
+//		RuntimeError targetError = RuntimeError("Tried to run variable " + name +", despite it not existing");
+//		outError.copy(targetError);
+//		return nullptr;
+//	}
+//	return elem->second;
+//}
+//
+//bool SymbTable::isVarDecl(std::string name) {
+//	auto elem = variables.find(name);
+//	if (elem == variables.end())
+//		return true;
+//	if (parent != nullptr)
+//		return parent->isVarDecl(name);
+//	return false;
+//}
 //template<SuppType T>
 //Error SymbTable::declareVar(std::string name, T value) {
 //	if (isVarDecl(name)) {

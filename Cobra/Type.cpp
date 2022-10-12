@@ -48,15 +48,15 @@ Value* Type::getMemb(std::string name, Error& outError)
 	}
 	
 	Interpreter* interpreter = Interpreter::getSingelton();
-	Value* thisRef = interpreter->getCurrScope()->getVar("this", outError);
-	Type* callType = interpreter->getType(thisRef->getType(), outError);
+	Value* thisRef = interpreter->getCurrScope()->getVar("this", outError)->getVal();
+	Type* callType = interpreter->getType(thisRef->getTypeId(), outError);
 	if (callType == nullptr) {
 		return nullptr;
 	}
 	std::string callTypename = callType->typeName;
 
 	if (elem->second.acces == Acces::protectedAcc) {
-		if (isChild(thisRef->getType())) {
+		if (isChild(thisRef->getTypeId())) {
 			return elem->second.var;
 		}
 
@@ -69,7 +69,7 @@ Value* Type::getMemb(std::string name, Error& outError)
 	}
 	// private acc
 	else{
-		if (thisRef->getType() == typeId) {
+		if (thisRef->getTypeId() == typeId) {
 			return elem->second.var;
 		}
 		RuntimeError targetError{ std::format(

@@ -8,7 +8,7 @@
 #include "ElseCond.h"
 #include "Error.h"
 #include "Expression.h"
-#include "GetVar.h"
+#include "GetVal.h"
 #include "IfCond.h"
 #include "Lexer.h"
 #include "Literal.h"

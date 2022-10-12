@@ -13,7 +13,7 @@ void PrintState::run(Error& outError) {
 	if (val == nullptr)
 		return;
 
-	std::cout << *val << std::endl;
+	std::cout << val->toString() << std::endl;
 	return;
 }
 //

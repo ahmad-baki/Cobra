@@ -8,22 +8,22 @@
 
 class SymbTable
 {
-public:
-	SymbTable* parent;
-	std::map<std::string, Value*> variables;
-
-	SymbTable(SymbTable* parent = nullptr);
-	~SymbTable();
-
-	void declareVar(std::string name, Value* val, Error& outError, bool isConst = false, bool isStaticType = false);
-	void declareVar(std::string name, int typeId, Error& outError, void* data = nullptr, bool isConst = false, bool isStaticType = false);
-	Value* run(std::string name, Error& outError);
-	void setVar(std::string name, Value* val, Error& outError);
-
-	bool isVarDecl(std::string name);
-
-
 #pragma region OLD-CODE
+//public:
+//	SymbTable* parent;
+//	std::map<std::string, Value*> variables;
+//
+//	SymbTable(SymbTable* parent = nullptr);
+//	~SymbTable();
+//
+//	void declareVar(std::string name, Value* val, Error& outError, bool isConst = false, bool isStaticType = false);
+//	void declareVar(std::string name, int typeId, Error& outError, void* data = nullptr, bool isConst = false, bool isStaticType = false);
+//	Value* run(std::string name, Error& outError);
+//	void setVar(std::string name, Value* val, Error& outError);
+//
+//	bool isVarDecl(std::string name);
+//
+
 	//std::map<std::string, int> parseReg;
 	//std::map<std::string, int> integers;
 	//std::map<std::string, float> floats;

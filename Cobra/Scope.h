@@ -6,6 +6,7 @@
 #include "Value.h"
 #include "CobrClass.h"
 #include "Type.h"
+#include "Variable.h"
 
 class Scope {
 
@@ -13,8 +14,11 @@ public:
 	Scope(std::string name, Error& outError, Value* thisRef = nullptr);
 	void exit();
 
-	bool declareVar(std::string name, int typeId, Error& outError, void* data = nullptr, bool isConst = false, bool isStaticType = false);
-	Value* getVar(std::string name, Error& outError);
+	bool declareVar(std::string name, int typeId, Error& outError, 
+		bool isConst = false, bool isStaticType = false);
+	bool declareVar(std::string name, Value* val, int typeId, 
+		Error& outError, bool isConst = false, bool isStaticType = false);
+	Variable* getVar(std::string name, Error& outError);
 	bool setVar(std::string name, Value* val, Error& outError);
 	bool isVarDecl(std::string name);
 
@@ -27,7 +31,7 @@ public:
 
 private:
 	std::string name;
-	std::map<std::string, Value*> variables;
+	std::map<std::string, Variable*> variables;
 	std::map<std::string, int> typeNameReg;
 	std::map<int, Type*> typeIdReg;
 };

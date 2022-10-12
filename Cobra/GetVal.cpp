@@ -1,9 +1,9 @@
-#include "GetVar.h"
+#include "GetVal.h"
 #include <string>
 #include "RuntimeError.h"
 #include "Interpreter.h"
 
-GetVar::GetVar(std::string varName, size_t line, size_t startColumn, size_t endColumn)
+GetVal::GetVal(std::string varName, size_t line, size_t startColumn, size_t endColumn)
 	: varName{varName}
 {
 	this->line = line;
@@ -12,8 +12,8 @@ GetVar::GetVar(std::string varName, size_t line, size_t startColumn, size_t endC
 }
 
 
-Value* GetVar::run(Error& outError) {
-	Value* val = Interpreter::getSingelton()->getVar(varName, outError);
+Value* GetVal::run(Error& outError) {
+	Value* val = Interpreter::getSingelton()->getVar(varName, outError)->getVal();
 	if (val == nullptr)
 	{
 		outError.line			= line;
