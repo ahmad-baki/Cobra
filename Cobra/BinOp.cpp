@@ -4,6 +4,7 @@
 #include <cmath>
 #include "TokenType.CPP"
 #include "RuntimeError.h"
+#include <format>
 
 
 //template<SuppType T1, SuppType T2, SuppType T3>
@@ -13,24 +14,39 @@ BinOp::BinOp(Expression* expr1, Expression* expr2, enum TokenType op):
 }
 
 //template<SuppType T1, SuppType T2, SuppType T3>
-Value* BinOp::run(Error& outError)
+std::vector<Value*> BinOp::run(Error& outError)
 {
-	Value* val1 = expr1->run(outError);
 
-	if (val1 == nullptr)
-		return nullptr;
+	std::vector<Value*> val1 = expr1->run(outError);
 
-	Value* val2 = expr2->run(outError);
-
-	if (val2 == nullptr)
-		return nullptr;
-
-	Value* result = val1->doOp(*val2, op, outError);
-
-	if (result == nullptr) {
-		return nullptr;
+	if (outError.errorName != "NULL") {
+		return {};
 	}
-	return result;
+
+	std::vector<Value*> val2 = expr2->run(outError);
+
+	if (outError.errorName != "NULL"){
+		return {};
+	}
+
+	if (val1.size() != val2.size()) {
+		RuntimeError targetError{ std::format("The two values have different sizes: {}, {}", 
+			std::to_string(val1.size()), std::to_string(val2.size())) };
+		outError.copy(targetError);
+		return {};
+	}
+	std::vector<Value*> output{};
+	output.reserve(val1.size());
+
+	for (size_t i = 0; i < val1.size(); i++) {
+		Value* result = val1[i]->doOp(*val2[i], op, outError);
+
+		if (result == nullptr) {
+			return {};
+		}
+		output.push_back(result);
+	}
+	return output;
 #pragma region OLD-CODE
 	//switch (op)
 	//{

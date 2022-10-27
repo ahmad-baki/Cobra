@@ -5,10 +5,12 @@
 #include <random>
 
 Scope::Scope(std::string name, Error& outError, Value* thisRef)
-	: name{name}, variables { std::map<std::string, Variable*>() }
+	: name{name}, variables{std::map<std::string, Variable*>()}
 {
 	 //to stop user from using "this" as a variable
-	std::pair<std::string, Variable*> elem{ "this", new Variable(thisRef, outError, 0, true)};
+	std::pair<std::string, Variable*> elem{ "this", 
+		new Variable((thisRef == nullptr) ? std::vector<Value*>{} : std::vector<Value*>{ thisRef }
+	, outError, 0, true) };
 	variables.emplace(elem);
 }
 
@@ -27,7 +29,7 @@ void Scope::exit()
 }
 
 bool Scope::declareVar(std::string name, int typeId, Error& outError, 
-	bool isConst, bool isStaticType) {
+	bool isConst, bool isStaticType, int size) {
 	if (isVarDecl(name)) {
 		RuntimeError targetError = RuntimeError(
 			"Tried to declar variable" + name + ", despite it already existing");
@@ -35,13 +37,13 @@ bool Scope::declareVar(std::string name, int typeId, Error& outError,
 		return false;
 	}
 
-	Variable* newVar = new Variable{ nullptr, outError, typeId, isConst, isStaticType };
+	Variable* newVar = new Variable{ {} , outError, typeId, isConst, isStaticType, size};
 	variables.emplace(name, newVar);
 	return true;
 }
 
-bool Scope::declareVar(std::string name, Value* val, int typeId, 
-	Error& outError, bool isConst, bool isStaticType)
+bool Scope::declareVar(std::string name, std::vector<Value*> val, int typeId, 
+	Error& outError, bool isConst, bool isStaticType, int size)
 {
 	if (isVarDecl(name)) {
 		RuntimeError targetError = RuntimeError(
@@ -55,7 +57,7 @@ bool Scope::declareVar(std::string name, Value* val, int typeId,
 	return true;
 }
 
-bool Scope::setVar(std::string name, Value* tVal, Error& outError)
+bool Scope::setVar(std::string name, std::vector<Value*> tVal, Error& outError)
 {
 	Variable* var= this->getVar(name, outError);
 
@@ -65,7 +67,7 @@ bool Scope::setVar(std::string name, Value* tVal, Error& outError)
 		return false;
 	}
 
-	var->setVar(tVal, outError);
+	var->setVar(tVal, nullptr, outError);
 	if (outError.errorName != "NULL")
 		return false;
 	return true;

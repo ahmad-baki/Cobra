@@ -27,6 +27,7 @@ std::string readFileIntoString(std::string path) {
 }
 
 double execFromFile(std::string path) {
+	std::cout << "executing: " << path << std::endl;
 	std::string input = readFileIntoString(path);
 
 	Lexer lexer = Lexer(input, path);
@@ -109,8 +110,10 @@ void execFromCommandLine() {
 int main(int argc, char* argv[])
 {
 	if (argc > 1) {
-		double runTime = execFromFile(argv[1]);
-		std::cout << "finished in: " << runTime << "ms" << std::endl;
+		for (size_t i = 1; i < argc; i++) {
+			double runTime = execFromFile(argv[i]);
+			std::cout << "finished in: " << runTime << "ms" << std::endl;
+		}
 	}
 	else {
 		execFromCommandLine();

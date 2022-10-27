@@ -53,8 +53,8 @@ PrimValue::~PrimValue() {
 	data = nullptr;
 }
 
-Value* PrimValue::run(Error& outError) {
-	return this;
+std::vector<Value*> PrimValue::run(Error& outError) {
+	return { this };
 }
 
 //void PrimValue::setVal(Value* val, Error& outError) {

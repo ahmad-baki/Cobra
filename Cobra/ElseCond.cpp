@@ -1,4 +1,6 @@
 #include "ElseCond.h"
+#include <format>
+#include "RuntimeError.h"
 
 ElseCond::ElseCond(Expression* cond, Statement* statement, size_t line, size_t startColumn, size_t endColumn)
 	: cond{cond}, statement{ statement } 
@@ -10,21 +12,27 @@ ElseCond::ElseCond(Expression* cond, Statement* statement, size_t line, size_t s
 
 bool ElseCond::run(Error& outError)
 {
-	Value* condVal = cond->run(outError);
+	std::vector<Value*> condVal = cond->run(outError);
 
 	if (outError.errorName != "NULL") {
-		//outError.line = line;
-		//outError.startColumn = startColumn;
-		//outError.endColumn = endColumn;
+		return false;
+	}
+	if (condVal.size() != 1) {
+		RuntimeError targetError{ std::format("Cannot convert to boolean from list with size {}",
+			std::to_string(condVal.size())) };
+		outError.copy(targetError);
 		return false;
 	}
 
-	bool condBol = condVal->getBool(outError);
+	bool condBol = condVal[0]->getBool(outError);
 
 	if (outError.errorName != "NULL") {
-		//outError.line = line;
-		//outError.startColumn = startColumn;
-		//outError.endColumn = endColumn;
+		return false;
+	}
+	if (condVal.size() != 1) {
+		RuntimeError targetError{ std::format("Cannot convert to boolean from list with size {}",
+			std::to_string(condVal.size())) };
+		outError.copy(targetError);
 		return false;
 	}
 

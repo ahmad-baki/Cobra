@@ -20,7 +20,7 @@ public:
 		int t_typeId, Error& outError);
 
 	std::string toString();
-	Value* run(Error& outError);
+	std::vector<Value*> run(Error& outError);
 	//void setVal(Value* val, size_t index, Error& outError);
 	//void setVal(Value* val, Error& outError);
 	bool getBool(Error& outError);

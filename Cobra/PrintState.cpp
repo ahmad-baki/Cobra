@@ -8,12 +8,16 @@ PrintState::PrintState(Expression* param)
 }
 
 void PrintState::run(Error& outError) {
-	Value* val = param->run(outError);
+	std::vector<Value*> vals = param->run(outError);
 
-	if (val == nullptr)
+	if (outError.errorName != "NULL") {
 		return;
-
-	std::cout << val->toString() << std::endl;
+	}
+	std::cout << '[';
+	for (Value* val : vals) {
+		std::cout << val->toString();
+	}
+	std::cout << ']' << std::endl;
 	return;
 }
 //

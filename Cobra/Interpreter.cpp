@@ -68,16 +68,16 @@ Scope* Interpreter::getCurrScope()
 	return &scopes.back();
 }
 
-bool Interpreter::declareVar(std::string name, Value* val, 
-	int typeId, Error& outError, bool isConst, bool isStaticType)
+bool Interpreter::declareVar(std::string name, std::vector<Value*> val,
+	int typeId, Error& outError, bool isConst, bool isStaticType, int size)
 {
-	return getCurrScope()->declareVar(name, val, typeId, outError, isConst, isStaticType);
+	return getCurrScope()->declareVar(name, val, typeId, outError, isConst, isStaticType, size);
 }
 
 bool Interpreter::declareVar(std::string name, int typeId,
-	Error& outError, bool isConst, bool isStaticType)
+	Error& outError, bool isConst, bool isStaticType, int size)
 {
-	return getCurrScope()->declareVar(name, typeId, outError, isConst, isStaticType);
+	return getCurrScope()->declareVar(name, typeId, outError, isConst, isStaticType, size);
 }
 
 Variable* Interpreter::getVar(std::string name, Error& outError)
@@ -94,7 +94,7 @@ Variable* Interpreter::getVar(std::string name, Error& outError)
 	return nullptr;
 }
 
-bool Interpreter::setVar(std::string name, Value* val, Error& outError)
+bool Interpreter::setVar(std::string name, std::vector<Value*> val, Error& outError)
 {
 	for (auto scope = scopes.rbegin(); scope != scopes.rend(); ++scope) {
 		if(scope->isVarDecl(name)) {

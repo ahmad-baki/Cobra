@@ -30,13 +30,23 @@ Expression* IEASTNode::getExpr(Error& outError) {
 	switch (token.dataType)
 	{
 	case TokenType::INTLIT:
-		expr = new PrimValue(interp->getTypeId("int", outError), (void*)new int{std::stoi(token.value)}, outError);
+		expr = new PrimValue(interp->getTypeId("int", outError), 
+			(void*)new int{std::stoi(token.value)}, outError);
 		break;
 	case TokenType::DECLIT:
-		expr = new PrimValue(interp->getTypeId("float", outError), (void*)new float{ std::stof(token.value) }, outError);
+		expr = new PrimValue(interp->getTypeId("float", outError), 
+			(void*)new float{ std::stof(token.value) }, outError);
 		break;
 	case TokenType::IDENTIFIER:
-		expr = new GetVal(token.value, token.line, token.startColumn, token.endColumn);
+		{
+			Expression* indexExpr{ nullptr };
+
+			if (leftNode != nullptr) {
+				indexExpr = leftNode->getExpr(outError);
+			}
+			expr = new GetVal(token.value, indexExpr, 
+				token.line, token.startColumn, token.endColumn);
+		}
 		break;
 	default:
 		if (leftNode == nullptr) {
@@ -45,21 +55,23 @@ Expression* IEASTNode::getExpr(Error& outError) {
 			outError.copy(targetError);
 			return nullptr;
 		}
+		else {
+			Expression* leftExpr = leftNode->getExpr(outError);
 
-		Expression* leftExpr = leftNode->getExpr(outError);
+			if (leftExpr == nullptr)
+				return nullptr;
 
-		if (leftExpr == nullptr)
-			return nullptr;
+			if (rightNode == nullptr)
+				return leftExpr;
 
-		if (rightNode == nullptr)
-			return leftExpr;
+			Expression* rightExpr = rightNode->getExpr(outError);
 
-		Expression* rightExpr = rightNode->getExpr(outError);
+			if (rightExpr == nullptr)
+				return nullptr;
 
-		if (rightExpr == nullptr)
-			return nullptr;
-
-		expr = new BinOp(leftExpr, rightExpr, token.dataType);
+			expr = new BinOp(leftExpr, rightExpr, token.dataType);
+		}
+		break;
 	}
 
 	if (outError.errorName != "NULL") {

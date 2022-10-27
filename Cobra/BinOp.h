@@ -20,5 +20,5 @@ private:
 
 public:
 	BinOp(Expression* expr1, Expression* expr2, enum TokenType op);
-	Value* run(Error& outError);
+	std::vector<Value*> run(Error& outError);
 };

@@ -1,18 +1,24 @@
 #pragma once
 #include "Value.h"
+#include <vector>
+#include "PrimValue.h"
 
 class Variable
 {
 public:
-	Variable(Value* tVal, Error& outError, int typeId = 0, 
-		bool isConst = false, bool isStaticType = false);
+	// with size = -1 the size is flexible
+	Variable(std::vector<Value*> values, Error& outError, int typeId = 0,
+		bool isConst = false, bool isStaticType = false, int size = 1);
 	void exit();
-	bool setVar(Value* tVal, Error& outError);
-	Value* getVal();
+	bool setVar(std::vector<Value*>, Value* index, Error& outError);
+	std::vector<Value*> getVal(Value* primVal, Error& outError);
+	static int getIndex(Value* primVal, Error& outError);
 
 private:
-	Value* value;
+	std::vector<Value*> values;
 	bool isConst;
 	bool isStaticType;
+	int size;
+
 };
 

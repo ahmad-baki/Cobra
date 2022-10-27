@@ -48,7 +48,7 @@ Value* Type::getMemb(std::string name, Error& outError)
 	}
 	
 	Interpreter* interpreter = Interpreter::getSingelton();
-	Value* thisRef = interpreter->getCurrScope()->getVar("this", outError)->getVal();
+	Value* thisRef = interpreter->getCurrScope()->getVar("this", outError)->getVal(nullptr, outError)[0];
 	Type* callType = interpreter->getType(thisRef->getTypeId(), outError);
 	if (callType == nullptr) {
 		return nullptr;

@@ -2,11 +2,12 @@
 #include "RuntimeError.h"
 #include "SyntaxError.h"
 #include "Interpreter.h"
+#include <format>
 
 
 DeclVar::DeclVar(std::string name, size_t line, size_t startColumn, 
-	size_t endColumn, bool isConst, bool isStaticType, int typeId, Expression* expr)
-	: name{name}, isConst{isConst}, isStaticType{ isStaticType }, typeId{ typeId }, expr{ expr }
+	size_t endColumn, bool isConst, bool isStaticType, int typeId, Expression* value, Expression* sizeExpr)
+	: name{name}, isConst{isConst}, isStaticType{ isStaticType }, typeId{ typeId }, value{ value }, sizeExpr{ sizeExpr }
 {
 	this->line			= line;
 	this->startColumn	= startColumn;
@@ -25,17 +26,41 @@ DeclVar::DeclVar(std::string name, size_t line, size_t startColumn,
 
 void DeclVar::run(Error& outError)
 {
-	if (expr != nullptr) {
-		Value* val = expr->run(outError);
-		if (val == nullptr) {
+	int size = 0;
+	if (sizeExpr == nullptr) {
+		size = 1;
+	}
+	else {
+		std::vector<Value*> values = sizeExpr->run(outError);
+		if (outError.errorName != "NULL") {
+			return;
+		}
+		if (values.size() != 1) {
+			RuntimeError targetError{ std::format("Cannot convert from list with size {} to int", 
+				std::to_string(values.size())) };
+			outError.copy(targetError);
+			return;
+		}
+		size = Variable::getIndex(values[0], outError);
+		if (outError.errorName != "NULL") {
+			return;
+		}
+	}
+
+	if (value != nullptr) {
+		std::vector<Value*> val = value->run(outError);
+		if (outError.errorName != "NULL") {
+			outError.line = line;
+			outError.startColumn = startColumn;
+			outError.endColumn = endColumn;
 			return;
 		}
 		Interpreter::getSingelton()->declareVar(name, val, this->typeId, 
-			outError, isConst, isStaticType);
+			outError, isConst, isStaticType, size);
 	}
 	else {
 		Interpreter::getSingelton()->declareVar(name, this->typeId,
-			outError, isConst, isStaticType);
+			outError, isConst, isStaticType, size);
 	}
 	if (outError.errorName != "NULL") {
 		outError.line			= line;

@@ -13,7 +13,7 @@ public:
 	void* getData();
 	virtual std::string toString() = 0;
 
-	virtual Value* run(Error& outError) = 0;
+	virtual std::vector<Value*> run(Error& outError) = 0;
 	//virtual void setVal(Value* val, size_t index, Error& outError) = 0;
 	//virtual void setVal(Value* val, Error& outError) = 0;
 	virtual bool getBool(Error& outError) = 0;

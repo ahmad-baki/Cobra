@@ -17,14 +17,14 @@ public:
 	void EnterScope(Error& outError, Value* thisRef = nullptr, std::string name = "anonymous");
 	void ExitScope();
 	Scope* getCurrScope();
-	bool declareVar(std::string name, Value* val, int typeId,
-		Error& outError, bool isConst = false, bool isStaticType = false);
+	bool declareVar(std::string name, std::vector<Value*> val, int typeId,
+		Error& outError, bool isConst = false, bool isStaticType = false, int size = 1);
 
 	bool declareVar(std::string name, int typeId, Error& outError,
-		bool isConst = false, bool isStaticType = false);
+		bool isConst = false, bool isStaticType = false, int size = 1);
 
 	Variable* getVar(std::string name, Error& outError);
-	bool setVar(std::string name, Value* val, Error& outError);
+	bool setVar(std::string name, std::vector<Value*> val, Error& outError);
 	bool isVarDecl(std::string name);
 
 	Type* getType(std::string typeName, Error& outError);

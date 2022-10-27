@@ -3,8 +3,8 @@
 #include "RuntimeError.h"
 #include "Interpreter.h"
 
-GetVal::GetVal(std::string varName, size_t line, size_t startColumn, size_t endColumn)
-	: varName{varName}
+GetVal::GetVal(std::string varName, Expression* expr, size_t line, size_t startColumn, size_t endColumn)
+	: varName{varName}, expr{ expr }
 {
 	this->line = line;
 	this->startColumn = startColumn;
@@ -12,14 +12,27 @@ GetVal::GetVal(std::string varName, size_t line, size_t startColumn, size_t endC
 }
 
 
-Value* GetVal::run(Error& outError) {
-	Value* val = Interpreter::getSingelton()->getVar(varName, outError)->getVal();
-	if (val == nullptr)
+std::vector<Value*> GetVal::run(Error& outError) {
+	Value* index{nullptr};
+	if (expr != nullptr) {
+		std::vector<Value*> vals = expr->run(outError);
+		if (vals.size() == 0) {
+			return {};
+		}
+		if (vals.size() > 1) {
+			RuntimeError targetError{ "InvalidType: Cannot use list as index" };
+			outError.copy(targetError);
+			return {};
+		}
+		index = vals[0];
+	}
+	std::vector<Value*> val = Interpreter::getSingelton()->getVar(varName, outError)->getVal(index, outError);
+	if (val.size() == 0)
 	{
 		outError.line			= line;
 		outError.startColumn	= startColumn;
 		outError.endColumn		= endColumn;
-		return nullptr;
+		return {};
 	}
 	return val;
 }

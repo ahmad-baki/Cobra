@@ -1,6 +1,7 @@
 #include "SetVar.h"
 #include "RuntimeError.h"
 #include "Interpreter.h"
+#include <format>
 
 
 
@@ -15,12 +16,15 @@ SetVar::SetVar(std::string name, Expression* value, size_t line, size_t startCol
 
 void SetVar::run(Error& outError)
 {
-	Value* val = value->run(outError);
+	std::vector<Value*> val = value->run(outError);
 
-	if (val == nullptr) {
-		//outError.line			= line;
-		//outError.startColumn	= startColumn;
-		//outError.endColumn		= endColumn;
+	if (outError.errorName != "NULL") {
+		return;
+	}
+	if (val.size() != 1) {
+		RuntimeError targetError{ std::format("Cannot convert to boolean from list with size {}",
+			std::to_string(val.size())) };
+		outError.copy(targetError);
 		return;
 	}
 
