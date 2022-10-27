@@ -39,9 +39,6 @@ double execFromFile(std::string path) {
 		return 0;
 	}
 
-	// neccesary to be before the parsing, so that std-types get loaded
-	Interpreter* interpreter = Interpreter::getSingelton();
-
 	Parser parser = Parser(input, path);
 	std::vector<Statement*> statements = parser.parse(tokenString, error);
 
@@ -49,6 +46,8 @@ double execFromFile(std::string path) {
 		std::cout << error << '\n' << std::endl;
 		return 0;
 	}
+
+	Interpreter* interpreter = Interpreter::getSingelton();
 	interpreter->setStatements(statements);
 
 	const auto startTime = system_clock::now();
@@ -111,11 +110,14 @@ int main(int argc, char* argv[])
 {
 	if (argc > 1) {
 		for (size_t i = 1; i < argc; i++) {
+			Interpreter::reset();
 			double runTime = execFromFile(argv[i]);
 			std::cout << "finished in: " << runTime << "ms" << std::endl;
+			std::cout << std::endl;
 		}
 	}
 	else {
+		Interpreter::reset();
 		execFromCommandLine();
 		std::cout << "finished" << std::endl;
 	}	

@@ -1,0 +1,10 @@
+float n = 5656788;
+float a = 1;
+float b = n;
+int cycles = 1000;
+while (a != b && cycles > 0) {
+    a = (a+b) / 2;
+    b = n / a;
+    cycles = cycles - 1;
+}
+print(a);

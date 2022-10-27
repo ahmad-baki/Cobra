@@ -14,6 +14,12 @@ Interpreter::Interpreter()
 	loadStdTypes();
 }
 
+Interpreter::~Interpreter() {
+	for (auto scope : scopes) {
+		scope.exit();
+	}
+}
+
 Interpreter* Interpreter::getSingelton() {
 	if (singelton == nullptr) {
 		singelton = new Interpreter();
@@ -163,4 +169,11 @@ void Interpreter::loadStdTypes() {
 		Type* type = new Type(elemTypes[i], i);
 		scopes[0].declareType(type, outError);
 	}
+}
+
+void Interpreter::reset() {
+	if (singelton != nullptr) {
+		delete singelton;
+	}
+	singelton = new Interpreter();
 }

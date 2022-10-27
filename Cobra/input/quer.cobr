@@ -1,0 +1,8 @@
+int n = 99;
+int sum = 0;
+while (n > 0) {
+    int new = n / 10;
+    sum = sum + n - new * 10;
+    n = new;
+}
+print(sum);

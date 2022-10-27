@@ -7,8 +7,11 @@
 
 class Interpreter
 {
-public: 
+public:
+	~Interpreter();
+
 	static Interpreter* getSingelton();
+	static void reset();
 	void run(Error& outError);
 	void contin(Error& outError);
 	void addStatements(std::vector<Statement*> statements);
