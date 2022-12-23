@@ -27,7 +27,7 @@
     <ClCompile Include="ElseCond.cpp" />
     <ClCompile Include="Error.cpp" />
     <ClCompile Include="Expression.cpp" />
-    <ClCompile Include="GetVal.cpp" />
+    <ClCompile Include="GetVar.cpp" />
     <ClCompile Include="IEASTNode.cpp" />
     <ClCompile Include="IfCond.cpp" />
     <ClCompile Include="Interpreter.cpp" />

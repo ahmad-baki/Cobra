@@ -10,10 +10,11 @@ class SetVar : public Statement
 private:
 	//SymbTable* table;
 	std::string name;
-	Expression* value;
+	Expression* index;
+	Expression* tValue;
 
 public:
 
+	SetVar(std::string name, Expression* index, Expression* tValue, size_t line, size_t startColumn, size_t endColumn);
 	void run(Error& outError);
-	SetVar(std::string name, Expression* value, size_t line, size_t startColumn, size_t endColumn);
 };

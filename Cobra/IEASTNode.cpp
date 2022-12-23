@@ -44,7 +44,7 @@ Expression* IEASTNode::getExpr(Error& outError) {
 			if (leftNode != nullptr) {
 				indexExpr = leftNode->getExpr(outError);
 			}
-			expr = new GetVal(token.value, indexExpr, 
+			expr = new GetVar(token.value, indexExpr, 
 				token.line, token.startColumn, token.endColumn);
 		}
 		break;

@@ -37,6 +37,8 @@ private:
 
 	void advance();
 	void revert(size_t pos);
+	Token getCurrToken();
+
 	Statement* getStatement(Error& outError);
 	Statement* getBlockState(Error& outError);
 	Statement* getIfState(Error& outError);
@@ -53,7 +55,7 @@ private:
 	Expression* getExpr(Error& outError);
 	void getIEAST(IEASTNode& rootNode, Error& outError);
 	void streamToIEAST(std::vector<Token> tokenStream, IEASTNode& rootNode, Error& outError);
-	std::vector<Token> getExprTokStream();
+	static std::vector<Token> getExprTokStream(size_t& pos, const std::vector<Token> tokenStream);
 	std::vector<Token> transExprTokStream(std::vector<Token> tokenStream);
 	std::vector<Token> addBrackets(std::vector<Token> tokenStream, std::vector<enum TokenType> op);
 };

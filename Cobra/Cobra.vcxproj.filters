@@ -54,7 +54,7 @@
     <ClCompile Include="Expression.cpp">
       <Filter>Source Files\Parser</Filter>
     </ClCompile>
-    <ClCompile Include="GetVal.cpp">
+    <ClCompile Include="GetVar.cpp">
       <Filter>Source Files\Parser</Filter>
     </ClCompile>
     <ClCompile Include="IEASTNode.cpp">

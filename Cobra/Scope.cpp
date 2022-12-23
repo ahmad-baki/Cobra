@@ -57,7 +57,7 @@ bool Scope::declareVar(std::string name, std::vector<Value*> val, int typeId,
 	return true;
 }
 
-bool Scope::setVar(std::string name, std::vector<Value*> tVal, Error& outError)
+bool Scope::setVar(std::string name, Value* index, std::vector<Value*> tVal, Error& outError)
 {
 	Variable* var= this->getVar(name, outError);
 
@@ -67,7 +67,7 @@ bool Scope::setVar(std::string name, std::vector<Value*> tVal, Error& outError)
 		return false;
 	}
 
-	var->setVar(tVal, nullptr, outError);
+	var->setVar(tVal, index, outError);
 	if (outError.errorName != "NULL")
 		return false;
 	return true;

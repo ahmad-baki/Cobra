@@ -1,9 +1,9 @@
-float n = 5656788;
+float n = 10;
 float a = 1;
 float b = n;
-int cycles = 1000;
+int cycles = 1000000000;
 while (a != b && cycles > 0) {
-    a = (a+b) / 2;
+    a = (a[0]+b) / 2;
     b = n / a;
     cycles = cycles - 1;
 }

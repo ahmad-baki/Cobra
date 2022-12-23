@@ -5,14 +5,14 @@
 #include "SuppType.h"
 #include "Error.h"
 
-class GetVal : public Expression
+class GetVar : public Expression
 {
 private:
     std::string varName;
     Expression* expr;
 
 public:
-    GetVal(std::string varName, Expression* expr, size_t line, size_t startColumn, size_t endColumn);
+    GetVar(std::string varName, Expression* expr, size_t line, size_t startColumn, size_t endColumn);
     std::vector<Value*> run(Error& outError);
 };
 

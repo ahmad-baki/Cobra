@@ -27,7 +27,7 @@ public:
 		bool isConst = false, bool isStaticType = false, int size = 1);
 
 	Variable* getVar(std::string name, Error& outError);
-	bool setVar(std::string name, std::vector<Value*> val, Error& outError);
+	bool setVar(std::string name, Value* index, std::vector<Value*> tVal, Error& outError);
 	bool isVarDecl(std::string name);
 
 	Type* getType(std::string typeName, Error& outError);

@@ -100,11 +100,11 @@ Variable* Interpreter::getVar(std::string name, Error& outError)
 	return nullptr;
 }
 
-bool Interpreter::setVar(std::string name, std::vector<Value*> val, Error& outError)
+bool Interpreter::setVar(std::string name, Value* index, std::vector<Value*> tVal, Error& outError)
 {
 	for (auto scope = scopes.rbegin(); scope != scopes.rend(); ++scope) {
 		if(scope->isVarDecl(name)) {
-			return scope->setVar(name, val, outError);
+			return scope->setVar(name, index, tVal, outError);
 		}
 	}
 	Error targetError = RuntimeError("Tried to set variable: " + name + ", despite it not existing");

@@ -3,7 +3,7 @@
 #include "RuntimeError.h"
 #include "Interpreter.h"
 
-GetVal::GetVal(std::string varName, Expression* expr, size_t line, size_t startColumn, size_t endColumn)
+GetVar::GetVar(std::string varName, Expression* expr, size_t line, size_t startColumn, size_t endColumn)
 	: varName{varName}, expr{ expr }
 {
 	this->line = line;
@@ -12,7 +12,7 @@ GetVal::GetVal(std::string varName, Expression* expr, size_t line, size_t startC
 }
 
 
-std::vector<Value*> GetVal::run(Error& outError) {
+std::vector<Value*> GetVar::run(Error& outError) {
 	Value* index{nullptr};
 	if (expr != nullptr) {
 		std::vector<Value*> vals = expr->run(outError);
