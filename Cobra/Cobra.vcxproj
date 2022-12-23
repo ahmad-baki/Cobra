@@ -33,6 +33,7 @@
     <ClCompile Include="Interpreter.cpp" />
     <ClCompile Include="InvChrError.cpp" />
     <ClCompile Include="Lexer.cpp" />
+    <ClCompile Include="ListExpr.cpp" />
     <ClCompile Include="Literal.cpp" />
     <ClCompile Include="Loop.cpp" />
     <ClCompile Include="Parser.cpp" />
@@ -64,6 +65,7 @@
     <ClInclude Include="Interpreter.h" />
     <ClInclude Include="InvChrError.h" />
     <ClInclude Include="Lexer.h" />
+    <ClInclude Include="ListExpr.h" />
     <ClInclude Include="Literal.h" />
     <ClInclude Include="Loop.h" />
     <ClInclude Include="Node.h" />

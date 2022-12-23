@@ -55,8 +55,11 @@ private:
 	Expression* getExpr(Error& outError);
 	void getIEAST(IEASTNode& rootNode, Error& outError);
 	void streamToIEAST(std::vector<Token> tokenStream, IEASTNode& rootNode, Error& outError);
-	static std::vector<Token> getExprTokStream(size_t& pos, const std::vector<Token> tokenStream);
-	std::vector<Token> transExprTokStream(std::vector<Token> tokenStream);
-	std::vector<Token> addBrackets(std::vector<Token> tokenStream, std::vector<enum TokenType> op);
+	static std::vector<Token> getExprTokStream(size_t& pos, const std::vector<Token>& tokenStream);
+	static std::vector<Token> getArrExprTokStream(size_t& pos, const std::vector<Token>& tokenStream);
+	static std::vector<Token> getSingExprTokStream(size_t& pos, const std::vector<Token>& tokenStream);
+	
+	static std::vector<Token> transExprTokStream(std::vector<Token> tokenStream);
+	static std::vector<Token> addBrackets(std::vector<Token> tokenStream, std::vector<enum TokenType> op);
 };
 

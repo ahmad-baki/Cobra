@@ -14,8 +14,11 @@ void PrintState::run(Error& outError) {
 		return;
 	}
 	std::cout << '[';
-	for (Value* val : vals) {
-		std::cout << val->toString();
+	for (size_t i = 0; i < vals.size(); i++) {
+		std::cout << vals[i]->toString();
+		if (i != vals.size() - 1) {
+			std::cout << ", ";
+		}
 	}
 	std::cout << ']' << std::endl;
 	return;

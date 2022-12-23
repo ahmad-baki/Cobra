@@ -47,6 +47,7 @@ private:
 		{"{",		TokenType::LCURLBRACKET},
 		{"}",		TokenType::RCURLBRACKET},
 		{"!",		TokenType::EXCLA},
+		{",",		TokenType::COMMA},
 		{"=",		TokenType::EQ},
 		{"==",		TokenType::EQEQ},
 		{"!=",		TokenType::EXCLAEQ},

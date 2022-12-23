@@ -9,6 +9,7 @@
 #include "SyntaxError.h"
 #include "Interpreter.h"
 #include "PrimValue.h"
+#include "ListExpr.h"
 
 
 IEASTNode::IEASTNode(std::string_view path, std::string_view text)
@@ -47,6 +48,20 @@ Expression* IEASTNode::getExpr(Error& outError) {
 			expr = new GetVar(token.value, indexExpr, 
 				token.line, token.startColumn, token.endColumn);
 		}
+		break;
+	case TokenType::LCURLBRACKET:
+	case TokenType::COMMA:
+	{
+		ListExpr* listExpr = new ListExpr();
+		if (leftNode != nullptr) {
+			listExpr->add(leftNode->getExpr(outError));
+			listExpr->add((ListExpr*)rightNode->getExpr(outError));
+		}
+		expr = listExpr;
+		break;
+	}
+	case TokenType::RCURLBRACKET:
+		expr = new ListExpr();
 		break;
 	default:
 		if (leftNode == nullptr) {

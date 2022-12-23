@@ -475,7 +475,6 @@ Expression* Parser::getExpr(Error& outError)
 		return nullptr;
 	}
 
-	tokenStream = transExprTokStream(tokenStream);
 	IEASTNode rootNode = IEASTNode(path, text);
 	streamToIEAST(tokenStream, rootNode, outError);
 
@@ -491,6 +490,7 @@ Expression* Parser::getExpr(Error& outError)
 }
 
 // delete the node, becouse its constructed on the heap
+
 void Parser::getIEAST(IEASTNode& rootNode, Error& outError) {
 	std::vector<Token> tokenStream = getExprTokStream(currentPos, tokenStream);
 	if (tokenStream.size() == 0){
@@ -551,7 +551,7 @@ void Parser::streamToIEAST(std::vector<Token> tokenStream, IEASTNode& rootNode, 
 		case TokenType::LSQBRACKET:
 		{
 			i++;
-			std::vector<Token> indextokenStream = getExprTokStream(i, refTokenStream);
+			std::vector<Token> indexTokenStream = getExprTokStream(i, refTokenStream);
 
 			if (refTokenStream[i].dataType != TokenType::RSQBRACKET) {
 				SyntaxError targetError = SyntaxError("Presumably Missing ']'-Bracket", refTokenStream[i].line,
@@ -561,12 +561,48 @@ void Parser::streamToIEAST(std::vector<Token> tokenStream, IEASTNode& rootNode, 
 			}
 
 			IEASTNode* indexRootNode = new IEASTNode(path, text);
-			streamToIEAST(indextokenStream, *indexRootNode, outError);
+			streamToIEAST(indexTokenStream, *indexRootNode, outError);
 			auto top = nodeStack.top();
 			nodeStack.top()->leftNode->leftNode = indexRootNode;
 			break;
 		}
+		case TokenType::RSQBRACKET:
+		{
+			SyntaxError targetError = SyntaxError("Presumably Missing '['-Bracket", refTokenStream[i].line,
+				refTokenStream[i].startColumn, refTokenStream[i].endColumn, path, text);
+			outError.copy(targetError);
+			return;
+		}
+		case TokenType::LCURLBRACKET:
+		{
+			IEASTNode* currNode = nodeStack.top();
+			do
+			{
+				currNode->token = refTokenStream[i];
+				i++;
+				std::vector<Token> exprTokenStream = getExprTokStream(i, refTokenStream);
+				if (exprTokenStream.size() == 0) {
+					// todo
+				}
+				IEASTNode* valExpr = new IEASTNode(path, text);
+				streamToIEAST(exprTokenStream, *valExpr, outError);
+				currNode->leftNode = valExpr;
+				IEASTNode* newNode = new IEASTNode(path, text);
+				currNode->rightNode = newNode;
+				currNode = newNode;
 
+			} while (refTokenStream[i].dataType == TokenType::COMMA);
+
+			if (refTokenStream[i].dataType != TokenType::RCURLBRACKET) {
+				SyntaxError targetError = SyntaxError("Presumably Missing '}'-Bracket", refTokenStream[i].line,
+					refTokenStream[i].startColumn, refTokenStream[i].endColumn, path, text);
+				outError.copy(targetError);
+				return;
+			}
+			currNode->token = refTokenStream[i];
+			nodeStack.pop();
+			break;
+		}
 		// operator
 		default:
 			IEASTNode* topNode = nodeStack.top();
@@ -586,7 +622,35 @@ void Parser::streamToIEAST(std::vector<Token> tokenStream, IEASTNode& rootNode, 
 
 // finds token-string of expression and checks wether it 
 // fits grammer of language
-std::vector<Token> Parser::getExprTokStream(size_t& pos, const std::vector<Token> tokenStream) {
+std::vector<Token> Parser::getExprTokStream(size_t& pos, const std::vector<Token>& tokenStream) {
+	if (tokenStream[pos].dataType == TokenType::LCURLBRACKET) {
+		return getArrExprTokStream(pos, tokenStream);
+	}
+	return getSingExprTokStream(pos, tokenStream);
+}
+
+std::vector<Token> Parser::getArrExprTokStream(size_t& pos, const std::vector<Token>& tokenStream) {
+	size_t startPos = pos;
+	std::vector<Token> out{};
+	do
+	{
+		out.push_back(tokenStream[pos]);
+		pos++;
+		std::vector<Token> singTokenStream = getSingExprTokStream(pos, tokenStream);
+		singTokenStream = transExprTokStream(singTokenStream);
+		out.insert(out.end(), singTokenStream.begin(), singTokenStream.end());
+	} while (tokenStream[pos].dataType == TokenType::COMMA);
+
+	if (tokenStream[pos].dataType != TokenType::RCURLBRACKET) {
+		pos = startPos;
+		return {};
+	}
+	out.push_back(tokenStream[pos]);
+	pos++;
+	return out;
+}
+
+std::vector<Token> Parser::getSingExprTokStream(size_t& pos, const std::vector<Token>& tokenStream) {
 	size_t startPos = pos;
 	size_t bracketSur = 0;
 	size_t sqrBracketSur = 0;
@@ -605,12 +669,13 @@ std::vector<Token> Parser::getExprTokStream(size_t& pos, const std::vector<Token
 	std::vector<enum TokenType> binOps{
 		TokenType::PLUS, TokenType::MINUS, TokenType::MUL,
 		TokenType::DIV, TokenType::EQEQ, TokenType::EXCLAEQ,
-		TokenType::BIG, TokenType::BIGEQ, TokenType::SMALL, 
+		TokenType::BIG, TokenType::BIGEQ, TokenType::SMALL,
 		TokenType::SMALLEQ, TokenType::AND, TokenType::OR,
 		TokenType::MOD,
 	};
 
 	while (tokType != TokenType::SEMICOLON && tokType != TokenType::COMMA &&
+		tokType != TokenType::RCURLBRACKET &&
 		!(tokType == TokenType::RBRACKET && bracketSur == 0) &&
 		!(tokType == TokenType::RSQBRACKET && sqrBracketSur == 0)
 		&& tokenStream[pos].dataType != TokenType::NONE)
@@ -662,7 +727,8 @@ std::vector<Token> Parser::getExprTokStream(size_t& pos, const std::vector<Token
 	if (bracketSur > 0 || sqrBracketSur > 0)
 		return std::vector<Token>();
 
-	return std::vector<Token>(tokenStream.begin() + startPos, tokenStream.begin() + pos);
+	auto outTokenStream = std::vector<Token>(tokenStream.begin() + startPos, tokenStream.begin() + pos);
+	return transExprTokStream(outTokenStream);
 }
 
 // adds Brackets around operators according to their priorities
@@ -674,6 +740,10 @@ std::vector<Token> Parser::transExprTokStream(std::vector<Token> tokenStream) {
 		{TokenType::EQEQ, TokenType::EXCLAEQ, TokenType::SMALL, TokenType::SMALLEQ, TokenType::BIG, TokenType::BIGEQ, },
 		{TokenType::AND, TokenType::OR},
 	};
+
+	// just to be sure
+	tokenStream.insert(tokenStream.begin(), Token(TokenType::LBRACKET));
+	tokenStream.push_back(Token(TokenType::RBRACKET));
 
 	for (auto opClass : opClasses) {
 		tokenStream = addBrackets(tokenStream, opClass);
