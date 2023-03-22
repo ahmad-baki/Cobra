@@ -14,12 +14,12 @@ SetVar::SetVar(std::string name, Expression* index, Expression* tValue, size_t l
 }
 
 
-void SetVar::run(Error& outError)
+size_t SetVar::run(Error& outError)
 {
 	std::vector<Value*> val = tValue->run(outError);
 
 	if (outError.errorName != "NULL") {
-		return;
+		return 0;
 	}
 	// confusion 1
 	//if (val.size() != 1) {
@@ -33,13 +33,13 @@ void SetVar::run(Error& outError)
 	if (index != nullptr) {
 		std::vector<Value*> indexVals = index->run(outError);
 		if (outError.errorName != "NULL") {
-			return;
+			return 0;
 		}
 		if (indexVals.size() != 1) {
 			RuntimeError targetError{ std::format("Cannot convert to index from list with size {}",
 				std::to_string(val.size())) };
 			outError.copy(targetError);
-			return;
+			return 0;
 		}
 		indexVal = indexVals[0];
 	}
@@ -53,5 +53,5 @@ void SetVar::run(Error& outError)
 		outError.startColumn	= startColumn;
 		outError.endColumn		= endColumn;
 	}
-	return;
+	return 0;
 }

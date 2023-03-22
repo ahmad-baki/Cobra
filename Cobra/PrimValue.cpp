@@ -246,6 +246,7 @@ void* PrimValue::Cast(void* data, int o_typeId, int t_typeId, Error& outError) {
 	Interpreter* interpreter = Interpreter::getSingelton();
 	int intTypeId = interpreter->getTypeId("int", outError);
 	int floatTypeId = interpreter->getTypeId("float", outError);
+	int charTypeId = interpreter->getTypeId("char", outError);
 
 	if (t_typeId == intTypeId) {
 		if (o_typeId == intTypeId){
@@ -254,6 +255,9 @@ void* PrimValue::Cast(void* data, int o_typeId, int t_typeId, Error& outError) {
 		else if (o_typeId == floatTypeId) {
 			returnValue = (void*)new int(*(float*)data);
 		}
+		else if (o_typeId == charTypeId) {
+			returnValue = (void*)new int(*(char*)data);
+		}
 	}
 	else if (t_typeId == floatTypeId) {
 		if (o_typeId == intTypeId) {
@@ -261,6 +265,14 @@ void* PrimValue::Cast(void* data, int o_typeId, int t_typeId, Error& outError) {
 		}
 		else if (o_typeId == floatTypeId) {
 			returnValue = (void*)new float{ *(float*)data };
+		}
+	}
+	else if (t_typeId == charTypeId) {
+		if (o_typeId == intTypeId) {
+			returnValue = (void*)new char(*(int*)data);
+		}
+		else if (o_typeId == charTypeId) {
+			returnValue = (void*)new char(*(char*)data);
 		}
 	}
 	if (returnValue == nullptr) {
@@ -286,6 +298,9 @@ std::string PrimValue::toString()
 		}
 		else if (typeId == interpr->getTypeId("float", outError)) {
 			output << *(float*)data;
+		}
+		else if (typeId == interpr->getTypeId("char", outError)) {
+			output << *(char*)data;
 		}
 		else if (typeId == 0) {
 			output << "undefined";

@@ -9,6 +9,6 @@ private:
 	Expression* param;
 public:
 	PrintState(Expression* param);
-	void run(Error& outError);
+	size_t run(Error& outError);
 };
 

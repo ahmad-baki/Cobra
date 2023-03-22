@@ -8,12 +8,12 @@ IfCond::IfCond(Expression* cond, Statement* statement, std::vector<ElseCond*> if
 {
 }
 
-void IfCond::run(Error& outError)
+size_t IfCond::run(Error& outError)
 {
 	std::vector<Value*> condVal = cond->run(outError);
 
 	if (outError.errorName != "NULL") {
-		return;
+		return 0;
 	}
 	if (condVal.size() != 1) {
 		RuntimeError targetError{ std::format("Cannot convert to boolean from list with size {}", 
@@ -23,11 +23,10 @@ void IfCond::run(Error& outError)
 	bool condBol = condVal[0]->getBool(outError);
 
 	if (outError.errorName != "NULL")
-		return;
+		return 0;
 
 	if (condBol) {
-		statement->run(outError);
-		return;
+		return statement->run(outError);
 	}
 	else {
 		for (int i = 0; i < ifElseStates.size(); i++)
@@ -35,23 +34,23 @@ void IfCond::run(Error& outError)
 			bool ifElseBool = ifElseStates[i]->run(outError);
 
 			if (outError.errorName != "NULL") {
-				return;
+				return 0;
 			}
 			if (condVal.size() != 1) {
 				RuntimeError targetError{ std::format("Cannot convert to boolean from list with size {}",
 					std::to_string(condVal.size())) };
 				outError.copy(targetError);
-				return;
+				return 0;
 			}
 
 			if (ifElseBool) {
-				return;
+				return ifElseStates[i]->run(outError);
 			}
 		}
 		if (elseState != nullptr) {
-			elseState->run(outError);
+			return elseState->run(outError);
 		}
-		return;
+		return 0;
 	}
 }
 

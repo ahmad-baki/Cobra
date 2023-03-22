@@ -23,13 +23,16 @@ void BlockNode::contin(Error& outError) {
 	}
 }
 
-void BlockNode::run(Error& outError)
+size_t BlockNode::run(Error& outError)
 {
 	Interpreter::getSingelton()->EnterScope(outError, nullptr, name);
 	for (Statement* statement : blockNode) {
-		statement->run(outError);
+		size_t breakCount = statement->run(outError);
 		if (outError.errorName != "NULL")
-			return;
+			return 0;
+		if (breakCount > 0) {
+			return 0;
+		}
 	}
 	Interpreter::getSingelton()->ExitScope();
 }

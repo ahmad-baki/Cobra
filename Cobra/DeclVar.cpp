@@ -26,7 +26,7 @@ DeclVar::DeclVar(std::string name, size_t line, size_t startColumn,
 #pragma endregion 
 }
 
-void DeclVar::run(Error& outError)
+size_t DeclVar::run(Error& outError)
 {
 	//bool isList;
 	//if (sizeExpr == nullptr) {
@@ -55,7 +55,7 @@ void DeclVar::run(Error& outError)
 			outError.line = line;
 			outError.startColumn = startColumn;
 			outError.endColumn = endColumn;
-			return;
+			return 0;
 		}
 		Interpreter::getSingelton()->declareVar(name, val, this->typeId, 
 			outError, isConst, isStaticType, isList);
@@ -68,7 +68,7 @@ void DeclVar::run(Error& outError)
 		outError.line			= line;
 		outError.startColumn	= startColumn;
 		outError.endColumn		= endColumn;
-		return;
+		return 0;
 	}
 }
 

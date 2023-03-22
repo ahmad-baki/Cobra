@@ -209,6 +209,7 @@ Statement* Parser::getDeclState(Error& outError)
 	}
 	if (getCurrToken().dataType != TokenType::INTWORD && 
 		getCurrToken().dataType != TokenType::FLOATWORD &&
+		getCurrToken().dataType != TokenType::CHARWORD &&
 		getCurrToken().dataType != TokenType::VARWORD)
 	{
 		if (constVar) {
@@ -228,6 +229,9 @@ Statement* Parser::getDeclState(Error& outError)
 		break;
 	case TokenType::FLOATWORD:
 		typeId = Interpreter::getSingelton()->getTypeId("float", outError);
+		break;
+	case TokenType::CHARWORD:
+		typeId = Interpreter::getSingelton()->getTypeId("char", outError);
 		break;
 	case TokenType::VARWORD:
 		typeId = 0;
@@ -535,17 +539,12 @@ void Parser::streamToIEAST(std::vector<Token> tokenStream, IEASTNode& rootNode, 
 			break;
 		}
 		case TokenType::DECLIT:
-		{
-			IEASTNode* DecNode = nodeStack.top();
-			nodeStack.pop();
-			DecNode->token = tokenStream[i];
-			break;
-		}
 		case TokenType::INTLIT:
+		case TokenType::CHARLIT:
 		{
-			IEASTNode* IntNode = nodeStack.top();
+			IEASTNode* litNode = nodeStack.top();
 			nodeStack.pop();
-			IntNode->token = tokenStream[i];
+			litNode->token = tokenStream[i];
 			break;
 		}
 		case TokenType::IDENTIFIER:
@@ -676,7 +675,7 @@ std::vector<Token> Parser::getSingExprTokStream(size_t& pos, const std::vector<T
 	}
 
 	std::vector<enum TokenType> valTypes{
-		TokenType::INTLIT, TokenType::DECLIT, TokenType::IDENTIFIER
+		TokenType::INTLIT, TokenType::DECLIT, TokenType::CHARLIT , TokenType::IDENTIFIER
 	};
 	std::vector<enum TokenType> binOps{
 		TokenType::PLUS, TokenType::MINUS, TokenType::MUL,

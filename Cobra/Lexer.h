@@ -27,6 +27,7 @@ private:
 	void revert(size_t pos);
 	Token getNextToken(Error& outError);
 	Token getNextNumber(Error& outError);
+	Token getNextChar(Error& outError);
 	Token getNextOperator(Error& outError);
 	Token getNextWord(Error& outError);
 	bool isInt(int val);
@@ -67,6 +68,7 @@ private:
 		{"while",	TokenType::WHILE},
 		{"int",		TokenType::INTWORD},
 		{"float",	TokenType::FLOATWORD},
+		{"char",	TokenType::CHARWORD},
 		{"var",		TokenType::VARWORD},
 		{"const",	TokenType::CONSTWORD},
 	};

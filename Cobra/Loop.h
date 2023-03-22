@@ -10,5 +10,5 @@ class Loop : public Statement
 
 public:
 	Loop(Expression* cond, Statement* statement);
-	void run(Error& outError);
+	size_t run(Error& outError);
 };

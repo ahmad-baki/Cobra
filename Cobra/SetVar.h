@@ -16,5 +16,5 @@ private:
 public:
 
 	SetVar(std::string name, Expression* index, Expression* tValue, size_t line, size_t startColumn, size_t endColumn);
-	void run(Error& outError);
+	size_t run(Error& outError);
 };

@@ -7,11 +7,11 @@ PrintState::PrintState(Expression* param)
 {
 }
 
-void PrintState::run(Error& outError) {
+size_t PrintState::run(Error& outError) {
 	std::vector<Value*> vals = param->run(outError);
 
 	if (outError.errorName != "NULL") {
-		return;
+		return 0;
 	}
 	std::cout << '[';
 	for (size_t i = 0; i < vals.size(); i++) {
@@ -21,7 +21,7 @@ void PrintState::run(Error& outError) {
 		}
 	}
 	std::cout << ']' << std::endl;
-	return;
+	return 0;
 }
 //
 //template class PrintState<bool>;

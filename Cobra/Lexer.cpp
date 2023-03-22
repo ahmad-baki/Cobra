@@ -71,20 +71,41 @@ Token Lexer::getNextToken(Error& outError) {
 	while (isspace(currentChar))
 		advance();
 
-	// 1. return literal
+
+	// 1. return char-literal
+	if (currentChar == '\'') {
+		return getNextChar(outError);
+	}
+
+	// 2. return number-literal
 	if (isInt(currentChar)) {
 		return getNextNumber(outError);
 	}
 
-	// 2. return operator
+	// 3. return operator
 	Error opError = Error();
 	Token token = getNextOperator(opError);
 	if (opError.errorName == "NULL") {
 		return token;
 	}
 
-	// 3. return identifier or keyword
+	// 4. return identifier or keyword
 	return getNextWord(outError);
+}
+
+Token Lexer::getNextChar(Error& outError) {
+	size_t startColumn = column;
+	advance();
+	std::string tokenString{ currentChar };
+	advance();
+	if (currentChar != '\'') {
+		InvChrError copyTarget = InvChrError("Missing \'", line, column, column + 1, path, text);
+		outError.copy(copyTarget);
+		return Token();
+	}
+	size_t endColumn = column;
+	advance();
+	return Token(TokenType::CHARLIT, line, startColumn, endColumn, tokenString);
 }
 
 Token Lexer::getNextNumber(Error& outError) {

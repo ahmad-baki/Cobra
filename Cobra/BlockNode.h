@@ -17,7 +17,7 @@ public:
 	BlockNode();
 	BlockNode(std::vector<Statement*> blockNode, std::string name = "CodeBlock");
 	void contin(Error& outError);
-	void run(Error& outError);
+	size_t run(Error& outError);
 	void add(Statement* statement);
 };
 

@@ -8,7 +8,7 @@ class Statement : public Node
 {
 public:
 	//SymbTable* table;
-	virtual void run(Error& outError) = 0;
+	virtual size_t run(Error& outError) = 0;
 };
 
 

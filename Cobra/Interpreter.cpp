@@ -163,7 +163,7 @@ int Interpreter::getTypeId(std::string typeName, Error& outError) {
 }
 
 void Interpreter::loadStdTypes() {
-	std::string elemTypes[]{"null", "int", "float"};
+	std::string elemTypes[]{"null", "int", "float", "char"};
 	Error outError{};
 	for (size_t i = 0; i < std::size(elemTypes); i++) {
 		Type* type = new Type(elemTypes[i], i);
