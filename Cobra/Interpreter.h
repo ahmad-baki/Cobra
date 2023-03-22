@@ -24,7 +24,7 @@ public:
 		Error& outError, bool isConst = false, bool isStaticType = false, int size = 1);
 
 	bool declareVar(std::string name, int typeId, Error& outError,
-		bool isConst = false, bool isStaticType = false, int size = 1);
+		bool isConst = false, bool isStaticType = false, bool isList = false);
 
 	Variable* getVar(std::string name, Error& outError);
 	bool setVar(std::string name, Value* index, std::vector<Value*> tVal, Error& outError);

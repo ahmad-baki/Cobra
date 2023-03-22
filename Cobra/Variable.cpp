@@ -4,8 +4,8 @@
 #include <format>
 
 Variable::Variable(std::vector<Value*> values, Error& outError, int typeId,
-	bool isConst, bool isStaticType, int size)
-	: values{}, isConst{ isConst }, isStaticType{isStaticType}, size{size}
+	bool isConst, bool isStaticType, bool isList)
+	: values{}, isConst{ isConst }, isStaticType{isStaticType}, isList{isList}
 {
 	//if (values.size() == 0) {
 	//	RuntimeError targetError{ "empty list cannot be element of \
@@ -13,10 +13,19 @@ Variable::Variable(std::vector<Value*> values, Error& outError, int typeId,
 	//}
 
 	int copyTypeId = (isStaticType) ? typeId : 0;
-	this->values.reserve(values.size());
-	for (Value* val : values)
+
+	int size;
+	if (copyTypeId != 0 && !isList) {
+		size = 1;
+	}
+	else {
+		size = values.size();
+	}
+
+	this->values.reserve(size);
+	for (auto pointer = values.begin(); pointer < values.begin() + size; pointer++)
 	{
-		Value* copy = val->getCopy(copyTypeId, outError);
+		Value* copy = (*pointer)->getCopy(copyTypeId, outError);
 		if (copy == nullptr) {
 			return;
 		}
@@ -44,8 +53,8 @@ bool Variable::setVar(std::vector<Value*> tValues, Value* index, Error& outError
 	int typeId = (isStaticType) ? values[0]->getTypeId() : 0;
 	if (index == nullptr) {
 
-		if (size == -1 && tValues.size() != 1) {
-			RuntimeError targetError{ std::format("value of size {} doesnt fit into variable of size 1"
+		if (!isList && tValues.size() != 1) {
+			RuntimeError targetError{ std::format("target value has size {}, which is uneqal to 1"
 				, tValues.size()) };
 			outError.copy(targetError);
 			return false;
@@ -68,14 +77,19 @@ bool Variable::setVar(std::vector<Value*> tValues, Value* index, Error& outError
 	}
 	else {
 		if (tValues.size() != 1) {
-			RuntimeError targetError{ std::format("list of size {} cannot be element of \
-				list", tValues.size()) };
+			RuntimeError targetError{ "a list cannot be element of another list" };
 			outError.copy(targetError);
 			return false;
 		}
 
 		int intIndex = getIndex(index, outError);
 		if (outError.errorName != "NULL") {
+			return false;
+		}
+
+		if (intIndex > values.size() - 1) {
+			RuntimeError targetError{ std::format("IndexOutOfBounds: Cannot acces index {} of variable with size {}", intIndex, values.size()) };
+			outError.copy(targetError);
 			return false;
 		}
 
@@ -93,8 +107,8 @@ bool Variable::setVar(std::vector<Value*> tValues, Value* index, Error& outError
 std::vector<Value*> Variable::getVal(Value* index, Error& outError)
 {
 	// when value is not defined
-	if (size == 1 && values.size() == 0) {
-		RuntimeError targetError{ "ValueNotDefined: Cannot get not defined variable" };
+	if (!isList && values.size() == 0) {
+		RuntimeError targetError{ "ValueNotDefined: Cannot get undefined variable" };
 		outError.copy(targetError);
 		return {};
 	}
@@ -102,18 +116,19 @@ std::vector<Value*> Variable::getVal(Value* index, Error& outError)
 	if (index == nullptr) {
 		return values;
 	}
+
 	int intIndex = getIndex(index, outError);
 	if (outError.errorName != "NULL") {
 		return {};
 	}
 
-	if (intIndex < 0 || intIndex > values.size()-1) {
+	if (intIndex > values.size()-1) {
 		RuntimeError targetError{ std::format("IndexOutOfBounds: Cannot acces index {} \
 			of variable with size {}", intIndex, values.size() )};
 		outError.copy(targetError);
 	}
 
-	return { values[intIndex] };
+	return { values[abs((int)(intIndex % values.size()))] };
 }
 
 // inefficient, will optimize it another time

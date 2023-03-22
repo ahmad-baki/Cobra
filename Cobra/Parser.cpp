@@ -220,19 +220,8 @@ Statement* Parser::getDeclState(Error& outError)
 		revert(startPos);
 		return nullptr;
 	}
-	auto returnType = getCurrToken().dataType;
-	advance();
-
-	if (getCurrToken().dataType != TokenType::IDENTIFIER) {
-		SyntaxError targetError = SyntaxError("No variablename found", getCurrToken().line,
-			getCurrToken().startColumn, getCurrToken().endColumn, path, text);
-		outError.copy(targetError);
-		return nullptr;
-	}
-	std::string varName = getCurrToken().value;
-
 	int typeId{0};
-	switch (returnType)
+	switch (getCurrToken().dataType)
 	{
 	case TokenType::INTWORD:
 		typeId = Interpreter::getSingelton()->getTypeId("int", outError);
@@ -251,6 +240,29 @@ Statement* Parser::getDeclState(Error& outError)
 	}
 
 	advance();
+
+	bool isList = false;
+	if (getCurrToken().dataType == TokenType::LSQBRACKET) {
+		advance();
+		if (getCurrToken().dataType != TokenType::RSQBRACKET) {
+			SyntaxError targetError = SyntaxError("Presumably Missing ']'", getCurrToken().line,
+				getCurrToken().startColumn, getCurrToken().endColumn, path, text);
+			outError.copy(targetError);
+			return nullptr;
+		}
+		isList = true;
+		advance();
+	}
+
+	if (getCurrToken().dataType != TokenType::IDENTIFIER) {
+		SyntaxError targetError = SyntaxError("No variablename found", getCurrToken().line,
+			getCurrToken().startColumn, getCurrToken().endColumn, path, text);
+		outError.copy(targetError);
+		return nullptr;
+	}
+	std::string varName = getCurrToken().value;
+	advance();
+
 	Expression* expr{ nullptr };
 	// only decl
 	if (getCurrToken().dataType == TokenType::SEMICOLON) {
@@ -283,7 +295,7 @@ Statement* Parser::getDeclState(Error& outError)
 	}
 	advance();
 	Statement* decl = new DeclVar(varName, getCurrToken().line,
-		tokenStream[startPos].startColumn, getCurrToken().endColumn, constVar, true, typeId, expr);
+		tokenStream[startPos].startColumn, getCurrToken().endColumn, constVar, true, typeId, isList, expr);
 	return decl;
 }
 

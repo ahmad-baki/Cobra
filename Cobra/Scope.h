@@ -15,9 +15,9 @@ public:
 	void exit();
 
 	bool declareVar(std::string name, int typeId, Error& outError, 
-		bool isConst = false, bool isStaticType = false, int size = 1);
+		bool isConst = false, bool isStaticType = false, bool isList = false);
 	bool declareVar(std::string name, std::vector<Value*> val, int typeId, 
-		Error& outError, bool isConst = false, bool isStaticType = false, int size = 1);
+		Error& outError, bool isConst, bool isStaticType, bool isList);
 	Variable* getVar(std::string name, Error& outError);
 	bool setVar(std::string name, Value* index, std::vector<Value*> tVal, Error& outError);
 	bool isVarDecl(std::string name);

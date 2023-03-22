@@ -10,7 +10,7 @@ Scope::Scope(std::string name, Error& outError, Value* thisRef)
 	 //to stop user from using "this" as a variable
 	std::pair<std::string, Variable*> elem{ "this", 
 		new Variable((thisRef == nullptr) ? std::vector<Value*>{} : std::vector<Value*>{ thisRef }
-	, outError, 0, true) };
+	, outError, 0, true, true, false) };
 	variables.emplace(elem);
 }
 
@@ -29,30 +29,30 @@ void Scope::exit()
 }
 
 bool Scope::declareVar(std::string name, int typeId, Error& outError, 
-	bool isConst, bool isStaticType, int size) {
+	bool isConst, bool isStaticType, bool isList) {
 	if (isVarDecl(name)) {
 		RuntimeError targetError = RuntimeError(
-			"Tried to declar variable" + name + ", despite it already existing");
+			"Tried to declar variable " + name + ", despite it already existing");
 		outError.copy(targetError);
 		return false;
 	}
 
-	Variable* newVar = new Variable{ {} , outError, typeId, isConst, isStaticType, size};
+	Variable* newVar = new Variable{ {} , outError, typeId, isConst, isStaticType, isList};
 	variables.emplace(name, newVar);
 	return true;
 }
 
 bool Scope::declareVar(std::string name, std::vector<Value*> val, int typeId, 
-	Error& outError, bool isConst, bool isStaticType, int size)
+	Error& outError, bool isConst, bool isStaticType, bool isList)
 {
 	if (isVarDecl(name)) {
 		RuntimeError targetError = RuntimeError(
-			"Tried to declar variable" + name + ", despite it already existing");
+			"Tried to declar variable " + name + ", despite it already existing");
 		outError.copy(targetError);
 		return false;
 	}
 
-	Variable* newVar = new Variable{ val, outError, typeId, isConst, isStaticType };
+	Variable* newVar = new Variable{ val, outError, typeId, isConst, isStaticType, isList };
 	variables.emplace(name, newVar);
 	return true;
 }

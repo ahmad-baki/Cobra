@@ -81,9 +81,9 @@ bool Interpreter::declareVar(std::string name, std::vector<Value*> val,
 }
 
 bool Interpreter::declareVar(std::string name, int typeId,
-	Error& outError, bool isConst, bool isStaticType, int size)
+	Error& outError, bool isConst, bool isStaticType, bool isList)
 {
-	return getCurrScope()->declareVar(name, typeId, outError, isConst, isStaticType, size);
+	return getCurrScope()->declareVar(name, typeId, outError, isConst, isStaticType, isList);
 }
 
 Variable* Interpreter::getVar(std::string name, Error& outError)

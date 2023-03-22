@@ -6,8 +6,10 @@
 
 
 DeclVar::DeclVar(std::string name, size_t line, size_t startColumn, 
-	size_t endColumn, bool isConst, bool isStaticType, int typeId, Expression* value, Expression* sizeExpr)
-	: name{name}, isConst{isConst}, isStaticType{ isStaticType }, typeId{ typeId }, value{ value }, sizeExpr{ sizeExpr }
+	size_t endColumn, bool isConst, bool isStaticType, int typeId, bool isList, 
+	Expression* value)
+	: name{name}, isConst{isConst}, isStaticType{ isStaticType }, 
+	typeId{ typeId }, isList{ isList }, value{value}
 {
 	this->line			= line;
 	this->startColumn	= startColumn;
@@ -26,26 +28,26 @@ DeclVar::DeclVar(std::string name, size_t line, size_t startColumn,
 
 void DeclVar::run(Error& outError)
 {
-	int size = 0;
-	if (sizeExpr == nullptr) {
-		size = 1;
-	}
-	else {
-		std::vector<Value*> values = sizeExpr->run(outError);
-		if (outError.errorName != "NULL") {
-			return;
-		}
-		if (values.size() != 1) {
-			RuntimeError targetError{ std::format("Cannot convert from list with size {} to int", 
-				std::to_string(values.size())) };
-			outError.copy(targetError);
-			return;
-		}
-		size = Variable::getIndex(values[0], outError);
-		if (outError.errorName != "NULL") {
-			return;
-		}
-	}
+	//bool isList;
+	//if (sizeExpr == nullptr) {
+	//	isList = 1;
+	//}
+	//else {
+	//	std::vector<Value*> values = sizeExpr->run(outError);
+	//	if (outError.errorName != "NULL") {
+	//		return;
+	//	}
+	//	if (values.size() != 1) {
+	//		RuntimeError targetError{ std::format("Cannot convert from list with size {} to int", 
+	//			std::to_string(values.size())) };
+	//		outError.copy(targetError);
+	//		return;
+	//	}
+	//	isList = Variable::getIndex(values[0], outError);
+	//	if (outError.errorName != "NULL") {
+	//		return;
+	//	}
+	//}
 
 	if (value != nullptr) {
 		std::vector<Value*> val = value->run(outError);
@@ -56,11 +58,11 @@ void DeclVar::run(Error& outError)
 			return;
 		}
 		Interpreter::getSingelton()->declareVar(name, val, this->typeId, 
-			outError, isConst, isStaticType, size);
+			outError, isConst, isStaticType, isList);
 	}
 	else {
 		Interpreter::getSingelton()->declareVar(name, this->typeId,
-			outError, isConst, isStaticType, size);
+			outError, isConst, isStaticType, isList);
 	}
 	if (outError.errorName != "NULL") {
 		outError.line			= line;
