@@ -18,12 +18,12 @@ size_t SetVar::run(Error& outError)
 {
 	std::vector<Value*> val = tValue->run(outError);
 
-	if (outError.errorName != "NULL") {
+	if (outError.errType != ErrorType::NULLERROR) {
 		return 0;
 	}
 	// confusion 1
 	//if (val.size() != 1) {
-	//	RuntimeError targetError{ std::format("Cannot convert to boolean from list with size {}",
+	//	Error targetError{ ErrorType::RUNTIMEERROR, std::format("Cannot convert to boolean from list with size {}",
 	//		std::to_string(val.size())) };
 	//	outError.copy(targetError);
 	//	return;
@@ -32,11 +32,11 @@ size_t SetVar::run(Error& outError)
 	Value* indexVal;
 	if (index != nullptr) {
 		std::vector<Value*> indexVals = index->run(outError);
-		if (outError.errorName != "NULL") {
+		if (outError.errType != ErrorType::NULLERROR) {
 			return 0;
 		}
 		if (indexVals.size() != 1) {
-			RuntimeError targetError{ std::format("Cannot convert to index from list with size {}",
+			Error targetError{ ErrorType::RUNTIMEERROR, std::format("Cannot convert to index from list with size {}",
 				std::to_string(val.size())) };
 			outError.copy(targetError);
 			return 0;
@@ -48,10 +48,21 @@ size_t SetVar::run(Error& outError)
 	}
 
 	Interpreter::getSingelton()->setVar(name, indexVal, val, outError);
-	if (outError.errorName != "NULL") {
+	if (outError.errType != ErrorType::NULLERROR) {
 		outError.line			= line;
 		outError.startColumn	= startColumn;
 		outError.endColumn		= endColumn;
+	}
+	return 0;
+}
+
+size_t SetVar::run(std::vector<Value*> val, Error& outError) {
+
+	Interpreter::getSingelton()->setVar(name, nullptr, val, outError);
+	if (outError.errType != ErrorType::NULLERROR) {
+		outError.line = line;
+		outError.startColumn = startColumn;
+		outError.endColumn = endColumn;
 	}
 	return 0;
 }

@@ -7,6 +7,8 @@
 #include "CobrClass.h"
 #include "Type.h"
 #include "Variable.h"
+#include "Func.h"
+#include "DeclVar.h"
 
 class Scope {
 
@@ -22,6 +24,12 @@ public:
 	bool setVar(std::string name, Value* index, std::vector<Value*> tVal, Error& outError);
 	bool isVarDecl(std::string name);
 
+	bool declareFunc(std::string name, int typeId, std::vector<DeclVar*> params,
+		Statement* statement, bool isList, Error& outError);
+	std::vector<Value*> callFunc(std::string name, std::vector<std::vector<Value*>>
+		params, Error& outError);
+	bool isFuncDecl(std::string name);
+
 	bool declareType(Type* type, Error& outError);
 	Type* getType(std::string typeName);
 	Type* getType(int typeId);
@@ -32,6 +40,7 @@ public:
 private:
 	std::string name;
 	std::map<std::string, Variable*> variables;
+	std::map<std::string, Func*> funcs;
 	std::map<std::string, int> typeNameReg;
 	std::map<int, Type*> typeIdReg;
 };

@@ -19,6 +19,6 @@ private:
 	bool isConst;
 	bool isStaticType;
 	bool isList;
-
+	int typeId;
 };
 

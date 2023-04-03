@@ -6,18 +6,21 @@
 #include "Token.h"
 #include "Error.h"
 #include "TokenType.cpp"
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 
 
 class Lexer
 {
 public:
-	Lexer(std::string_view text, std::string_view path, size_t line = 1);
+	Lexer(std::string_view text, fs::path path, size_t line = 1);
 	std::vector<Token> lex(Error& outError);
 
 private:
 	std::string_view text;
-	std::string_view path;
+	fs::path path;
 	size_t pos;
 	size_t line;
 	size_t column;
@@ -26,6 +29,7 @@ private:
 	void advance();
 	void revert(size_t pos);
 	Token getNextToken(Error& outError);
+	Token getNextMakro(Error& outError);
 	Token getNextNumber(Error& outError);
 	Token getNextChar(Error& outError);
 	Token getNextOperator(Error& outError);
@@ -69,8 +73,10 @@ private:
 		{"int",		TokenType::INTWORD},
 		{"float",	TokenType::FLOATWORD},
 		{"char",	TokenType::CHARWORD},
+		{"void",	TokenType::VOIDWORD},
 		{"var",		TokenType::VARWORD},
 		{"const",	TokenType::CONSTWORD},
+		{"return",	TokenType::RETURN},
 	};
 
 	//std::vector<std::string> tokenNames;

@@ -19,18 +19,18 @@ std::vector<Value*> BinOp::run(Error& outError)
 
 	std::vector<Value*> val1 = expr1->run(outError);
 
-	if (outError.errorName != "NULL") {
+	if (outError.errType != ErrorType::NULLERROR) {
 		return {};
 	}
 
 	std::vector<Value*> val2 = expr2->run(outError);
 
-	if (outError.errorName != "NULL"){
+	if (outError.errType != ErrorType::NULLERROR){
 		return {};
 	}
 
 	if (val1.size() != val2.size()) {
-		RuntimeError targetError{ std::format("The two values have different sizes: {}, {}", 
+		Error targetError{ ErrorType::RUNTIMEERROR, std::format("The two values have different sizes: {}, {}",
 			std::to_string(val1.size()), std::to_string(val2.size())) };
 		outError.copy(targetError);
 		return {};

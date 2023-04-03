@@ -11,7 +11,9 @@ public:
 	DeclVar(std::string name, size_t line, size_t startColumn, size_t endColumn, 
 		bool isConst = false, bool isStaticType = false, int typeId = 0, bool isList = false,
 		Expression* value = nullptr);
+	
 	size_t run(Error& outError);
+	std::string getName();
 
 private:
 	std::string name;

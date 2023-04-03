@@ -20,19 +20,19 @@ std::vector<Value*> GetVar::run(Error& outError) {
 			return {};
 		}
 		if (vals.size() > 1) {
-			RuntimeError targetError{ "InvalidType: Cannot use list as index" };
+			Error targetError{ ErrorType::RUNTIMEERROR, "InvalidType: Cannot use list as index" };
 			outError.copy(targetError);
 			return {};
 		}
 		index = vals[0];
 	}
-	std::vector<Value*> val = Interpreter::getSingelton()->getVar(varName, outError)->getVal(index, outError);
-	if (val.size() == 0)
+	Variable* var = Interpreter::getSingelton()->getVar(varName, outError);
+	if (var == nullptr)
 	{
 		outError.line			= line;
 		outError.startColumn	= startColumn;
 		outError.endColumn		= endColumn;
 		return {};
 	}
-	return val;
+	return var->getVal(index, outError);
 }

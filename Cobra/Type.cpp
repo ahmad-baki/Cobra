@@ -13,7 +13,7 @@ Type::Type(std::string name, int typeId, int parentId,
 bool Type::inherit(int typeId, Error& outError)
 {
 	if (childrenId.contains(typeId)) {
-		RuntimeError targetError{ std::format(
+		Error targetError{ ErrorType::RUNTIMEERROR, std::format(
 			"Class with id {} already inherits from class", typeId) };
 		outError.copy(targetError);
 		return false;
@@ -28,7 +28,7 @@ bool Type::unInherit(int typeId, Error& outError)
 		childrenId.erase(typeId);
 		return true;
 	}
-	RuntimeError targetError{ std::format(
+	Error targetError{ ErrorType::RUNTIMEERROR, std::format(
 		"Class with id {} already inherits from class", typeId) };
 	outError.copy(targetError);
 	return false;
@@ -38,7 +38,7 @@ Value* Type::getMemb(std::string name, Error& outError)
 {
 	auto elem = members.find(name);
 	if (elem == members.end()) {
-		RuntimeError targetError{ std::format(
+		Error targetError{ ErrorType::RUNTIMEERROR, std::format(
 			"{} doesnt have member with name: {}", typeName, name) };
 		outError.copy(targetError);
 		return nullptr;
@@ -60,7 +60,7 @@ Value* Type::getMemb(std::string name, Error& outError)
 			return elem->second.var;
 		}
 
-		RuntimeError targetError{ std::format(
+		Error targetError{ ErrorType::RUNTIMEERROR, std::format(
 			"{} doesnt inherit from {}, so it cant acces protected member {}", 
 			callTypename, typeName, name) 
 		};
@@ -72,7 +72,7 @@ Value* Type::getMemb(std::string name, Error& outError)
 		if (thisRef->getTypeId() == typeId) {
 			return elem->second.var;
 		}
-		RuntimeError targetError{ std::format(
+		Error targetError{ ErrorType::RUNTIMEERROR, std::format(
 				"{} cant acces private member {}",
 				callTypename, name)
 		};

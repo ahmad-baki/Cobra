@@ -10,7 +10,7 @@ PrintState::PrintState(Expression* param)
 size_t PrintState::run(Error& outError) {
 	std::vector<Value*> vals = param->run(outError);
 
-	if (outError.errorName != "NULL") {
+	if (outError.errType != ErrorType::NULLERROR) {
 		return 0;
 	}
 	std::cout << '[';

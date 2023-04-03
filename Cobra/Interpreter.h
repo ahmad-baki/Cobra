@@ -14,21 +14,28 @@ public:
 	static void reset();
 	void run(Error& outError);
 	void contin(Error& outError);
+	void import(std::vector<std::string> imports, Error& outError);
 	void addStatements(std::vector<Statement*> statements);
 	void addStatement(Statement* statement);
 	void setStatements(std::vector<Statement*> statements);
 	void EnterScope(Error& outError, Value* thisRef = nullptr, std::string name = "anonymous");
+	void EnterSepScope(Error& outError, Value* thisRef = nullptr, std::string name = "anonymous");
 	void ExitScope();
 	Scope* getCurrScope();
+
 	bool declareVar(std::string name, std::vector<Value*> val, int typeId,
 		Error& outError, bool isConst = false, bool isStaticType = false, int size = 1);
-
 	bool declareVar(std::string name, int typeId, Error& outError,
 		bool isConst = false, bool isStaticType = false, bool isList = false);
-
 	Variable* getVar(std::string name, Error& outError);
 	bool setVar(std::string name, Value* index, std::vector<Value*> tVal, Error& outError);
 	bool isVarDecl(std::string name);
+
+	bool declareFunc(std::string name, int typeId, std::vector<DeclVar*> params,
+		Statement* statement, bool isList, Error& outError);
+	std::vector<Value*> callFunc(std::string name, 
+		std::vector<std::vector<Value*>> params, Error& outError);
+	bool isFuncDecl(std::string name);
 
 	Type* getType(std::string typeName, Error& outError);
 	Type* getType(int typeId, Error& outError);
@@ -36,7 +43,8 @@ public:
 	void loadStdTypes();
 
 private:
-	std::vector<Scope> scopes;
+	//std::vector<Scope> scopes;
+	std::vector<std::vector<Scope>> sepScopes;
 	//BlockNode* blockNode;
 	std::vector<Statement*> statements;
 	size_t nextExecIndex;

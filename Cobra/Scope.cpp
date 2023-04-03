@@ -21,6 +21,11 @@ void Scope::exit()
 			delete elem.second;
 		}
 	}
+	for (auto elem : funcs) {
+		if (elem.second != nullptr) {
+			delete elem.second;
+		}
+	}
 	for (auto elem : typeIdReg) {
 		if (elem.second != nullptr) {
 			delete elem.second;
@@ -31,7 +36,7 @@ void Scope::exit()
 bool Scope::declareVar(std::string name, int typeId, Error& outError, 
 	bool isConst, bool isStaticType, bool isList) {
 	if (isVarDecl(name)) {
-		RuntimeError targetError = RuntimeError(
+		Error targetError(ErrorType::RUNTIMEERROR, 
 			"Tried to declar variable " + name + ", despite it already existing");
 		outError.copy(targetError);
 		return false;
@@ -46,7 +51,7 @@ bool Scope::declareVar(std::string name, std::vector<Value*> val, int typeId,
 	Error& outError, bool isConst, bool isStaticType, bool isList)
 {
 	if (isVarDecl(name)) {
-		RuntimeError targetError = RuntimeError(
+		Error targetError(ErrorType::RUNTIMEERROR, 
 			"Tried to declar variable " + name + ", despite it already existing");
 		outError.copy(targetError);
 		return false;
@@ -62,13 +67,13 @@ bool Scope::setVar(std::string name, Value* index, std::vector<Value*> tVal, Err
 	Variable* var= this->getVar(name, outError);
 
 	if (var == nullptr) {
-		Error targetError = RuntimeError("Tried to set variable: " + name + ", despite it not existing");
+		Error targetError(ErrorType::RUNTIMEERROR, "Tried to set variable: " + name + ", despite it not existing");
 		outError.copy(targetError);
 		return false;
 	}
 
 	var->setVar(tVal, index, outError);
-	if (outError.errorName != "NULL")
+	if (outError.errType != ErrorType::NULLERROR)
 		return false;
 	return true;
 }
@@ -78,7 +83,7 @@ Variable* Scope::getVar(std::string name, Error& outError)
 	auto elem = variables.find(name);
 	if (elem == variables.end()) {
 
-		RuntimeError targetError = RuntimeError(
+		Error targetError(ErrorType::RUNTIMEERROR, 
 			std::format("Tried to get variable {}, despite it not existing", name));
 		outError.copy(targetError);
 		return nullptr;
@@ -93,9 +98,39 @@ bool Scope::isVarDecl(std::string name) {
 	return false;
 }
 
+
+bool Scope::declareFunc(std::string name, int typeId, std::vector<DeclVar*> params,
+	Statement* statement, bool isList, Error& outError) {
+	Func* func = new Func(name, params, statement, typeId, isList);
+	funcs.emplace(name, func);
+	return true;
+}
+
+std::vector<Value*> Scope::callFunc(std::string name, 
+	std::vector<std::vector<Value*>> params, Error& outError) 
+{
+	//auto func = funcs.find(name);
+	//if (!funcs.contains(name)) {
+
+	//	Error targetError(ErrorType::RUNTIMEERROR, 
+	//		std::format("Tried to get function {}, despite it not existing", name));
+	//	outError.copy(targetError);
+	//	return {};
+	//}
+	Func* func = funcs[name];
+	func->load(params, outError);
+	return func->run(outError);
+}
+
+
+bool Scope::isFuncDecl(std::string name) {
+	return funcs.contains(name);
+}
+
+
 bool Scope::declareType(Type* type, Error& outError) {
 	if (typeNameReg.contains(type->getTypeName())) {
-		RuntimeError targetError{ 
+		Error targetError{ ErrorType::RUNTIMEERROR, 
 			std::format("Type with name: {} already exists", 
 			type->getTypeName()) 
 		};

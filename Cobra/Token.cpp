@@ -7,8 +7,11 @@ Token::Token()
 {
 }
 
-Token::Token(enum TokenType returnType, size_t line, size_t startColumn, size_t endColumn, std::string value)
-	: dataType{ returnType }, value{ value }, line{ line }, startColumn{ startColumn }, endColumn{ endColumn }
+Token::Token(enum TokenType returnType, fs::path path, std::string_view text, 
+	size_t line, size_t startColumn,
+	size_t endColumn, std::string value)
+	: dataType{ returnType }, value{ value }, line{ line }, startColumn{ startColumn }, 
+	endColumn{ endColumn }, path{path}, text{value}
 {
 }
 

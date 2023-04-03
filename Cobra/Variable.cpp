@@ -2,19 +2,20 @@
 #include "RuntimeError.h"
 #include "Interpreter.h"
 #include <format>
+#include <algorithm>
 
 Variable::Variable(std::vector<Value*> values, Error& outError, int typeId,
 	bool isConst, bool isStaticType, bool isList)
-	: values{}, isConst{ isConst }, isStaticType{isStaticType}, isList{isList}
+	: values{}, isConst{ isConst }, isStaticType{isStaticType}, isList{isList}, typeId{typeId}
 {
 	//if (values.size() == 0) {
-	//	RuntimeError targetError{ "empty list cannot be element of \
+	//	Error targetError{ ErrorType::RUNTIMEERROR, "empty list cannot be element of \
 	//			list" };
 	//}
 
 	int copyTypeId = (isStaticType) ? typeId : 0;
 
-	int size;
+	size_t size;
 	if (copyTypeId != 0 && !isList) {
 		size = 1;
 	}
@@ -23,9 +24,9 @@ Variable::Variable(std::vector<Value*> values, Error& outError, int typeId,
 	}
 
 	this->values.reserve(size);
-	for (auto pointer = values.begin(); pointer < values.begin() + size; pointer++)
+	for (size_t i = 0; i < std::min(size, values.size()); i++)
 	{
-		Value* copy = (*pointer)->getCopy(copyTypeId, outError);
+		Value* copy = values[i]->getCopy(copyTypeId, outError);
 		if (copy == nullptr) {
 			return;
 		}
@@ -46,15 +47,15 @@ void Variable::exit()
 bool Variable::setVar(std::vector<Value*> tValues, Value* index, Error& outError)
 {
 	if (isConst) {
-		RuntimeError targetError{ "Tried to write in const Variable" };
+		Error targetError{ ErrorType::RUNTIMEERROR, "Tried to write in const Variable" };
 		outError.copy(targetError);
 	}
 
-	int typeId = (isStaticType) ? values[0]->getTypeId() : 0;
+	int t_typeId = (isStaticType) ? typeId : 0;
 	if (index == nullptr) {
 
 		if (!isList && tValues.size() != 1) {
-			RuntimeError targetError{ std::format("target value has size {}, which is uneqal to 1"
+			Error targetError{ ErrorType::RUNTIMEERROR, std::format("target value has size {}, which is uneqal to 1"
 				, tValues.size()) };
 			outError.copy(targetError);
 			return false;
@@ -68,7 +69,7 @@ bool Variable::setVar(std::vector<Value*> tValues, Value* index, Error& outError
 		values.reserve(tValues.size());
 		for (Value* val : tValues)
 		{
-			Value* copy = val->getCopy(typeId, outError);
+			Value* copy = val->getCopy(t_typeId, outError);
 			if (copy == nullptr){
 				return false;
 			}
@@ -77,23 +78,23 @@ bool Variable::setVar(std::vector<Value*> tValues, Value* index, Error& outError
 	}
 	else {
 		if (tValues.size() != 1) {
-			RuntimeError targetError{ "a list cannot be element of another list" };
+			Error targetError{ ErrorType::RUNTIMEERROR, "a list cannot be element of another list" };
 			outError.copy(targetError);
 			return false;
 		}
 
 		int intIndex = getIndex(index, outError);
-		if (outError.errorName != "NULL") {
+		if (outError.errType != ErrorType::NULLERROR) {
 			return false;
 		}
 
 		if (intIndex > values.size() - 1) {
-			RuntimeError targetError{ std::format("IndexOutOfBounds: Cannot acces index {} of variable with size {}", intIndex, values.size()) };
+			Error targetError{ ErrorType::RUNTIMEERROR, std::format("IndexOutOfBounds: Cannot acces index {} of variable with size {}", intIndex, values.size()) };
 			outError.copy(targetError);
 			return false;
 		}
 
-		Value* copy = tValues[0]->getCopy(typeId, outError);
+		Value* copy = tValues[0]->getCopy(t_typeId, outError);
 		if (copy == nullptr) {
 			return false;
 		}
@@ -108,7 +109,7 @@ std::vector<Value*> Variable::getVal(Value* index, Error& outError)
 {
 	// when value is not defined
 	if (!isList && values.size() == 0) {
-		RuntimeError targetError{ "ValueNotDefined: Cannot get undefined variable" };
+		Error targetError{ ErrorType::RUNTIMEERROR, "ValueNotDefined: Cannot get undefined variable" };
 		outError.copy(targetError);
 		return {};
 	}
@@ -118,12 +119,12 @@ std::vector<Value*> Variable::getVal(Value* index, Error& outError)
 	}
 
 	int intIndex = getIndex(index, outError);
-	if (outError.errorName != "NULL") {
+	if (outError.errType != ErrorType::NULLERROR) {
 		return {};
 	}
 
 	if (intIndex > values.size()-1) {
-		RuntimeError targetError{ std::format("IndexOutOfBounds: Cannot acces index {} \
+		Error targetError{ ErrorType::RUNTIMEERROR, std::format("IndexOutOfBounds: Cannot acces index {} \
 			of variable with size {}", intIndex, values.size() )};
 		outError.copy(targetError);
 	}

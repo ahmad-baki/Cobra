@@ -1,0 +1,17 @@
+int n_fib = 10;
+int[] fib_counter = {0, 1};
+
+if (n_fib <= 1) {
+    print(fib_counter[n_fib]);
+}
+else {
+    n_fib = n_fib - 2;
+    while(n_fib >= 0) {
+        int a = fib_counter[0];
+        int b = fib_counter[1];
+        fib_counter[0] = b;
+        fib_counter[1] = a + b;
+        n_fib = n_fib - 1;
+    }
+    print(fib_counter[1]);
+}

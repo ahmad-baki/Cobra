@@ -18,7 +18,7 @@ Value::Value(Value* other, Error& outError, int typeId)
 			return;
 		}
 
-		RuntimeError targetError = RuntimeError(std::format("Couldnt cast {} to {}",
+		Error targetError(ErrorType::RUNTIMEERROR, std::format("Couldnt cast {} to {}",
 			othType->getTypeName(), thisType->getTypeName()));
 		outError.copy(targetError);
 	}

@@ -3,7 +3,7 @@
 #include "InvChrError.h"
 
 
-Lexer::Lexer(std::string_view text, std::string_view path, size_t line) : 
+Lexer::Lexer(std::string_view text, fs::path path, size_t line) : 
 	text{ text }, path{ path }, pos{ 0 }, line{line}, column{0}, currentChar{' '}
 {	
 	if (text.size() > 0)
@@ -13,11 +13,12 @@ Lexer::Lexer(std::string_view text, std::string_view path, size_t line) :
 std::vector<Token> Lexer::lex(Error& outError)
 {
 	std::vector<Token> tokens{};
+	skipSpace();
 	while (currentChar != 0) {
 		Token token = getNextToken(outError);
 
 		// when lexer throws error
-		if (outError.errorName != "NULL") {
+		if (outError.errType != ErrorType::NULLERROR) {
 			return {};
 		}
 		tokens.push_back(token);
@@ -71,26 +72,43 @@ Token Lexer::getNextToken(Error& outError) {
 	while (isspace(currentChar))
 		advance();
 
+	// 1. return makro operator
+	if (currentChar == '#') {
+		return getNextMakro(outError);
+	}
 
-	// 1. return char-literal
+	// 2. return char-literal
 	if (currentChar == '\'') {
 		return getNextChar(outError);
 	}
 
-	// 2. return number-literal
+	// 3. return number-literal
 	if (isInt(currentChar)) {
 		return getNextNumber(outError);
 	}
 
-	// 3. return operator
+	// 4. return operator
+	// check how this works !!!!!!!!!!!!!!!!
 	Error opError = Error();
 	Token token = getNextOperator(opError);
-	if (opError.errorName == "NULL") {
+	if (token.dataType != TokenType::NONE) {
 		return token;
 	}
 
-	// 4. return identifier or keyword
+	// 5. return identifier or keyword
 	return getNextWord(outError);
+}
+
+Token Lexer::getNextMakro(Error& outError)
+{
+	size_t startPos = pos;
+	while (currentChar != '\n') {
+		advance();
+	}
+	Token out{ TokenType::MAKRO, path, text, line, startPos, pos,
+		std::string(text.substr(startPos, pos - startPos)) };
+	advance();
+	return out;
 }
 
 Token Lexer::getNextChar(Error& outError) {
@@ -99,13 +117,13 @@ Token Lexer::getNextChar(Error& outError) {
 	std::string tokenString{ currentChar };
 	advance();
 	if (currentChar != '\'') {
-		InvChrError copyTarget = InvChrError("Missing \'", line, column, column + 1, path, text);
+		Error copyTarget(ErrorType::INVCHRERROR, "Missing \'", line, column, column + 1, path, text);
 		outError.copy(copyTarget);
 		return Token();
 	}
 	size_t endColumn = column;
 	advance();
-	return Token(TokenType::CHARLIT, line, startColumn, endColumn, tokenString);
+	return Token(TokenType::CHARLIT, path, text, line, startColumn, endColumn, tokenString);
 }
 
 Token Lexer::getNextNumber(Error& outError) {
@@ -115,7 +133,7 @@ Token Lexer::getNextNumber(Error& outError) {
 		if (currentChar == '.') {
 			if (containsPeriod)
 			{
-				InvChrError copyTarget = InvChrError("More than one '.' in decimal", line, column, column + 1, path, text);
+				Error copyTarget(ErrorType::INVCHRERROR, "More than one '.' in decimal", line, column, column + 1, path, text);
 				outError.copy(copyTarget);
 				return Token();
 			}
@@ -128,9 +146,9 @@ Token Lexer::getNextNumber(Error& outError) {
 	size_t endcolumn = column + 1;
 
 	if (containsPeriod) {
-		return Token(TokenType::DECLIT, line, startColumn, endcolumn, tokenString);
+		return Token(TokenType::DECLIT, path, text, line, startColumn, endcolumn, tokenString);
 	}
-	return Token(TokenType::INTLIT, line, startColumn, endcolumn, tokenString);
+	return Token(TokenType::INTLIT, path, text, line, startColumn, endcolumn, tokenString);
 }
 
 Token Lexer::getNextOperator(Error& outError) 
@@ -154,9 +172,9 @@ Token Lexer::getNextOperator(Error& outError)
 			if (elem != operators.end()) {
 				size_t startColumn = column + 1- opString.size();
 				size_t endColumn = column + 1;
-				return Token(elem->second, line, startColumn, endColumn);
+				return Token(elem->second, path, text, line, startColumn, endColumn);
 			}
-			InvChrError copyTarget = InvChrError("Received Invalied Token", line, column, 
+			Error copyTarget(ErrorType::INVCHRERROR, "Received Invalied Token", line, column, 
 				column + 1, path, text);
 			outError.copy(copyTarget);
 			return Token();
@@ -179,10 +197,10 @@ Token Lexer::getNextOperator(Error& outError)
 			if (elem != operators.find(opString)) {
 				size_t startColumn = column + 1 - opString.size();
 				size_t endColumn = column + 1;
-				return Token(operators[opString], line, startColumn, endColumn);
+				return Token(operators[opString], path, text, line, startColumn, endColumn);
 			}
 		}
-		InvChrError copyTarget = InvChrError("Received Invalied Token: " + currentChar, 
+		Error copyTarget(ErrorType::INVCHRERROR, "Received Invalied Token: " + currentChar, 
 			line, column, column + 1, path, text);
 		outError.copy(copyTarget);
 		return Token();
@@ -193,7 +211,7 @@ Token Lexer::getNextOperator(Error& outError)
 	size_t startColumn = column + 1 - opString.size();
 	size_t endColumn = column + 1;
 	advance();
-	return Token(operators[opString], line, startColumn, endColumn);
+	return Token(operators[opString], path, text, line, startColumn, endColumn);
 }
 
 Token Lexer::getNextWord(Error& outError) {
@@ -205,7 +223,7 @@ Token Lexer::getNextWord(Error& outError) {
 	auto elem = keywords.find(tokenString);
 	if (elem == keywords.end()) {
 		if (tokenString.size() == 0) {
-			InvChrError copyTarget = InvChrError("Received Invalied Token", line, column, 
+			Error copyTarget(ErrorType::INVCHRERROR, "Received Invalied Token", line, column, 
 				column + 1, path, text);
 			outError.copy(copyTarget);
 			return Token();
@@ -214,11 +232,11 @@ Token Lexer::getNextWord(Error& outError) {
 
 		size_t startColumn = column + 1 - tokenString.size();
 		size_t endColumn = column + 1;
-		return Token(TokenType::IDENTIFIER, line, startColumn, endColumn, tokenString);
+		return Token(TokenType::IDENTIFIER, path, text, line, startColumn, endColumn, tokenString);
 	}
 	size_t startColumn = column + 1 - tokenString.size();
 	size_t endColumn = column + 1;
-	return Token(elem->second, line, startColumn, endColumn, tokenString);
+	return Token(elem->second, path, text, line, startColumn, endColumn, tokenString);
 }
 
 bool Lexer::isInt(int val) {

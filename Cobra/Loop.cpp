@@ -8,11 +8,11 @@ Loop::Loop(Expression* cond, Statement* statement)
 size_t Loop::run(Error& outError)
 {	std::vector<Value*> condVal = cond->run(outError);
 
-	if (outError.errorName != "NULL") {
+	if (outError.errType != ErrorType::NULLERROR) {
 		return 0;
 	}
 	if (condVal.size() != 1) {
-		RuntimeError targetError{ std::format("Cannot convert to boolean from list with size {}", 
+		Error targetError{ ErrorType::RUNTIMEERROR, std::format("Cannot convert to boolean from list with size {}", 
 			std::to_string(condVal.size())) };
 		outError.copy(targetError);
 		return 0;
@@ -20,13 +20,13 @@ size_t Loop::run(Error& outError)
 
 	bool condBool = condVal[0]->getBool(outError);
 
-	if (outError.errorName != "NULL")
+	if (outError.errType != ErrorType::NULLERROR)
 		return 0;
 
 	while (condBool) {
 		size_t breakCount = statement->run(outError);
 
-		if (outError.errorName != "NULL")
+		if (outError.errType != ErrorType::NULLERROR)
 			return 0;
 
 		if (breakCount > 0) {
@@ -35,12 +35,12 @@ size_t Loop::run(Error& outError)
 
 		condVal = cond->run(outError);
 
-		if (outError.errorName != "NULL") {
+		if (outError.errType != ErrorType::NULLERROR) {
 			return 0;
 		}
 
 		if (condVal.size() != 1) {
-			RuntimeError targetError{ std::format("Cannot convert to boolean from list with size {}",
+			Error targetError{ ErrorType::RUNTIMEERROR, std::format("Cannot convert to boolean from list with size {}",
 				std::to_string(condVal.size())) };
 			outError.copy(targetError);
 			return 0;
@@ -48,7 +48,7 @@ size_t Loop::run(Error& outError)
 
 		condBool = condVal[0]->getBool(outError);
 
-		if (outError.errorName != "NULL")
+		if (outError.errType != ErrorType::NULLERROR)
 			return 0;
 	}
 }

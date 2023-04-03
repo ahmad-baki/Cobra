@@ -21,13 +21,18 @@
   <ItemGroup>
     <ClCompile Include="BinOp.cpp" />
     <ClCompile Include="BlockNode.cpp" />
+    <ClCompile Include="BreakState.cpp" />
     <ClCompile Include="Cobra.cpp" />
     <ClCompile Include="CobrClass.cpp" />
+    <ClCompile Include="DeclFunc.cpp" />
     <ClCompile Include="DeclVar.cpp" />
     <ClCompile Include="ElseCond.cpp" />
     <ClCompile Include="Error.cpp" />
     <ClCompile Include="Expression.cpp" />
+    <ClCompile Include="ExprState.cpp" />
+    <ClCompile Include="Func.cpp" />
     <ClCompile Include="GetVar.cpp" />
+    <ClCompile Include="IEASTFuncNode.cpp" />
     <ClCompile Include="IEASTNode.cpp" />
     <ClCompile Include="IfCond.cpp" />
     <ClCompile Include="Interpreter.cpp" />
@@ -37,8 +42,10 @@
     <ClCompile Include="Literal.cpp" />
     <ClCompile Include="Loop.cpp" />
     <ClCompile Include="Parser.cpp" />
+    <ClCompile Include="PreProcesser.cpp" />
     <ClCompile Include="PrintState.cpp" />
     <ClCompile Include="Projekt2.cpp" />
+    <ClCompile Include="RunFunc.cpp" />
     <ClCompile Include="RuntimeError.cpp" />
     <ClCompile Include="Scope.cpp" />
     <ClCompile Include="SetVar.cpp" />
@@ -54,12 +61,18 @@
   <ItemGroup>
     <ClInclude Include="BinOp.h" />
     <ClInclude Include="BlockNode.h" />
+    <ClInclude Include="BreakState.h" />
+    <ClInclude Include="Cobra.h" />
     <ClInclude Include="CobrClass.h" />
+    <ClInclude Include="DeclFunc.h" />
     <ClInclude Include="DeclVar.h" />
     <ClInclude Include="ElseCond.h" />
     <ClInclude Include="Error.h" />
     <ClInclude Include="Expression.h" />
+    <ClInclude Include="ExprState.h" />
+    <ClInclude Include="Func.h" />
     <ClInclude Include="GetVal.h" />
+    <ClInclude Include="IEASTFuncNode.h" />
     <ClInclude Include="IEASTNode.h" />
     <ClInclude Include="IfCond.h" />
     <ClInclude Include="Interpreter.h" />
@@ -70,7 +83,9 @@
     <ClInclude Include="Loop.h" />
     <ClInclude Include="Node.h" />
     <ClInclude Include="Parser.h" />
+    <ClInclude Include="PreProcesser.h" />
     <ClInclude Include="PrintState.h" />
+    <ClInclude Include="RunFunc.h" />
     <ClInclude Include="RuntimeError.h" />
     <ClInclude Include="Scope.h" />
     <ClInclude Include="SetVar.h" />

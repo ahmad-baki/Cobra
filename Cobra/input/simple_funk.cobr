@@ -1,0 +1,6 @@
+
+int func(int a, int b){
+	return a * b;
+}
+
+print(func(3, 6));

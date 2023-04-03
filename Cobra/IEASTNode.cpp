@@ -12,7 +12,7 @@
 #include "ListExpr.h"
 
 
-IEASTNode::IEASTNode(std::string_view path, std::string_view text)
+IEASTNode::IEASTNode(fs::path path, std::string_view text)
 	: token{Token(TokenType::NONE)}, path{path}, text{text}
 {
 }
@@ -69,7 +69,7 @@ Expression* IEASTNode::getExpr(Error& outError) {
 		break;
 	default:
 		if (leftNode == nullptr) {
-			SyntaxError targetError = SyntaxError("Operator Node has no child-elements", token.line,
+			Error targetError(ErrorType::SYNTAXERROR, "Operator Node has no child-elements", token.line,
 				token.startColumn, token.endColumn, path, text);
 			outError.copy(targetError);
 			return nullptr;
@@ -93,7 +93,7 @@ Expression* IEASTNode::getExpr(Error& outError) {
 		break;
 	}
 
-	if (outError.errorName != "NULL") {
+	if (outError.errType != ErrorType::NULLERROR) {
 		return nullptr;
 	}
 	expr->line			= token.line;

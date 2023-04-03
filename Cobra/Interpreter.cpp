@@ -6,17 +6,23 @@
 Interpreter* Interpreter::singelton = nullptr;
 
 Interpreter::Interpreter()
-	: statements{}, scopes{}, nextExecIndex{0}
+	: statements{}/*, scopes{}*/, sepScopes{}, nextExecIndex{0}
 {
 	Error outError{};
-	scopes.push_back(Scope("global", outError));
+	sepScopes.push_back({ Scope("global", outError) });
 	//blockNode = new BlockNode({}, "global");
 	loadStdTypes();
 }
 
 Interpreter::~Interpreter() {
-	for (auto scope : scopes) {
-		scope.exit();
+	//for (auto scope : scopes) {
+	//	scope.exit();
+	//}
+
+	for (auto scopes : sepScopes) {
+		for (auto scope : scopes) {
+			scope.exit();
+		}
 	}
 }
 
@@ -30,7 +36,7 @@ Interpreter* Interpreter::getSingelton() {
 void Interpreter::run(Error& outError) {
 	for (Statement* statement : statements) {
 		statement->run(outError);
-		if (outError.errorName != "NULL")
+		if (outError.errType != ErrorType::NULLERROR)
 			return;
 	}
 }
@@ -38,10 +44,14 @@ void Interpreter::run(Error& outError) {
 void Interpreter::contin(Error& outError) {
 	while (nextExecIndex < statements.size()) {
 		statements[nextExecIndex]->run(outError);
-		if (outError.errorName != "NULL")
+		if (outError.errType != ErrorType::NULLERROR)
 			return;
 		nextExecIndex++;
 	}
+}
+
+void Interpreter::import(std::vector<std::string> imports, Error& outError)
+{
 }
 
 void Interpreter::addStatements(std::vector<Statement*> statements) {
@@ -60,19 +70,33 @@ void Interpreter::setStatements(std::vector<Statement*> statements) {
 
 void Interpreter::EnterScope(Error& outError, Value* thisRef, std::string name)
 {
-	scopes.push_back({ name, outError, thisRef });
+	sepScopes.back().push_back({name, outError, thisRef});
+}
+
+void Interpreter::EnterSepScope(Error& outError, Value* thisRef, std::string name) {
+	sepScopes.push_back({ { name, outError, thisRef } });
 }
 
 void Interpreter::ExitScope()
 {
-	scopes.back().exit();
-	scopes.erase(scopes.end()-1);
+	sepScopes.back().back().exit();
+	if (sepScopes.back().size() == 1) {
+		sepScopes.erase(sepScopes.end() - 1);
+	}
+	else {
+		sepScopes.back().erase(sepScopes.back().end() - 1);
+	}
 }
 
 Scope* Interpreter::getCurrScope()
 {
-	return &scopes.back();
+	//if (sepScopes.size() > 0) {
+	//	return &sepScopes.back().back();
+	//}
+	//return &scopes.back();
+	return &sepScopes.back().back();
 }
+
 
 bool Interpreter::declareVar(std::string name, std::vector<Value*> val,
 	int typeId, Error& outError, bool isConst, bool isStaticType, int size)
@@ -88,12 +112,24 @@ bool Interpreter::declareVar(std::string name, int typeId,
 
 Variable* Interpreter::getVar(std::string name, Error& outError)
 {
+	//if (sepScopes.size() > 0) {
+	//	//if (sepScopes.back().isVarDecl(name)) {
+	//		return sepScopes.back().getVar(name, outError);
+	//	//}
+	//	// global scope
+	//	//else {
+	//		//return scopes[0].getVar(name, outError);
+	//	//}
+	//}
+
 	Error getError{};
-	for (auto scope = scopes.rbegin(); scope != scopes.rend(); ++scope) {
-		getError = Error();
-		Variable* var = scope->getVar(name, getError);
-		if (var != nullptr) {
-			return var;
+	for (auto scopes = sepScopes.rbegin(); scopes != sepScopes.rend(); ++scopes){
+		for (auto scope = scopes->rbegin(); scope != scopes->rend(); ++scope) {
+			getError = Error();
+			Variable* var = scope->getVar(name, getError);
+			if (var != nullptr) {
+				return var;
+			}
 		}
 	}
 	outError.copy(getError);
@@ -102,61 +138,170 @@ Variable* Interpreter::getVar(std::string name, Error& outError)
 
 bool Interpreter::setVar(std::string name, Value* index, std::vector<Value*> tVal, Error& outError)
 {
-	for (auto scope = scopes.rbegin(); scope != scopes.rend(); ++scope) {
-		if(scope->isVarDecl(name)) {
-			return scope->setVar(name, index, tVal, outError);
+	//if (sepScopes.size() > 0) {
+	//	//if (sepScopes.back().isVarDecl(name)) {
+	//		return sepScopes.back().setVar(name, index, tVal, outError);
+	//	//}
+	//	//// global scope
+	//	//else {
+	//	//	return scopes[0].getVar(name, outError);
+	//	//}
+	//}
+
+	for (auto scopes = sepScopes.rbegin(); scopes != sepScopes.rend(); ++scopes) {
+		for (auto scope = scopes->rbegin(); scope != scopes->rend(); ++scope) {
+			if (scope->isVarDecl(name)) {
+				return scope->setVar(name, index, tVal, outError);
+			}
 		}
 	}
-	Error targetError = RuntimeError("Tried to set variable: " + name + ", despite it not existing");
+	Error targetError(ErrorType::RUNTIMEERROR, "Tried to set variable: " + name + ", despite it not existing");
 	outError.copy(targetError);
 	return false;
 }
 
 bool Interpreter::isVarDecl(std::string name)
 {
-	for (auto i = scopes.end() - 1; i != scopes.begin()-1; i--) {
-		bool isDecl = i->isVarDecl(name);
-		if (isDecl) {
-			return true;
+	//if (sepScopes.size() > 0) {
+	//	return sepScopes.back().isVarDecl(name) /*|| scopes[0].isVarDecl(name)*/;
+	//}
+
+	for (auto scopes = sepScopes.rbegin(); scopes != sepScopes.rend(); ++scopes) {
+		for (auto i = scopes->rbegin(); i != scopes->rend(); ++i) {
+			if (i->isVarDecl(name)) {
+				return true;
+			}
 		}
 	}
 	return false;
 }
 
+
+bool Interpreter::declareFunc(std::string name, int typeId, std::vector<DeclVar*> params,
+	Statement* statement, bool isList, Error& outError) {
+	//return getCurrScope()->declareFunc(name, typeId, params, statement, isList, outError);
+	return sepScopes[0][0].declareFunc(name, typeId, params, statement, isList, outError);
+}
+
+std::vector<Value*> Interpreter::callFunc(std::string name, 
+	std::vector<std::vector<Value*>> params, Error& outError) {
+	
+	//if (sepScopes.size() > 0) {
+	//	if (sepScopes.back().isFuncDecl(name)) {
+	//		return sepScopes.back().callFunc(name, params, outError);
+	//	}
+	//	// global scope
+	//	else {
+	//		return scopes[0].callFunc(name, params, outError);
+	//	}
+	//}
+	//else {
+
+	for (auto scopes = sepScopes.rbegin(); scopes != sepScopes.rend(); ++scopes) {
+		for (auto scope = scopes->rbegin(); scope != scopes->rend(); ++scope) {
+			Error runError = Error();
+			if (scope->isFuncDecl(name)) {
+				return scope->callFunc(name, params, outError);
+			}
+		}
+	}
+	//}
+	Error targetError(ErrorType::RUNTIMEERROR, 
+		std::format("Tried to get function {}, despite it not existing", name));
+	outError.copy(targetError);
+	return {};
+}
+
+bool Interpreter::isFuncDecl(std::string name)
+{
+	//if (sepScopes.size() > 0) {
+	//	return sepScopes.back().isFuncDecl(name) || scopes[0].isFuncDecl(name);
+	//}
+
+	for (auto scopes = sepScopes.rbegin(); scopes != sepScopes.rend(); ++scopes) {
+		for (auto i = scopes->end() - 1; i != scopes->begin() - 1; i--) {
+			if (i->isFuncDecl(name)) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+
 Type* Interpreter::getType(std::string typeName, Error& outError) {
-	for (auto scope = scopes.rbegin(); scope != scopes.rend(); scope++) {
-		if (scope->isTypeDecl(typeName)) {
-			return scope->getType(typeName);
+
+	//if (sepScopes.size() > 0) {
+	//	if (sepScopes.back().isTypeDecl(typeName)) {
+	//		return sepScopes.back().getType(typeName);
+	//	}
+	//	// global scope
+	//	else {
+	//		return scopes[0].getType(typeName);
+	//	}
+	//}
+
+	for (auto scopes = sepScopes.rbegin(); scopes != sepScopes.rend(); ++scopes) {
+		for (auto scope = scopes->rbegin(); scope != scopes->rend(); scope++) {
+			if (scope->isTypeDecl(typeName)) {
+				return scope->getType(typeName);
+			}
 		}
 	}
 
-	RuntimeError targetError = RuntimeError(
+	Error targetError(ErrorType::RUNTIMEERROR, 
 		std::format("Tried to get Type {}, despite it not existing", typeName));
 	outError.copy(targetError);
 	return nullptr;
 }
 
 Type* Interpreter::getType(int id, Error& outError) {
-	for (auto scope = scopes.rbegin(); scope != scopes.rend(); scope++) {
-		if (scope->isTypeDecl(id)) {
-			return scope->getType(id);
+
+	//if (sepScopes.size() > 0) {
+	//	if (sepScopes.back().isTypeDecl(id)) {
+	//		return sepScopes.back().getType(id);
+	//	}
+	//	// global scope
+	//	else {
+	//		return scopes[0].getType(id);
+	//	}
+	//}
+
+	for (auto scopes = sepScopes.rbegin(); scopes != sepScopes.rend(); ++scopes) {
+		for (auto scope = scopes->rbegin(); scope != scopes->rend(); scope++) {
+			if (scope->isTypeDecl(id)) {
+				return scope->getType(id);
+			}
 		}
 	}
 
-	RuntimeError targetError = RuntimeError(
+	Error targetError(ErrorType::RUNTIMEERROR, 
 		std::format("Tried to get the Type with id: {}, despite it not existing", id));
 	outError.copy(targetError);
 	return nullptr;
 }
 
 int Interpreter::getTypeId(std::string typeName, Error& outError) {
-	for (auto scope = scopes.rbegin(); scope != scopes.rend(); scope++) {
-		if (scope->isTypeDecl(typeName)) {
-			return scope->getTypeId(typeName);
+
+	//if (sepScopes.size() > 0) {
+	//	if (sepScopes.back().isTypeDecl(typeName)) {
+	//		return sepScopes.back().getTypeId(typeName);
+	//	}
+	//	// global scope
+	//	else {
+	//		return scopes[0].getTypeId(typeName);
+	//	}
+	//}
+
+	for (auto scopes = sepScopes.rbegin(); scopes != sepScopes.rend(); ++scopes) {
+		for (auto scope = scopes->rbegin(); scope != scopes->rend(); scope++) {
+			if (scope->isTypeDecl(typeName)) {
+				return scope->getTypeId(typeName);
+			}
 		}
 	}
 
-	RuntimeError targetError = RuntimeError(
+	Error targetError(ErrorType::RUNTIMEERROR, 
 		std::format("Tried to get Type {}, despite it not existing", typeName));
 	outError.copy(targetError);
 	return 0;
@@ -167,7 +312,7 @@ void Interpreter::loadStdTypes() {
 	Error outError{};
 	for (size_t i = 0; i < std::size(elemTypes); i++) {
 		Type* type = new Type(elemTypes[i], i);
-		scopes[0].declareType(type, outError);
+		sepScopes[0][0].declareType(type, outError);
 	}
 }
 

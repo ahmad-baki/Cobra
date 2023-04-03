@@ -31,7 +31,7 @@
 //
 //void SymbTable::declareVar(std::string name, int typeId, Error& outError, void* data, bool isConst, bool isStaticType) {
 //	if (isVarDecl(name)) {
-//		RuntimeError targetError = RuntimeError("Tried to declar variable " + name + ", despite it already existing");
+//		Error targetError(ErrorType::RUNTIMEERROR, "Tried to declar variable " + name + ", despite it already existing");
 //		outError.copy(targetError);
 //	}
 //
@@ -47,7 +47,7 @@
 //		return;
 //
 //	val->setVal(tVal, outError);
-//	if (outError.errorName != "NULL")
+//	if (outError.errType != ErrorType::NULLERROR)
 //		return;
 //}
 //
@@ -59,7 +59,7 @@
 //			parent->run(name, outError);
 //		}
 //
-//		RuntimeError targetError = RuntimeError("Tried to run variable " + name +", despite it not existing");
+//		Error targetError(ErrorType::RUNTIMEERROR, "Tried to run variable " + name +", despite it not existing");
 //		outError.copy(targetError);
 //		return nullptr;
 //	}

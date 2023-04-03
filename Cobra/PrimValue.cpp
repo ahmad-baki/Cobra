@@ -79,7 +79,7 @@ bool PrimValue::getBool(Error& outError)
 		return bool(*(float*)data);
 	}
 	if (typeId == 0) {
-		targetError = RuntimeError("Cannot acces data of variable which is not defined",
+		targetError = Error(ErrorType::RUNTIMEERROR, "Cannot acces data of variable which is not defined",
 			line, startColumn, endColumn);
 		outError.copy(targetError);
 		return false;
@@ -91,7 +91,7 @@ bool PrimValue::getBool(Error& outError)
 	}
 	std::string typeName = type->getTypeName();
 
-	targetError = RuntimeError(std::format("Invalid DataType: {}", typeName), line, startColumn, endColumn);
+	targetError = Error(ErrorType::RUNTIMEERROR, std::format("Invalid DataType: {}", typeName), line, startColumn, endColumn);
 	outError.copy(targetError);
 	return false;
 }
@@ -111,7 +111,7 @@ PrimValue* PrimValue::calcOp(T* val1, T* val2, enum TokenType op, int typeId, Er
 		return new PrimValue(typeId, new T( *val1 - *val2 ), outError);
 	case TokenType::DIV:
 		if (*val2 == 0) {
-			RuntimeError targetError = RuntimeError("ZeroDivisionError: " + 
+			Error targetError(ErrorType::RUNTIMEERROR, "ZeroDivisionError: " + 
 				std::to_string(*val1) + "/0 ", line, startColumn, endColumn);
 			outError.copy(targetError);
 			return nullptr;
@@ -137,14 +137,14 @@ PrimValue* PrimValue::calcOp(T* val1, T* val2, enum TokenType op, int typeId, Er
 		return new PrimValue(typeId, new T( *val1 || *val2 ), outError);
 	case TokenType::MOD:
 		if (val2 == 0) {
-			RuntimeError targetError = RuntimeError("ZeroModError: " + 
+			Error targetError(ErrorType::RUNTIMEERROR, "ZeroModError: " + 
 				std::to_string(*val1) + "/0", line, startColumn, endColumn);
 			return nullptr;
 		}
 		return new PrimValue(typeId, new T(std::fmod(*val1, *val2)), outError);
 	}
 
-	RuntimeError targetError = RuntimeError("Invalid Operator: " + std::to_string(op),
+	Error targetError(ErrorType::RUNTIMEERROR, "Invalid Operator: " + std::to_string(op),
 		line, startColumn, endColumn);
 	outError.copy(targetError);
 	return nullptr;
@@ -160,7 +160,7 @@ PrimValue* PrimValue::calcOp(T* val1, T* val2, enum TokenType op, int typeId, Er
 //		return new PrimValue(PrimValue::DECTYPE, new float{ *val1 - *val2 }, outError);
 //	case TokenType::DIV:
 //		if (val2 == 0) {
-//			RuntimeError targetError = RuntimeError("ZeroDivisionError: " + std::to_string(*val1) + "/0",
+//			Error targetError(ErrorType::RUNTIMEERROR, "ZeroDivisionError: " + std::to_string(*val1) + "/0",
 //				line, startColumn, endColumn);
 //			outError.copy(targetError);
 //			return nullptr;
@@ -186,7 +186,7 @@ PrimValue* PrimValue::calcOp(T* val1, T* val2, enum TokenType op, int typeId, Er
 //		return new PrimValue(PrimValue::DECTYPE, new float(*val1 || *val2), outError);
 //	case TokenType::MOD:
 //		if (val2 == 0) {
-//			RuntimeError targetError = RuntimeError("ZeroModError: " + std::to_string(*val1) +"/{}",
+//			Error targetError(ErrorType::RUNTIMEERROR, "ZeroModError: " + std::to_string(*val1) +"/{}",
 //				line, startColumn, endColumn);
 //			outError.copy(targetError);
 //			return nullptr;
@@ -194,7 +194,7 @@ PrimValue* PrimValue::calcOp(T* val1, T* val2, enum TokenType op, int typeId, Er
 //		return new PrimValue(PrimValue::DECTYPE, new float{ std::fmod(*val1, *val2) }, outError);
 //	}
 //
-//	RuntimeError targetError = RuntimeError("Invalid Operator: ", line, startColumn, endColumn);
+//	Error targetError(ErrorType::RUNTIMEERROR, "Invalid Operator: ", line, startColumn, endColumn);
 //	outError.copy(targetError);
 //	return nullptr;
 //}
@@ -202,7 +202,7 @@ PrimValue* PrimValue::calcOp(T* val1, T* val2, enum TokenType op, int typeId, Er
 Value* PrimValue::doOp(Value& other, enum TokenType op, Error& outError)
 {
 	if (data == nullptr) {
-		RuntimeError targetError = RuntimeError("Cannot acces data of variable which is not defined", 
+		Error targetError(ErrorType::RUNTIMEERROR, "Cannot acces data of variable which is not defined", 
 			line, startColumn, endColumn);
 		outError.copy(targetError);
 		return nullptr;
@@ -223,7 +223,7 @@ Value* PrimValue::doOp(Value& other, enum TokenType op, Error& outError)
 		result = calcOp((float*)data, (float*)castVal, op, floatTypeId, outError);
 	}
 	else{
-		RuntimeError targetError = RuntimeError("Invalid DataType", line, startColumn, endColumn);
+		Error targetError(ErrorType::RUNTIMEERROR, "Invalid DataType", line, startColumn, endColumn);
 		outError.copy(targetError);
 	}
 	delete castVal;
@@ -241,6 +241,12 @@ Value* PrimValue::getCopy(int typeId, Error& outError)
 
 
 void* PrimValue::Cast(void* data, int o_typeId, int t_typeId, Error& outError) {
+
+	if (t_typeId == -1) {
+		Error targetError(ErrorType::RUNTIMEERROR, "Cant cast to void");
+		return nullptr;
+	}
+
 	// checks viable conversions
 	void* returnValue{ nullptr };
 	Interpreter* interpreter = Interpreter::getSingelton();
@@ -276,7 +282,7 @@ void* PrimValue::Cast(void* data, int o_typeId, int t_typeId, Error& outError) {
 		}
 	}
 	if (returnValue == nullptr) {
-		RuntimeError targetError = RuntimeError(std::format("Couldnt cast {} to {}", 
+		Error targetError(ErrorType::RUNTIMEERROR, std::format("Couldnt cast {} to {}", 
 			o_typeId, t_typeId));
 		return nullptr;
 	}

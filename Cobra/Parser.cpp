@@ -1,24 +1,33 @@
 #include <stack>
 #include <algorithm>
 #include <stdexcept>
+#include <string>
 #include "Parser.h"
 #include "printState.h"
 #include "SyntaxError.h"
 #include "Interpreter.h"
+#include "ExprState.h"
+#include "IEASTFuncNode.h"
+#include "DeclFunc.h"
+#include "BreakState.h"
 
 
-
-Parser::Parser(std::string_view text, std::string_view path)
-	: text{ text }, path{ path }, currentPos { 0 }, currentToken{ Token(TokenType::NONE) }, 
+Parser::Parser(/*std::string_view text, std::string_view path*/)
+	: /*text{text}, path{path}, */ currentPos{0}, currentToken{Token(TokenType::NONE)},
 	tokenStream{ std::vector<Token>() }
 {
 }
 
 std::vector<Statement*> Parser::parse(std::vector<Token> tokens, Error& outError)
 {
+	if (tokens.size() == 0) {
+		return {};
+	}
+
 	tokenStream = tokens;
 	currentToken = tokenStream[0];
 	revert(0);
+
 
 	std::vector<Statement*> statements{};
 	// main-parser loop
@@ -40,7 +49,7 @@ void Parser::advance()
 Token Parser::getCurrToken() {
 
 	if (currentPos > tokenStream.size() - 1) {
-		return Token(TokenType::NONE, currentToken.line, currentToken.endColumn + 1, 
+		return Token(TokenType::NONE, "", "", currentToken.line, currentToken.endColumn + 1,
 			currentToken.endColumn + 2);
 	}
 	else {
@@ -55,9 +64,9 @@ void Parser::revert(size_t pos) {
 Statement* Parser::getStatement(Error& outError)
 {
 	if (getCurrToken().dataType == TokenType::NONE) {
-		
-		SyntaxError targetError = SyntaxError("Reached End of File while Parcing", getCurrToken().line,
-			getCurrToken().startColumn, getCurrToken().endColumn, path, text);
+		Token tok = getCurrToken();
+		Error targetError(ErrorType::SYNTAXERROR, "Reached End of File while Parcing", tok.line,
+			tok.startColumn, tok.endColumn, tok.path, tok.text);
 		outError.copy(targetError);
 		return nullptr;
 	}
@@ -66,10 +75,13 @@ Statement* Parser::getStatement(Error& outError)
 		&Parser::getBlockState, 
 		&Parser::getIfState,
 		&Parser::getWhileState,
+		&Parser::getFuncDeclState,
 		&Parser::getDeclState,
 		&Parser::getSetState,
 		&Parser::getEmptyState,
-		&Parser::getPrint
+		&Parser::getPrint,
+		&Parser::getExprState,
+		&Parser::getReturnState
 	};
 
 	for (auto getStateFunc : getStateFuncs) {
@@ -79,12 +91,13 @@ Statement* Parser::getStatement(Error& outError)
 			return statement;
 
 		// if there is a syntax-error
-		if (outError.errorName != "NULL") {
+		if (outError.errType != ErrorType::NULLERROR) {
 			return nullptr;
 		}
 	}
-	Error targetError = SyntaxError("input doesnt fit any statement type", getCurrToken().line,
-		getCurrToken().startColumn, getCurrToken().endColumn, path, text);
+	Token tok = getCurrToken();
+	Error targetError(ErrorType::SYNTAXERROR, "input doesnt fit any statement type", tok.line,
+		tok.startColumn, tok.endColumn, tok.path, tok.text);
 	outError.copy(targetError);
 	return nullptr;
 }
@@ -101,7 +114,7 @@ Statement* Parser::getBlockState(Error& outError)
 	while (getCurrToken().dataType != TokenType::RCURLBRACKET) {
 		Statement* statement = getStatement(outError);
 
-		if (outError.errorName != "NULL") {
+		if (outError.errType != ErrorType::NULLERROR) {
 			return nullptr;
 		}
 
@@ -134,8 +147,9 @@ Statement* Parser::getIfState(Error& outError)
 	if (getCurrToken().dataType != TokenType::RBRACKET)
 	{
 		delete cond;
-		SyntaxError targetError = SyntaxError("Presumably Missing ')'-Bracket", getCurrToken().line,
-			getCurrToken().startColumn, getCurrToken().endColumn, path, text);
+		Token tok = getCurrToken();
+		Error targetError(ErrorType::SYNTAXERROR, "Presumably Missing ')'-Bracket", tok.line,
+			tok.startColumn, tok.endColumn, tok.path, tok.text);
 		outError.copy(targetError);
 		return nullptr;
 	}
@@ -165,8 +179,9 @@ Statement* Parser::getWhileState(Error& outError)
 	advance();
 
 	if (getCurrToken().dataType != TokenType::LBRACKET) {
-		SyntaxError targetError = SyntaxError("Presumably Missing '('-Bracket", getCurrToken().line,
-			getCurrToken().startColumn, getCurrToken().endColumn, path, text);
+		Token tok = getCurrToken();
+		Error targetError(ErrorType::SYNTAXERROR, "Presumably Missing '('-Bracket", tok.line,
+			tok.startColumn, tok.endColumn, tok.path, tok.text);
 		outError.copy(targetError);
 		return nullptr;
 	}
@@ -179,8 +194,9 @@ Statement* Parser::getWhileState(Error& outError)
 
 	if (getCurrToken().dataType != TokenType::RBRACKET) {
 		delete cond;
-		SyntaxError targetError = SyntaxError("Presumably Missing ')'-Bracket", getCurrToken().line,
-			getCurrToken().startColumn, getCurrToken().endColumn, path, text);
+		Token tok = getCurrToken();
+		Error targetError(ErrorType::SYNTAXERROR, "Presumably Missing ')'-Bracket", tok.line,
+			tok.startColumn, tok.endColumn, tok.path, tok.text);
 		outError.copy(targetError);
 		return nullptr;
 	}
@@ -200,107 +216,7 @@ Statement* Parser::getWhileState(Error& outError)
 // Decl (initialization)
 Statement* Parser::getDeclState(Error& outError)
 {
-	bool constVar{false};
-	size_t startPos = currentPos;
-
-	if (getCurrToken().dataType == TokenType::CONSTWORD) {
-		constVar = true;
-		advance();
-	}
-	if (getCurrToken().dataType != TokenType::INTWORD && 
-		getCurrToken().dataType != TokenType::FLOATWORD &&
-		getCurrToken().dataType != TokenType::CHARWORD &&
-		getCurrToken().dataType != TokenType::VARWORD)
-	{
-		if (constVar) {
-			SyntaxError targetError = SyntaxError("No type-specifier found", getCurrToken().line,
-				getCurrToken().startColumn, getCurrToken().endColumn, path, text);
-			outError.copy(targetError);
-			return nullptr;
-		}
-		revert(startPos);
-		return nullptr;
-	}
-	int typeId{0};
-	switch (getCurrToken().dataType)
-	{
-	case TokenType::INTWORD:
-		typeId = Interpreter::getSingelton()->getTypeId("int", outError);
-		break;
-	case TokenType::FLOATWORD:
-		typeId = Interpreter::getSingelton()->getTypeId("float", outError);
-		break;
-	case TokenType::CHARWORD:
-		typeId = Interpreter::getSingelton()->getTypeId("char", outError);
-		break;
-	case TokenType::VARWORD:
-		typeId = 0;
-		break;
-	default:
-		SyntaxError targetError = SyntaxError("Invalid Datatype", getCurrToken().line,
-			getCurrToken().startColumn, getCurrToken().endColumn, path, text);
-		outError.copy(targetError);
-		return nullptr;
-	}
-
-	advance();
-
-	bool isList = false;
-	if (getCurrToken().dataType == TokenType::LSQBRACKET) {
-		advance();
-		if (getCurrToken().dataType != TokenType::RSQBRACKET) {
-			SyntaxError targetError = SyntaxError("Presumably Missing ']'", getCurrToken().line,
-				getCurrToken().startColumn, getCurrToken().endColumn, path, text);
-			outError.copy(targetError);
-			return nullptr;
-		}
-		isList = true;
-		advance();
-	}
-
-	if (getCurrToken().dataType != TokenType::IDENTIFIER) {
-		SyntaxError targetError = SyntaxError("No variablename found", getCurrToken().line,
-			getCurrToken().startColumn, getCurrToken().endColumn, path, text);
-		outError.copy(targetError);
-		return nullptr;
-	}
-	std::string varName = getCurrToken().value;
-	advance();
-
-	Expression* expr{ nullptr };
-	// only decl
-	if (getCurrToken().dataType == TokenType::SEMICOLON) {
-		advance();
-	}
-	// decl + init
-	else if (getCurrToken().dataType == TokenType::EQ) {
-		advance();
-		expr = getExpr(outError);
-
-		if (expr == nullptr) {
-			return nullptr;
-		}
-	}
-	else {
-		delete expr;
-		SyntaxError targetError = SyntaxError("Invalid Token", getCurrToken().line,
-			getCurrToken().startColumn, getCurrToken().endColumn, path, text);
-		outError.copy(targetError);
-		return nullptr;
-	}
-	
-	if (getCurrToken().dataType != TokenType::SEMICOLON)
-	{
-		delete expr;
-		SyntaxError targetError = SyntaxError("Presumably Missing ';'", getCurrToken().line,
-			getCurrToken().startColumn, getCurrToken().endColumn, path, text);
-		outError.copy(targetError);
-		return nullptr;
-	}
-	advance();
-	Statement* decl = new DeclVar(varName, getCurrToken().line,
-		tokenStream[startPos].startColumn, getCurrToken().endColumn, constVar, true, typeId, isList, expr);
-	return decl;
+	return getDeclStateCustSep(outError, { TokenType::SEMICOLON });
 }
 
 // setVar
@@ -325,8 +241,9 @@ Statement* Parser::getSetState(Error& outError)
 
 		if (getCurrToken().dataType != TokenType::RSQBRACKET) {
 			delete index;
-			SyntaxError targetError = SyntaxError("Presumably Missing ']'", getCurrToken().line,
-				getCurrToken().startColumn, getCurrToken().endColumn, path, text);
+			Token tok = getCurrToken();
+			Error targetError(ErrorType::SYNTAXERROR, "Presumably Missing ']'", tok.line,
+				tok.startColumn, tok.endColumn, tok.path, tok.text);
 			outError.copy(targetError);
 			return nullptr;
 		}
@@ -354,8 +271,9 @@ Statement* Parser::getSetState(Error& outError)
 			delete index;
 		}
 		delete expr;
-		SyntaxError targetError = SyntaxError("Presumably Missing ';'", getCurrToken().line,
-			getCurrToken().startColumn, getCurrToken().endColumn, path, text);
+		Token tok = getCurrToken();
+		Error targetError(ErrorType::SYNTAXERROR, "Presumably Missing ';'", tok.line,
+			tok.startColumn, tok.endColumn, tok.path, tok.text);
 		outError.copy(targetError);
 		return nullptr;
 	}
@@ -376,6 +294,236 @@ Statement* Parser::getEmptyState(Error& outError)
 	return new BlockNode();
 }
 
+// Expression Statement
+Statement* Parser::getExprState(Error& outError) {
+	size_t startPos = currentPos;
+	Error tempError{};
+	Expression* expr = getExpr(tempError);
+
+	if (expr == nullptr) {
+		revert(startPos);
+		return nullptr;
+	}
+
+	if (getCurrToken().dataType != TokenType::SEMICOLON) {
+		delete expr;
+		Token tok = getCurrToken();
+		Error targetError(ErrorType::SYNTAXERROR, "Presumably Missing ';'", tok.line,
+			tok.startColumn, tok.endColumn, tok.path, tok.text);
+		outError.copy(targetError);
+		return nullptr;
+	}
+	advance();
+	return new ExprState(expr);
+}
+
+// Decl-Func Statement
+Statement* Parser::getFuncDeclState(Error& outError) {
+	int typeId;
+	switch (getCurrToken().dataType)
+	{
+	case TokenType::INTWORD:
+		typeId = Interpreter::getSingelton()->getTypeId("int", outError);
+		break;
+	case TokenType::FLOATWORD:
+		typeId = Interpreter::getSingelton()->getTypeId("float", outError);
+		break;
+	case TokenType::CHARWORD:
+		typeId = Interpreter::getSingelton()->getTypeId("char", outError);
+		break;
+	case TokenType::VARWORD:
+		typeId = 0;
+		break;
+	case TokenType::VOIDWORD:
+		typeId = -1;
+		break;
+	default:
+		return nullptr;
+	}
+
+	size_t startPos = currentPos;
+	advance();
+	
+	bool isList = false;
+	if (getCurrToken().dataType == TokenType::LSQBRACKET) {
+		advance();
+
+		if (getCurrToken().dataType != TokenType::RSQBRACKET) {
+			//Error targetError(ErrorType::SYNTAXERROR, "Presumably Missing ']'", getCurrToken().line,
+			//	getCurrToken().startColumn, getCurrToken().endColumn, path, text);
+			//outError.copy(targetError);
+			return nullptr;
+		}
+		isList = true;
+		advance();
+	}
+
+	if (getCurrToken().dataType != TokenType::IDENTIFIER) {
+		//Error targetError(ErrorType::SYNTAXERROR, "Missing Identifier", getCurrToken().line,
+		//	getCurrToken().startColumn, getCurrToken().endColumn, path, text);
+		//outError.copy(targetError);
+		revert(startPos);
+		return nullptr;
+	}
+
+	std::string funcName = getCurrToken().value;
+	
+	advance();
+
+	if (getCurrToken().dataType != TokenType::LBRACKET) {
+		//Error targetError(ErrorType::SYNTAXERROR, "Presumably Missing '('", getCurrToken().line,
+		//	getCurrToken().startColumn, getCurrToken().endColumn, path, text);
+		//outError.copy(targetError);
+		revert(startPos);
+		return nullptr;
+	}
+	advance();
+	
+	std::vector<DeclVar*> params{};
+	while (true) {
+		params.push_back(getDeclStateCustSep(outError, { }));
+
+		if (outError.errType != ErrorType::NULLERROR) {
+			return nullptr;
+		}
+
+		if (getCurrToken().dataType == TokenType::RBRACKET) {
+			break;
+		}
+
+		if (getCurrToken().dataType != TokenType::COMMA) {
+			Token tok = getCurrToken();
+			Error targetError(ErrorType::SYNTAXERROR, "Presumably Missing ','", tok.line,
+				tok.startColumn, tok.endColumn, tok.path, tok.text);
+			outError.copy(targetError);
+			return nullptr;
+		}
+		advance();
+	}
+
+	advance();
+	Statement* statement = getStatement(outError);
+
+	if (outError.errType != ErrorType::NULLERROR) {
+		return nullptr;
+	}
+
+	return new DeclFunc(funcName, typeId, isList, params, statement);
+}
+
+DeclVar* Parser::getDeclStateCustSep(Error& outError, std::vector<enum TokenType> sep) {
+	bool constVar{ false };
+	size_t startPos = currentPos;
+
+	if (getCurrToken().dataType == TokenType::CONSTWORD) {
+		constVar = true;
+		advance();
+	}
+	if (getCurrToken().dataType != TokenType::INTWORD &&
+		getCurrToken().dataType != TokenType::FLOATWORD &&
+		getCurrToken().dataType != TokenType::CHARWORD &&
+		getCurrToken().dataType != TokenType::VARWORD)
+	{
+		if (constVar) {
+			Token tok = getCurrToken();
+			Error targetError(ErrorType::SYNTAXERROR, "No type-specifier found", tok.line,
+				tok.startColumn, tok.endColumn, tok.path, tok.text);
+			outError.copy(targetError);
+			return nullptr;
+		}
+		revert(startPos);
+		return nullptr;
+	}
+	int typeId{ 0 };
+	switch (getCurrToken().dataType)
+	{
+	case TokenType::INTWORD:
+		typeId = Interpreter::getSingelton()->getTypeId("int", outError);
+		break;
+	case TokenType::FLOATWORD:
+		typeId = Interpreter::getSingelton()->getTypeId("float", outError);
+		break;
+	case TokenType::CHARWORD:
+		typeId = Interpreter::getSingelton()->getTypeId("char", outError);
+		break;
+	case TokenType::VARWORD:
+		typeId = 0;
+		break;
+	default:
+		Token tok = getCurrToken();
+		Error targetError(ErrorType::SYNTAXERROR, "Invalid Datatype", tok.line,
+			tok.startColumn, tok.endColumn, tok.path, tok.text);
+		outError.copy(targetError);
+		return nullptr;
+	}
+
+	advance();
+
+	bool isList = false;
+	if (getCurrToken().dataType == TokenType::LSQBRACKET) {
+		advance();
+		if (getCurrToken().dataType != TokenType::RSQBRACKET) {
+			Token tok = getCurrToken();
+			Error targetError(ErrorType::SYNTAXERROR, "Presumably Missing ']'", tok.line,
+				tok.startColumn, tok.endColumn, tok.path, tok.text);
+			outError.copy(targetError);
+			return nullptr;
+		}
+		isList = true;
+		advance();
+	}
+
+	if (getCurrToken().dataType != TokenType::IDENTIFIER) {
+		Token tok = getCurrToken();
+		Error targetError(ErrorType::SYNTAXERROR, "No variablename found", tok.line,
+			tok.startColumn, tok.endColumn, tok.path, tok.text);
+		outError.copy(targetError);
+		return nullptr;
+	}
+	std::string varName = getCurrToken().value;
+	advance();
+
+	Expression* expr{ nullptr };
+	//// only decl
+	//if (getCurrToken().dataType == sep) {
+	//	advance();
+	//}
+	// decl + init
+	if (getCurrToken().dataType == TokenType::EQ) {
+		advance();
+		expr = getExpr(outError);
+
+		if (expr == nullptr) {
+			return nullptr;
+		}
+	}
+	//else {
+	//	delete expr;
+	//	Error targetError(ErrorType::SYNTAXERROR, "Invalid Token", getCurrToken().line,
+	//		getCurrToken().startColumn, getCurrToken().endColumn, path, text);
+	//	outError.copy(targetError);
+	//	return nullptr;
+	//}
+
+	// if sep is needed
+	if (sep.size() > 0) {
+		// if end of decl-state is without sep
+		if (std::find(sep.begin(), sep.end(), getCurrToken().dataType) == sep.end())
+		{
+			delete expr;
+			Token tok = getCurrToken();
+			Error targetError(ErrorType::SYNTAXERROR, "Invalid Token", tok.line,
+				tok.startColumn, tok.endColumn, tok.path, tok.text);
+			outError.copy(targetError);
+			return nullptr;
+		}
+		advance();
+	}
+	DeclVar* decl = new DeclVar(varName, getCurrToken().line,
+		tokenStream[startPos].startColumn, getCurrToken().endColumn, constVar, true, typeId, isList, expr);
+	return decl;
+}
+
 // Print statement
 Statement* Parser::getPrint(Error& outError) 
 {
@@ -387,8 +535,9 @@ Statement* Parser::getPrint(Error& outError)
 	advance();
 
 	if (getCurrToken().dataType != TokenType::LBRACKET) {
-		SyntaxError targetError = SyntaxError("Presumably Missing '('-Bracket", getCurrToken().line,
-			getCurrToken().startColumn, getCurrToken().endColumn, path, text);
+		Token tok = getCurrToken();
+		Error targetError(ErrorType::SYNTAXERROR, "Presumably Missing '('-Bracket", tok.line,
+			tok.startColumn, tok.endColumn, tok.path, tok.text);
 		outError.copy(targetError);
 		return nullptr;
 	}
@@ -400,21 +549,46 @@ Statement* Parser::getPrint(Error& outError)
 
 	if (getCurrToken().dataType != TokenType::RBRACKET) {
 		delete expr;
-		SyntaxError targetError = SyntaxError("Presumably Missing ')'-Bracket", getCurrToken().line,
-			getCurrToken().startColumn, getCurrToken().endColumn, path, text);
+		Token tok = getCurrToken();
+		Error targetError(ErrorType::SYNTAXERROR, "Presumably Missing ')'-Bracket", tok.line,
+			tok.startColumn, tok.endColumn, tok.path, tok.text);
 		outError.copy(targetError);
 		return nullptr;
 	}
 	advance();
 	if (getCurrToken().dataType != TokenType::SEMICOLON) {
 		delete expr;
-		SyntaxError targetError = SyntaxError("Presumably Missing ';'", getCurrToken().line,
-			getCurrToken().startColumn, getCurrToken().endColumn, path, text);
+		Token tok = getCurrToken();
+		Error targetError(ErrorType::SYNTAXERROR, "Presumably Missing ';'", tok.line,
+			tok.startColumn, tok.endColumn, tok.path, tok.text);
 		outError.copy(targetError);
 		return nullptr;
 	}
 	advance();
 	return new PrintState(expr);
+}
+
+Statement* Parser::getReturnState(Error& outError) {
+	if (getCurrToken().dataType != TokenType::RETURN) {
+		return nullptr;
+	}
+	size_t startPos = currentPos;
+	advance();
+
+	BreakState* breakState = new BreakState(4294967295);
+	if (getCurrToken().dataType == TokenType::SEMICOLON) {
+		return breakState;
+	}
+
+	Expression* expr = getExpr(outError);
+
+	if (outError.errType != ErrorType::NULLERROR) {
+		return nullptr;
+	}
+
+	SetVar* setVar = new SetVar("$return", nullptr, expr, 
+		expr->line, startPos, expr->endColumn);
+	return new BlockNode({ setVar, breakState }, "return");
 }
 
 // list of else if statements
@@ -434,8 +608,9 @@ std::vector<ElseCond*> Parser::getIfElse(Error& outError)
 		advance();
 
 		if (getCurrToken().dataType != TokenType::LBRACKET) {
-			SyntaxError targetError = SyntaxError("Presumably Missing '('-Bracket", getCurrToken().line,
-				getCurrToken().startColumn, getCurrToken().endColumn, path, text);
+			Token tok = getCurrToken();
+			Error targetError(ErrorType::SYNTAXERROR, "Presumably Missing '('-Bracket", tok.line,
+				tok.startColumn, tok.endColumn, tok.path, tok.text);
 			outError.copy(targetError);
 			return {};
 		}
@@ -447,8 +622,9 @@ std::vector<ElseCond*> Parser::getIfElse(Error& outError)
 		}
 		if (getCurrToken().dataType != TokenType::RBRACKET) {
 			delete cond;
-			SyntaxError targetError = SyntaxError("Presumably Missing ')'-Bracket", getCurrToken().line,
-				getCurrToken().startColumn, getCurrToken().endColumn, path, text);
+			Token tok = getCurrToken();
+			Error targetError(ErrorType::SYNTAXERROR, "Presumably Missing ')'-Bracket", tok.line,
+				tok.startColumn, tok.endColumn, tok.path, tok.text);
 			outError.copy(targetError);
 			return {};
 		}
@@ -484,19 +660,22 @@ Statement* Parser::getElse(Error& outError) {
 Expression* Parser::getExpr(Error& outError)
 {
 	std::vector<Token> tokenStream = getExprTokStream(currentPos, this->tokenStream);
+	int brackCount = getBrackCount(tokenStream);
 	if (tokenStream.size() == 0) {
-		SyntaxError targetError = SyntaxError("Invalid Expression", getCurrToken().line,
-			getCurrToken().startColumn, getCurrToken().endColumn, path, text);
+		Token tok = getCurrToken();
+		Error targetError(ErrorType::SYNTAXERROR, "Invalid Expression", tok.line,
+			tok.startColumn, tok.endColumn, tok.path, tok.text);
 		outError.copy(targetError);
 		return nullptr;
 	}
 
-	IEASTNode rootNode = IEASTNode(path, text);
+	IEASTNode rootNode = IEASTNode(getCurrToken().path, getCurrToken().text);
 	streamToIEAST(tokenStream, rootNode, outError);
 
-	if (outError.errorName != "NULL") {
-		SyntaxError targetError = SyntaxError("Invalid Expression", getCurrToken().line,
-			getCurrToken().startColumn, getCurrToken().endColumn, path, text);
+	if (outError.errType != ErrorType::NULLERROR) {
+		Token tok = getCurrToken();
+		Error targetError(ErrorType::SYNTAXERROR, "Invalid Expression", tok.line,
+			tok.startColumn, tok.endColumn, tok.path, tok.text);
 		outError.copy(targetError);
 		return nullptr;
 	}
@@ -506,12 +685,12 @@ Expression* Parser::getExpr(Error& outError)
 }
 
 // delete the node, becouse its constructed on the heap
-
 void Parser::getIEAST(IEASTNode& rootNode, Error& outError) {
 	std::vector<Token> tokenStream = getExprTokStream(currentPos, tokenStream);
 	if (tokenStream.size() == 0){
-		SyntaxError targetError = SyntaxError("Invalid Expression", getCurrToken().line,
-			getCurrToken().startColumn, getCurrToken().endColumn, path, text);
+		Token tok = getCurrToken();
+		Error targetError(ErrorType::SYNTAXERROR, "Invalid Expression", tok.line,
+			tok.startColumn, tok.endColumn, tok.path, tok.text);
 		outError.copy(targetError);
 		return;
 	}
@@ -533,7 +712,7 @@ void Parser::streamToIEAST(std::vector<Token> tokenStream, IEASTNode& rootNode, 
 		{
 		case TokenType::LBRACKET:
 		{
-			IEASTNode* lNode = new IEASTNode(path, text);
+			IEASTNode* lNode = new IEASTNode(getCurrToken().path, getCurrToken().text);
 			nodeStack.top()->leftNode = lNode;
 			nodeStack.push(lNode);
 			break;
@@ -554,6 +733,49 @@ void Parser::streamToIEAST(std::vector<Token> tokenStream, IEASTNode& rootNode, 
 			varNode->token = tokenStream[i];
 			break;
 		}
+		case TokenType::FUNC:
+		{
+			IEASTNode* node = nodeStack.top();
+			nodeStack.pop();
+			node->token = tokenStream[i];
+			i++;
+
+			IEASTFuncNode* funcNode = new IEASTFuncNode(node->path, node->text);
+			node->leftNode = funcNode;
+			// identifier
+			funcNode->token = tokenStream[i];
+			i+=2;
+
+			std::vector<IEASTNode*> params{};
+			while (true) {
+				std::vector<Token> paramTokens = getSingExprTokStream(i, tokenStream);
+
+				if (paramTokens.size() == 0) {
+					Error targetError(ErrorType::SYNTAXERROR, "Invalid Expression", funcNode->token.line,
+						funcNode->token.startColumn, tokenStream[i].endColumn, 
+						tokenStream[i].path, tokenStream[i].text);
+					outError.copy(targetError);
+					return;
+				}
+				IEASTNode* paramRootNode = new IEASTNode(getCurrToken().path, getCurrToken().text);
+				streamToIEAST(paramTokens, *paramRootNode, outError);
+				params.push_back(paramRootNode);
+
+				if (tokenStream[i].dataType == TokenType::RBRACKET) {
+					break;
+				}
+
+				if (tokenStream[i].dataType != TokenType::COMMA) {
+					Error targetError(ErrorType::SYNTAXERROR, "Presumably Missing ','-Bracket", tokenStream[i].line,
+						tokenStream[i].startColumn, tokenStream[i].endColumn, tokenStream[i].path, tokenStream[i].text);
+					outError.copy(targetError);
+					return;
+				}
+				i++;
+			}
+			funcNode->params = params;
+			break;
+		}
 		case TokenType::RBRACKET:
 		{
 			nodeStack.pop();
@@ -565,13 +787,14 @@ void Parser::streamToIEAST(std::vector<Token> tokenStream, IEASTNode& rootNode, 
 			std::vector<Token> indexTokenStream = getExprTokStream(i, refTokenStream);
 
 			if (refTokenStream[i].dataType != TokenType::RSQBRACKET) {
-				SyntaxError targetError = SyntaxError("Presumably Missing ']'-Bracket", refTokenStream[i].line,
-					refTokenStream[i].startColumn, refTokenStream[i].endColumn, path, text);
+				Error targetError(ErrorType::SYNTAXERROR, "Presumably Missing ']'-Bracket", refTokenStream[i].line,
+					refTokenStream[i].startColumn, refTokenStream[i].endColumn, 
+					refTokenStream[i].path, refTokenStream[i].text);
 				outError.copy(targetError);
 				return;
 			}
 
-			IEASTNode* indexRootNode = new IEASTNode(path, text);
+			IEASTNode* indexRootNode = new IEASTNode(getCurrToken().path, getCurrToken().text);
 			streamToIEAST(indexTokenStream, *indexRootNode, outError);
 			auto top = nodeStack.top();
 			nodeStack.top()->leftNode->leftNode = indexRootNode;
@@ -579,8 +802,9 @@ void Parser::streamToIEAST(std::vector<Token> tokenStream, IEASTNode& rootNode, 
 		}
 		case TokenType::RSQBRACKET:
 		{
-			SyntaxError targetError = SyntaxError("Presumably Missing '['-Bracket", refTokenStream[i].line,
-				refTokenStream[i].startColumn, refTokenStream[i].endColumn, path, text);
+			Error targetError(ErrorType::SYNTAXERROR, "Presumably Missing '['-Bracket", refTokenStream[i].line,
+				refTokenStream[i].startColumn, refTokenStream[i].endColumn, refTokenStream[i].path, 
+				refTokenStream[i].text);
 			outError.copy(targetError);
 			return;
 		}
@@ -595,18 +819,19 @@ void Parser::streamToIEAST(std::vector<Token> tokenStream, IEASTNode& rootNode, 
 				if (exprTokenStream.size() == 0) {
 					// todo
 				}
-				IEASTNode* valExpr = new IEASTNode(path, text);
+				IEASTNode* valExpr = new IEASTNode(getCurrToken().path, getCurrToken().text);
 				streamToIEAST(exprTokenStream, *valExpr, outError);
 				currNode->leftNode = valExpr;
-				IEASTNode* newNode = new IEASTNode(path, text);
+				IEASTNode* newNode = new IEASTNode(getCurrToken().path, getCurrToken().text);
 				currNode->rightNode = newNode;
 				currNode = newNode;
 
 			} while (refTokenStream[i].dataType == TokenType::COMMA);
 
 			if (refTokenStream[i].dataType != TokenType::RCURLBRACKET) {
-				SyntaxError targetError = SyntaxError("Presumably Missing '}'-Bracket", refTokenStream[i].line,
-					refTokenStream[i].startColumn, refTokenStream[i].endColumn, path, text);
+				Error targetError(ErrorType::SYNTAXERROR, "Presumably Missing '}'-Bracket", refTokenStream[i].line,
+					refTokenStream[i].startColumn, refTokenStream[i].endColumn, refTokenStream[i].path, 
+					refTokenStream[i].text);
 				outError.copy(targetError);
 				return;
 			}
@@ -618,15 +843,16 @@ void Parser::streamToIEAST(std::vector<Token> tokenStream, IEASTNode& rootNode, 
 		default:
 			IEASTNode* topNode = nodeStack.top();
 			topNode->token = tokenStream[i];
-			IEASTNode* rightNode = new IEASTNode(path, text);
+			IEASTNode* rightNode = new IEASTNode(getCurrToken().path, getCurrToken().text);
 			topNode->rightNode = rightNode;
 			nodeStack.push(rightNode);
 			break;
 		}
 	}
 	if (nodeStack.size() > 0) {
-		SyntaxError targetError = SyntaxError("IEASTNode - Stack has elements over", getCurrToken().line,
-			getCurrToken().startColumn, getCurrToken().endColumn, path, text);
+		Token tok = getCurrToken();
+		Error targetError(ErrorType::SYNTAXERROR, "IEASTNode - Stack has elements over", tok.line,
+			tok.startColumn, tok.endColumn, tok.path, tok.text);
 		outError.copy(targetError);
 	}
 }
@@ -685,6 +911,8 @@ std::vector<Token> Parser::getSingExprTokStream(size_t& pos, const std::vector<T
 		TokenType::MOD,
 	};
 
+	auto outTokenStream = std::vector<Token>();
+
 	while (tokType != TokenType::SEMICOLON && tokType != TokenType::COMMA &&
 		tokType != TokenType::RCURLBRACKET &&
 		!(tokType == TokenType::RBRACKET && bracketSur == 0) &&
@@ -694,16 +922,28 @@ std::vector<Token> Parser::getSingExprTokStream(size_t& pos, const std::vector<T
 
 		if (mustValue) {
 			if (tokType != TokenType::LBRACKET) {
-				if (std::find(valTypes.begin(), valTypes.end(), tokType) == valTypes.end()) {
+				Error outError{};
+				std::vector<Token> funkTokStr = getFuncTokStream(tokenStream, pos, outError);
+				if (funkTokStr.size() > 0) {
+					int brackCount = getBrackCount(funkTokStr);
+					outTokenStream.insert(outTokenStream.end(), funkTokStr.begin(), funkTokStr.end());
+					//bracketSur++;
+				}
+				else if (std::find(valTypes.begin(), valTypes.end(), tokType) == valTypes.end()) {
 					//revert(startPos);
 					pos = startPos;
 					tokType = tokenStream[pos].dataType;
 					return std::vector<Token>();
 				}
+				else {
+					outTokenStream.push_back(tokenStream[pos]);
+				}
+				//outTokenStream.push_back(tokenStream[pos]);
 				mustValue = false;
 			}
 			else {
 				bracketSur++;
+				outTokenStream.push_back(tokenStream[pos]);
 			}
 		}
 		else {
@@ -725,6 +965,7 @@ std::vector<Token> Parser::getSingExprTokStream(size_t& pos, const std::vector<T
 			else {
 				bracketSur--;
 			}
+			outTokenStream.push_back(tokenStream[pos]);
 		}
 		// advance();
 		pos++;
@@ -738,8 +979,61 @@ std::vector<Token> Parser::getSingExprTokStream(size_t& pos, const std::vector<T
 	if (bracketSur > 0 || sqrBracketSur > 0)
 		return std::vector<Token>();
 
-	auto outTokenStream = std::vector<Token>(tokenStream.begin() + startPos, tokenStream.begin() + pos);
+	//auto outTokenStream = std::vector<Token>(tokenStream.begin() + startPos, tokenStream.begin() + pos);
 	return transExprTokStream(outTokenStream);
+}
+
+std::vector<Token> Parser::getFuncTokStream(const std::vector<Token>& tokenStream, size_t& pos, Error& outError)
+{
+	if (tokenStream[pos].dataType != TokenType::IDENTIFIER) {
+		return {};
+	}
+	size_t startPos = pos;
+	std::vector<Token> out{Token(TokenType::FUNC), tokenStream[pos]};
+	
+	pos++;
+	if (tokenStream[pos].dataType != TokenType::LBRACKET) {
+		pos = startPos;
+		return {};
+	}
+
+	out.push_back(tokenStream[pos]);
+	pos++;
+
+	while (pos < tokenStream.size()) {
+		auto tokStream = getSingExprTokStream(pos, tokenStream);
+		if (tokStream.size() == 0) {
+			Error targetError(ErrorType::SYNTAXERROR, "Invalid Expression as parameter", tokenStream[startPos].line,
+				tokenStream[startPos].startColumn, tokenStream[pos].endColumn);
+			outError.copy(targetError);
+			return {};
+		}
+
+		out.insert(out.end(), tokStream.begin(), tokStream.end());
+
+		if (tokenStream[pos].dataType == TokenType::RBRACKET) {
+			break;
+		}
+
+		if (tokenStream[pos].dataType != TokenType::COMMA) {
+			Error targetError(ErrorType::SYNTAXERROR, "Presumably Missing ','", tokenStream[pos].line,
+				tokenStream[pos].startColumn, tokenStream[pos].endColumn);
+			outError.copy(targetError);
+			return {};
+		}
+		out.push_back(tokenStream[pos]);
+		pos++;
+	}
+
+	if (tokenStream[pos].dataType != TokenType::RBRACKET) {
+		Error targetError(ErrorType::SYNTAXERROR, "Presumably Missing ')'", tokenStream[pos].line,
+			tokenStream[pos].startColumn, tokenStream[pos].endColumn);
+		outError.copy(targetError);
+		return {};
+	}
+	out.push_back(tokenStream[pos]);
+	out[0].value = std::to_string(pos);
+	return out;
 }
 
 // adds Brackets around operators according to their priorities
@@ -758,6 +1052,7 @@ std::vector<Token> Parser::transExprTokStream(std::vector<Token> tokenStream) {
 
 	for (auto opClass : opClasses) {
 		tokenStream = addBrackets(tokenStream, opClass);
+		int brackCount = getBrackCount(tokenStream);
 	}
 	return tokenStream;
 }
@@ -776,12 +1071,19 @@ std::vector<Token> Parser::addBrackets(std::vector<Token> tokenStream, std::vect
 			for (int j = i - 1; j > -1; j--) {
 				if (j == 0) {
 					tokenStream.insert(tokenStream.begin(), Token(TokenType::LBRACKET));
-					// i know its useless, but it looks good
-					break;
 				}
 				else if (tokenStream[j].dataType == TokenType::LBRACKET) {
-					bracketSur--;
-					if (bracketSur == 0 && sqrBracketSur == 0) {
+					bracketSur--;					
+					
+					// funcs
+					if (j > 2 && tokenStream[j-1].dataType == TokenType::IDENTIFIER
+						&& tokenStream[j - 2].dataType == TokenType::FUNC) {
+						tokenStream.insert(tokenStream.begin() + j - 2, Token(TokenType::LBRACKET));
+						break;
+					}
+
+					// normal
+					else if (bracketSur == 0 && sqrBracketSur == 0) {
 						tokenStream.insert(tokenStream.begin() + j, Token(TokenType::LBRACKET));
 						bracketSur++;
 						break;
@@ -798,7 +1100,15 @@ std::vector<Token> Parser::addBrackets(std::vector<Token> tokenStream, std::vect
 				}
 				else if (std::find(valExpr.begin(), valExpr.end(), tokenStream[j].dataType) != valExpr.end()
 					&& bracketSur == 0 && sqrBracketSur == 0) {
-					tokenStream.insert(tokenStream.begin() + j, Token(TokenType::LBRACKET));
+
+					// funcs
+					if (tokenStream[j].dataType == TokenType::IDENTIFIER && j > 0
+						&& tokenStream[j - 1].dataType == TokenType::FUNC) {
+						tokenStream.insert(tokenStream.begin() + j - 1, Token(TokenType::LBRACKET));
+					}
+					else {
+						tokenStream.insert(tokenStream.begin() + j, Token(TokenType::LBRACKET));
+					}
 					bracketSur++;
 					break;
 				}
@@ -809,9 +1119,20 @@ std::vector<Token> Parser::addBrackets(std::vector<Token> tokenStream, std::vect
 			bracketSur = 0;
 			// places a RBracket
 			for (int j = i + 1; j < tokenStream.size(); j++) {
+
 				if (j == tokenStream.size() - 1) {
 					tokenStream.insert(tokenStream.end(), Token(TokenType::RBRACKET));
+				}
+				// funcs
+				else if (tokenStream[j].dataType == TokenType::FUNC) {
+					//j = std::stoi(tokenStream[j].value);
+					//if (j == tokenStream.size() - 1) {
+					//	tokenStream.insert(tokenStream.end(), Token(TokenType::RBRACKET));
+					//}
+					j = findEndOfFunc(tokenStream, j + 1);
+					tokenStream.insert(tokenStream.end(), Token(TokenType::RBRACKET));
 					break;
+
 				}
 				else if (tokenStream[j].dataType == TokenType::RBRACKET) {
 					//if (bracketSur == 0) {
@@ -850,4 +1171,34 @@ std::vector<Token> Parser::addBrackets(std::vector<Token> tokenStream, std::vect
 		}
 	}
 	return tokenStream;
+}
+
+size_t Parser::findEndOfFunc(std::vector<Token> tokenStream, size_t pos) {
+	size_t bracketSur = 1;
+	for (size_t i = pos + 1; i < tokenStream.size(); i++) {
+		if (tokenStream[i].dataType == TokenType::LBRACKET) {
+			bracketSur++;
+		}
+		else if (tokenStream[i].dataType == TokenType::RBRACKET) {
+			bracketSur--;
+			if (bracketSur == 0) {
+				return i;
+			}
+		}
+	}
+	return -1;
+}
+
+int Parser::getBrackCount(std::vector<Token> tokStream)
+{
+	int out = 0;
+	for (auto i = tokStream.begin(); i != tokStream.end(); i++) {
+		if (i->dataType == TokenType::LBRACKET) {
+			out++;
+		}
+		else if (i->dataType == TokenType::RBRACKET) {
+			out--;
+		}
+	}
+	return out;
 }

@@ -1,11 +1,14 @@
 #pragma once
 #include <string>
+#include <filesystem>
 #include "SuppType.h"
 #include "Expression.h"
 #include "Token.h"
 #include "SymbTable.h"
 #include "Error.h"
 //#include "Parser.h"
+
+namespace fs = std::filesystem;
 
 // forward decl.
 class Parser;
@@ -16,11 +19,11 @@ public:
 	Token token;
 	IEASTNode* leftNode{nullptr};
 	IEASTNode* rightNode{nullptr};
-	std::string_view path;
+	fs::path path;
 	std::string_view text;
 
 	
-	IEASTNode(std::string_view path, std::string_view text);
+	IEASTNode(fs::path path, std::string_view text);
 	~IEASTNode();
-	Expression* getExpr(Error& outError);
+	virtual Expression* getExpr(Error& outError);
 };

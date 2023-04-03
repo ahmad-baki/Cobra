@@ -12,17 +12,17 @@ size_t IfCond::run(Error& outError)
 {
 	std::vector<Value*> condVal = cond->run(outError);
 
-	if (outError.errorName != "NULL") {
+	if (outError.errType != ErrorType::NULLERROR) {
 		return 0;
 	}
 	if (condVal.size() != 1) {
-		RuntimeError targetError{ std::format("Cannot convert to boolean from list with size {}", 
+		Error targetError{ ErrorType::RUNTIMEERROR, std::format("Cannot convert to boolean from list with size {}", 
 			std::to_string(condVal.size())) };
 	}
 
 	bool condBol = condVal[0]->getBool(outError);
 
-	if (outError.errorName != "NULL")
+	if (outError.errType != ErrorType::NULLERROR)
 		return 0;
 
 	if (condBol) {
@@ -33,12 +33,12 @@ size_t IfCond::run(Error& outError)
 		{
 			bool ifElseBool = ifElseStates[i]->run(outError);
 
-			if (outError.errorName != "NULL") {
+			if (outError.errType != ErrorType::NULLERROR) {
 				return 0;
 			}
 			if (condVal.size() != 1) {
-				RuntimeError targetError{ std::format("Cannot convert to boolean from list with size {}",
-					std::to_string(condVal.size())) };
+				Error targetError{ ErrorType::RUNTIMEERROR, std::format("Cannot convert to boolean from list with size {}",
+					std::to_string(condVal.size())) , condVal[0]->line, condVal[0]->startColumn, condVal[0]->endColumn};
 				outError.copy(targetError);
 				return 0;
 			}

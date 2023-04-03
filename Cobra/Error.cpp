@@ -1,11 +1,19 @@
 #include "Error.h"
 #include<string>  
 
+std::map<enum ErrorType, std::string> Error::errorNames = {
+	{ ErrorType::NULLERROR, "No Error" },
+	{ ErrorType::INVCHRERROR, "Invalid Character Error" },
+	{ ErrorType::SYNTAXERROR, "Syntax Error" },
+	{ ErrorType::RUNTIMEERROR, "Runtime Error" }
+};
+
+
 std::ostream& operator<<(std::ostream& output, const Error& e)
 {
 	output
 		<< "File: " << e.path << std::endl
-		<< e.errorName << " (line: " << e.line << ", column: " 
+		<< e.errorNames[e.errType] << " (line: " << e.line << ", column: "
 		<< e.startColumn << "-" << e.endColumn << "): "
 		<< e.desc << std::endl 
 		/*<< e.getErrorLine()*/;
@@ -13,11 +21,11 @@ std::ostream& operator<<(std::ostream& output, const Error& e)
 }
 
 Error::Error() 
-	: errorName{"NULL"}, desc{""}, text{""}, line{0}, startColumn{0}, endColumn{0}
+	: errType{ErrorType::NULLERROR}, desc{""}, text{""}, line{0}, startColumn{0}, endColumn{0}
 {}
 
-Error::Error(std::string_view errorName, std::string_view text, size_t line, size_t startColumn, size_t endColumn, std::string_view desc, std::string_view path) :
-	errorName{ errorName }, desc{ desc }, path{ path }, text{text}, line{line}, startColumn{startColumn}, endColumn{endColumn}
+Error::Error(ErrorType errTyp, std::string_view text, size_t line, size_t startColumn, size_t endColumn, fs::path path, std::string_view desc) :
+	errType{ errTyp }, desc{ desc }, path{ path }, text{text}, line{line}, startColumn{startColumn}, endColumn{endColumn}
 {
 }
 
@@ -99,7 +107,7 @@ size_t Error::getNTabs(std::string errorLine) const
 
 void Error::copy(Error& outError) {
 	path		= outError.path;
-	errorName	= outError.errorName;
+	errType		= outError.errType;
 	line		= outError.line;
 	startColumn	= outError.startColumn;
 	endColumn	= outError.endColumn;

@@ -23,7 +23,7 @@ std::vector<Value*> ListExpr::run(Error& outError) {
 	out.reserve(expressions.size());
 	for (Expression* expr : expressions) {
 		std::vector<Value*> val = expr->run(outError);
-		if (outError.errorName != "NULL")
+		if (outError.errType != ErrorType::NULLERROR)
 			return {};
 		out.push_back(val[0]);
 	}

@@ -1,0 +1,20 @@
+
+int[] arr = {0, 1, 2, 3, 4, 5, 6, 7, 8};
+int arrlen = 9;
+
+int find(int[] arr, int len, int[] what) {
+    int i = 0;
+    while (i < len) {
+        if (arr[i] == what) {
+            return i;
+        }
+        i = i + 1;
+    }
+    return 3289;
+}
+
+var res = find(arr, arrlen, 8);
+print(res);
+
+res = find(arr, arrlen, 102);
+print(res);

@@ -16,9 +16,6 @@
     <Filter Include="Source Files\Lexer">
       <UniqueIdentifier>{d87ed55f-0ec5-4417-a96c-b467906eb5d1}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Parser">
-      <UniqueIdentifier>{a44274d0-b1a5-4fe0-a199-33dda1fa1cfd}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Lexer">
       <UniqueIdentifier>{41f595e0-0538-4210-a99d-de2a4893941b}</UniqueIdentifier>
     </Filter>
@@ -31,11 +28,23 @@
     <Filter Include="Header Files\Error">
       <UniqueIdentifier>{8cb19821-6287-474b-af25-f3a5cef3f984}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Parser">
+      <UniqueIdentifier>{a44274d0-b1a5-4fe0-a199-33dda1fa1cfd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Interpreter">
+      <UniqueIdentifier>{57caf873-bd83-42a4-b1e1-10fa3f961ba0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Interpreter">
+      <UniqueIdentifier>{93ce0f79-4337-42a3-83b5-def255d4e59d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\PreProcess">
+      <UniqueIdentifier>{4afe3bd2-2f1c-4fa1-bdfc-c87a4de01a81}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\PreProcess">
+      <UniqueIdentifier>{cfbb0a9a-5801-4445-b2ac-30c8c93379c2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="TokenType.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Lexer.cpp">
       <Filter>Source Files\Lexer</Filter>
     </ClCompile>
@@ -87,9 +96,6 @@
     <ClCompile Include="PrintState.cpp">
       <Filter>Source Files\Parser</Filter>
     </ClCompile>
-    <ClCompile Include="Token.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Error.cpp">
       <Filter>Source Files\Error</Filter>
     </ClCompile>
@@ -102,28 +108,55 @@
     <ClCompile Include="SyntaxError.cpp">
       <Filter>Source Files\Error</Filter>
     </ClCompile>
-    <ClCompile Include="PrimValue.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Interpreter.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Scope.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="BreakState.cpp">
+      <Filter>Source Files\Parser</Filter>
     </ClCompile>
     <ClCompile Include="CobrClass.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Parser</Filter>
     </ClCompile>
-    <ClCompile Include="Type.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="DeclFunc.cpp">
+      <Filter>Source Files\Parser</Filter>
     </ClCompile>
-    <ClCompile Include="Value.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="ExprState.cpp">
+      <Filter>Source Files\Parser</Filter>
     </ClCompile>
-    <ClCompile Include="Variable.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Func.cpp">
+      <Filter>Source Files\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="IEASTFuncNode.cpp">
+      <Filter>Source Files\Parser</Filter>
     </ClCompile>
     <ClCompile Include="ListExpr.cpp">
+      <Filter>Source Files\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="PrimValue.cpp">
+      <Filter>Source Files\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="RunFunc.cpp">
+      <Filter>Source Files\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="Scope.cpp">
+      <Filter>Source Files\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="Type.cpp">
+      <Filter>Source Files\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="Value.cpp">
+      <Filter>Source Files\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="Variable.cpp">
+      <Filter>Source Files\Parser</Filter>
+    </ClCompile>
+    <ClCompile Include="TokenType.cpp">
+      <Filter>Source Files\Lexer</Filter>
+    </ClCompile>
+    <ClCompile Include="Token.cpp">
+      <Filter>Source Files\Lexer</Filter>
+    </ClCompile>
+    <ClCompile Include="Interpreter.cpp">
+      <Filter>Source Files\Interpreter</Filter>
+    </ClCompile>
+    <ClCompile Include="PreProcesser.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -176,14 +209,8 @@
     <ClInclude Include="Lexer.h">
       <Filter>Header Files\Lexer</Filter>
     </ClInclude>
-    <ClInclude Include="TokenType.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="PrintState.h">
       <Filter>Header Files\Parser</Filter>
-    </ClInclude>
-    <ClInclude Include="Token.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Error.h">
       <Filter>Header Files\Error</Filter>
@@ -197,31 +224,61 @@
     <ClInclude Include="SyntaxError.h">
       <Filter>Header Files\Error</Filter>
     </ClInclude>
-    <ClInclude Include="Node.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="PrimValue.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Interpreter.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Scope.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="CobrClass.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Type.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Variable.h">
+      <Filter>Header Files\Parser</Filter>
     </ClInclude>
     <ClInclude Include="Value.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Parser</Filter>
     </ClInclude>
-    <ClInclude Include="Variable.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Type.h">
+      <Filter>Header Files\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="Scope.h">
+      <Filter>Header Files\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="RunFunc.h">
+      <Filter>Header Files\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="PrimValue.h">
+      <Filter>Header Files\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="Node.h">
+      <Filter>Header Files\Parser</Filter>
     </ClInclude>
     <ClInclude Include="ListExpr.h">
+      <Filter>Header Files\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="IEASTFuncNode.h">
+      <Filter>Header Files\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="ExprState.h">
+      <Filter>Header Files\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="Func.h">
+      <Filter>Header Files\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="DeclFunc.h">
+      <Filter>Header Files\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="CobrClass.h">
+      <Filter>Header Files\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="BreakState.h">
+      <Filter>Header Files\Parser</Filter>
+    </ClInclude>
+    <ClInclude Include="Token.h">
+      <Filter>Header Files\Lexer</Filter>
+    </ClInclude>
+    <ClInclude Include="TokenType.h">
+      <Filter>Header Files\Lexer</Filter>
+    </ClInclude>
+    <ClInclude Include="Interpreter.h">
+      <Filter>Header Files\Interpreter</Filter>
+    </ClInclude>
+    <ClInclude Include="PreProcesser.h">
+      <Filter>Header Files\PreProcess</Filter>
+    </ClInclude>
+    <ClInclude Include="Cobra.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

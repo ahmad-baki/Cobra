@@ -34,24 +34,24 @@ size_t DeclVar::run(Error& outError)
 	//}
 	//else {
 	//	std::vector<Value*> values = sizeExpr->run(outError);
-	//	if (outError.errorName != "NULL") {
+	//	if (outError.errType != ErrorType::NULLERROR) {
 	//		return;
 	//	}
 	//	if (values.size() != 1) {
-	//		RuntimeError targetError{ std::format("Cannot convert from list with size {} to int", 
+	//		Error targetError{ ErrorType::RUNTIMEERROR, std::format("Cannot convert from list with size {} to int", 
 	//			std::to_string(values.size())) };
 	//		outError.copy(targetError);
 	//		return;
 	//	}
 	//	isList = Variable::getIndex(values[0], outError);
-	//	if (outError.errorName != "NULL") {
+	//	if (outError.errType != ErrorType::NULLERROR) {
 	//		return;
 	//	}
 	//}
 
 	if (value != nullptr) {
 		std::vector<Value*> val = value->run(outError);
-		if (outError.errorName != "NULL") {
+		if (outError.errType != ErrorType::NULLERROR) {
 			outError.line = line;
 			outError.startColumn = startColumn;
 			outError.endColumn = endColumn;
@@ -64,12 +64,17 @@ size_t DeclVar::run(Error& outError)
 		Interpreter::getSingelton()->declareVar(name, this->typeId,
 			outError, isConst, isStaticType, isList);
 	}
-	if (outError.errorName != "NULL") {
+	if (outError.errType != ErrorType::NULLERROR) {
 		outError.line			= line;
 		outError.startColumn	= startColumn;
 		outError.endColumn		= endColumn;
-		return 0;
 	}
+	return 0;
+}
+
+std::string DeclVar::getName()
+{
+	return name;
 }
 
 #pragma region OLD-CODE
