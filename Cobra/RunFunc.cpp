@@ -16,6 +16,11 @@ std::vector<Value*> RunFunc::run(Error& outError) {
 			return {};
 		}
 	}
-
-	return Interpreter::getSingelton()->callFunc(funcName, paramVal, outError);
+	auto result = Interpreter::getSingelton()->callFunc(funcName, paramVal, outError);
+	if (outError.errType != ErrorType::NULLERROR && outError.line == 0 && outError.startColumn == 0) {
+		outError.line = line;
+		outError.startColumn = startColumn;
+		outError.endColumn = endColumn;
+	}
+	return result;
 }

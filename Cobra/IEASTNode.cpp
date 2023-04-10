@@ -30,6 +30,10 @@ Expression* IEASTNode::getExpr(Error& outError) {
 	Interpreter* interp = Interpreter::getSingelton();
 	switch (token.dataType)
 	{
+	case TokenType::BOOLLIT:
+		expr = new PrimValue(interp->getTypeId("bool", outError),
+			(void*)new bool{ (token.value == "true") ? true : false }, outError);
+		break;
 	case TokenType::INTLIT:
 		expr = new PrimValue(interp->getTypeId("int", outError), 
 			(void*)new int{std::stoi(token.value)}, outError);

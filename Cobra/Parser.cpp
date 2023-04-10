@@ -419,7 +419,8 @@ DeclVar* Parser::getDeclStateCustSep(Error& outError, std::vector<enum TokenType
 		constVar = true;
 		advance();
 	}
-	if (getCurrToken().dataType != TokenType::INTWORD &&
+	if (getCurrToken().dataType != TokenType::BOOLWORD &&
+		getCurrToken().dataType != TokenType::INTWORD &&
 		getCurrToken().dataType != TokenType::FLOATWORD &&
 		getCurrToken().dataType != TokenType::CHARWORD &&
 		getCurrToken().dataType != TokenType::STRINGWORD &&
@@ -438,6 +439,9 @@ DeclVar* Parser::getDeclStateCustSep(Error& outError, std::vector<enum TokenType
 	int typeId{ 0 };
 	switch (getCurrToken().dataType)
 	{
+	case TokenType::BOOLWORD:
+		typeId = Interpreter::getSingelton()->getTypeId("bool", outError);
+		break;
 	case TokenType::INTWORD:
 		typeId = Interpreter::getSingelton()->getTypeId("int", outError);
 		break;
@@ -721,8 +725,9 @@ void Parser::streamToIEAST(std::vector<Token> tokenStream, IEASTNode& rootNode, 
 			nodeStack.push(lNode);
 			break;
 		}
-		case TokenType::DECLIT:
+		case TokenType::BOOLLIT:
 		case TokenType::INTLIT:
+		case TokenType::DECLIT:
 		case TokenType::CHARLIT:
 		case TokenType::STRINGLIT:
 		{
@@ -906,7 +911,8 @@ std::vector<Token> Parser::getSingExprTokStream(size_t& pos, const std::vector<T
 	}
 
 	std::vector<enum TokenType> valTypes{
-		TokenType::INTLIT, TokenType::DECLIT, TokenType::CHARLIT, TokenType::STRINGLIT , TokenType::IDENTIFIER
+		TokenType::BOOLLIT, TokenType::INTLIT, TokenType::DECLIT, 
+		TokenType::CHARLIT, TokenType::STRINGLIT , TokenType::IDENTIFIER
 	};
 	std::vector<enum TokenType> binOps{
 		TokenType::PLUS, TokenType::MINUS, TokenType::MUL,
@@ -1069,7 +1075,7 @@ std::vector<Token> Parser::transExprTokStream(std::vector<Token> tokenStream) {
 // add brackets around given operators
 std::vector<Token> Parser::addBrackets(std::vector<Token> tokenStream, std::vector<enum TokenType> op)
 {
-	auto valExpr = { TokenType::INTLIT, TokenType::DECLIT, 
+	auto valExpr = { TokenType::BOOLLIT, TokenType::INTLIT, TokenType::DECLIT, 
 		TokenType::CHARLIT, TokenType::STRINGLIT, TokenType::IDENTIFIER };
 	for (int i = 1; i < tokenStream.size(); i++) {
 		// if token is a strong-binding operator

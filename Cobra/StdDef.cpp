@@ -26,7 +26,6 @@ std::vector<Value*> StdDef::input(std::vector<std::vector<Value*>> param, Error&
 	}
 
 	std::cout << param[0][0]->toString();
-
 	std::string input_s;
 	std::getline(std::cin, input_s);
 
@@ -45,9 +44,9 @@ std::vector<Value*> StdDef::print(std::vector<std::vector<Value*>> param, Error&
 	}
 
 	int stringType = Interpreter::getSingelton()->getTypeId("string", outError);
-	if (!PackageManager::cast(param, { stringType }, outError)) {
-		return {};
-	}
+	//if (!PackageManager::cast(param, { stringType }, outError)) {
+	//	return {};
+	//}
 
 	std::cout << param[0][0]->toString() << std::endl;
 	return {};

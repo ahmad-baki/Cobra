@@ -239,33 +239,69 @@ Value* PrimValue::doOp(Value& other, enum TokenType op, Error& outError)
 		return nullptr;
 	}
 
-	void* castVal = Cast(other.getData(), other.getTypeId(), this->typeId, outError);
-	if (castVal == nullptr)
-		return nullptr;
+	void* castVal1;
+	void* castVal2;
 	Value* result{ nullptr };
 
 	Interpreter* interpreter = Interpreter::getSingelton();
+	int boolTypeId = interpreter->getTypeId("bool", outError);
 	int intTypeId = interpreter->getTypeId("int", outError);
 	int floatTypeId = interpreter->getTypeId("float", outError);
 	int charTypeId = interpreter->getTypeId("char", outError);
 	int stringTypeId = interpreter->getTypeId("string", outError);
-	if (this->typeId == intTypeId) {
-		result = calcOp((int*)data, (int*)castVal, op, this->typeId, outError);
+
+	if (this->getTypeId() == floatTypeId || other.getTypeId() == floatTypeId) {
+		castVal1 = Cast(this->getData(), this->getTypeId(), floatTypeId, outError);
+		if (castVal1 == nullptr)
+			return nullptr;
+		castVal2 = Cast(other.getData(), other.getTypeId(), floatTypeId, outError);
+		if (castVal2 == nullptr)
+			return nullptr;
+		result = calcOp((float*)castVal1, (float*)castVal2, op, floatTypeId, outError);
 	}
-	else if (this->typeId == floatTypeId) {
-		result = calcOp((float*)data, (float*)castVal, op, this->typeId, outError);
+	else if (this->getTypeId() == intTypeId || other.getTypeId() == intTypeId) {
+		castVal1 = Cast(this->getData(), this->getTypeId(), intTypeId, outError);
+		if (castVal1 == nullptr)
+			return nullptr;
+		castVal2 = Cast(other.getData(), other.getTypeId(), intTypeId, outError);
+		if (castVal2 == nullptr)
+			return nullptr;
+		result = calcOp((int*)castVal1, (int*)castVal2, op, intTypeId, outError);
 	}
-	else if (this->typeId == charTypeId) {
-		result = calcOp((char*)data, (char*)castVal, op, this->typeId, outError);
+	else if (this->getTypeId() == charTypeId || other.getTypeId() == charTypeId) {
+		castVal1 = Cast(this->getData(), this->getTypeId(), charTypeId, outError);
+		if (castVal1 == nullptr)
+			return nullptr;
+		castVal2 = Cast(other.getData(), other.getTypeId(), charTypeId, outError);
+		if (castVal2 == nullptr)
+			return nullptr;
+		result = calcOp((char*)castVal1, (char*)castVal2, op, charTypeId, outError);
 	}
-	else if (this->typeId == stringTypeId) {
-		result = calcOp((std::string*)data, (std::string*)castVal, op, this->typeId, outError);
+	else if (this->getTypeId() == boolTypeId || other.getTypeId() == boolTypeId) {
+		castVal1 = Cast(this->getData(), this->getTypeId(), boolTypeId, outError);
+		if (castVal1 == nullptr)
+			return nullptr;
+		castVal2 = Cast(other.getData(), other.getTypeId(), boolTypeId, outError);
+		if (castVal2 == nullptr)
+			return nullptr;
+		result = calcOp((bool*)castVal1, (bool*)castVal2, op, boolTypeId, outError);
+	}
+	else if (this->getTypeId() == stringTypeId || other.getTypeId() == stringTypeId) {
+		castVal1 = Cast(this->getData(), this->getTypeId(), stringTypeId, outError);
+		if (castVal1 == nullptr)
+			return nullptr;
+		castVal2 = Cast(other.getData(), other.getTypeId(), stringTypeId, outError);
+		if (castVal2 == nullptr)
+			return nullptr;
+		result = calcOp((std::string*)castVal1, (std::string*)castVal2, op, stringTypeId, outError);
 	}
 	else{
 		Error targetError(ErrorType::RUNTIMEERROR, "Invalid DataType", line, startColumn, endColumn);
 		outError.copy(targetError);
+		return nullptr;
 	}
-	delete castVal;
+	delete castVal1;
+	delete castVal2;
 	return result;
 }
 
@@ -289,13 +325,41 @@ void* PrimValue::Cast(void* data, int o_typeId, int t_typeId, Error& outError) {
 	// checks viable conversions
 	void* returnValue{ nullptr };
 	Interpreter* interpreter = Interpreter::getSingelton();
+	int boolTypeId = interpreter->getTypeId("bool", outError);
 	int intTypeId = interpreter->getTypeId("int", outError);
 	int floatTypeId = interpreter->getTypeId("float", outError);
 	int charTypeId = interpreter->getTypeId("char", outError);
 	int stringTypeId = interpreter->getTypeId("string", outError);
 
+
+	if (t_typeId == boolTypeId) {
+		if (o_typeId == boolTypeId) {
+			returnValue = (void*)new bool(*(bool*)data);
+		}
+		if (o_typeId == intTypeId) {
+			returnValue = (void*)new bool(*(int*)data);
+		}
+		else if (o_typeId == floatTypeId) {
+			returnValue = (void*)new bool{ *(float*)data != 0};
+		}
+		else if (o_typeId == charTypeId) {
+			returnValue = (void*)new bool(*(char*)data);
+		}
+		else if (o_typeId == stringTypeId) {
+			if (!isDec(*((std::string*)data))) {
+				Error targetError(ErrorType::RUNTIMEERROR, std::format("Cant cast following string to bool: {}",
+					*((std::string*)data)));
+				outError.copy(targetError);
+				return nullptr;
+			}
+			returnValue = (void*) new bool(std::stoi(*(std::string*)data));
+		}
+	}
 	if (t_typeId == intTypeId) {
-		if (o_typeId == intTypeId){
+		if (o_typeId == boolTypeId) {
+			returnValue = (void*)new int{ *(bool*)data };
+		}
+		else if (o_typeId == intTypeId){
 			returnValue = (void*)new int{ *(int*)data };
 		}
 		else if (o_typeId == floatTypeId) {
@@ -315,6 +379,9 @@ void* PrimValue::Cast(void* data, int o_typeId, int t_typeId, Error& outError) {
 		}
 	}
 	else if (t_typeId == floatTypeId) {
+		if (o_typeId == boolTypeId) {
+			returnValue = (void*)new float(*(bool*)data);
+		}
 		if (o_typeId == intTypeId) {
 			returnValue = (void*)new float(*(int*)data);
 		}
@@ -335,14 +402,29 @@ void* PrimValue::Cast(void* data, int o_typeId, int t_typeId, Error& outError) {
 		}
 	}
 	else if (t_typeId == charTypeId) {
+		if (o_typeId == boolTypeId) {
+			returnValue = (void*)new char(*(bool*)data);
+		}
 		if (o_typeId == intTypeId) {
 			returnValue = (void*)new char(*(int*)data);
 		}
 		else if (o_typeId == charTypeId) {
 			returnValue = (void*)new char(*(char*)data);
 		}
+		else if (o_typeId == stringTypeId) {
+			if (((std::string*)data)->size() != 1) {
+				Error targetError(ErrorType::RUNTIMEERROR, std::format("Cant cast following string to char: {}",
+					*((std::string*)data)));
+				outError.copy(targetError);
+				return nullptr;
+			}
+			returnValue = (void*)new char((*(std::string*)data)[0]);
+		}
 	}
 	else if (t_typeId == stringTypeId) {
+		if (o_typeId == boolTypeId) {
+			returnValue = (void*)new std::string(std::to_string(*(bool*)data));
+		}
 		if (o_typeId == intTypeId) {
 			returnValue = (void*)new std::string(std::to_string(*(int*)data));
 		}
@@ -378,7 +460,12 @@ std::string PrimValue::toString()
 	else {
 		Error outError{};
 		Interpreter* interpr = Interpreter::getSingelton();
-		if		(typeId == interpr->getTypeId("int", outError)) {
+		if (typeId == interpr->getTypeId("bool", outError)) {
+			output << std::boolalpha;
+			output << *(bool*)data;
+			output << std::noboolalpha;
+		}
+		else if		(typeId == interpr->getTypeId("int", outError)) {
 			output << *(int*)data;
 		}
 		else if (typeId == interpr->getTypeId("float", outError)) {

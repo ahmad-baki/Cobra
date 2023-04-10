@@ -72,6 +72,7 @@ private:
 		{"if",		TokenType::IF},
 		{"else",	TokenType::ELSE},
 		{"while",	TokenType::WHILE},
+		{"bool",	TokenType::BOOLWORD},
 		{"int",		TokenType::INTWORD},
 		{"float",	TokenType::FLOATWORD},
 		{"char",	TokenType::CHARWORD},

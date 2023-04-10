@@ -249,6 +249,11 @@ Token Lexer::getNextWord(Error& outError) {
 
 		size_t startColumn = column + 1 - tokenString.size();
 		size_t endColumn = column + 1;
+
+		if (tokenString == "false" || tokenString == "true") {
+			return Token(TokenType::BOOLLIT, path, text, line, startColumn, endColumn, tokenString);
+		}
+
 		return Token(TokenType::IDENTIFIER, path, text, line, startColumn, endColumn, tokenString);
 	}
 	size_t startColumn = column + 1 - tokenString.size();
