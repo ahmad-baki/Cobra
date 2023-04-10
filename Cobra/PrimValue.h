@@ -35,5 +35,8 @@ private:
 
 	template<SuppType T>
 	PrimValue* calcOp(T* val1, T* val2, enum TokenType op, int typeId, Error& outError);
+	PrimValue* calcOp(std::string* val1, std::string* val2, enum TokenType op, int typeId, Error& outError);
 	//Value* calcOp(float* val1, float* val2, enum TokenType op, Error& outError);
+	static bool isNumber(const std::string& s);
+	static bool isDec(const std::string& s);
 };

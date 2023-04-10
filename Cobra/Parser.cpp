@@ -79,7 +79,7 @@ Statement* Parser::getStatement(Error& outError)
 		&Parser::getDeclState,
 		&Parser::getSetState,
 		&Parser::getEmptyState,
-		&Parser::getPrint,
+		//&Parser::getPrint,
 		&Parser::getExprState,
 		&Parser::getReturnState
 	};
@@ -422,6 +422,7 @@ DeclVar* Parser::getDeclStateCustSep(Error& outError, std::vector<enum TokenType
 	if (getCurrToken().dataType != TokenType::INTWORD &&
 		getCurrToken().dataType != TokenType::FLOATWORD &&
 		getCurrToken().dataType != TokenType::CHARWORD &&
+		getCurrToken().dataType != TokenType::STRINGWORD &&
 		getCurrToken().dataType != TokenType::VARWORD)
 	{
 		if (constVar) {
@@ -445,6 +446,9 @@ DeclVar* Parser::getDeclStateCustSep(Error& outError, std::vector<enum TokenType
 		break;
 	case TokenType::CHARWORD:
 		typeId = Interpreter::getSingelton()->getTypeId("char", outError);
+		break;
+	case TokenType::STRINGWORD:
+		typeId = Interpreter::getSingelton()->getTypeId("string", outError);
 		break;
 	case TokenType::VARWORD:
 		typeId = 0;
@@ -525,48 +529,48 @@ DeclVar* Parser::getDeclStateCustSep(Error& outError, std::vector<enum TokenType
 }
 
 // Print statement
-Statement* Parser::getPrint(Error& outError) 
-{
-	if (getCurrToken().dataType != TokenType::IDENTIFIER || 
-		getCurrToken().value != "print")
-		return nullptr;
-
-	size_t startPos = currentPos;
-	advance();
-
-	if (getCurrToken().dataType != TokenType::LBRACKET) {
-		Token tok = getCurrToken();
-		Error targetError(ErrorType::SYNTAXERROR, "Presumably Missing '('-Bracket", tok.line,
-			tok.startColumn, tok.endColumn, tok.path, tok.text);
-		outError.copy(targetError);
-		return nullptr;
-	}
-	advance();
-	Expression* expr = getExpr(outError);
-
-	if (expr == nullptr)
-		return nullptr;
-
-	if (getCurrToken().dataType != TokenType::RBRACKET) {
-		delete expr;
-		Token tok = getCurrToken();
-		Error targetError(ErrorType::SYNTAXERROR, "Presumably Missing ')'-Bracket", tok.line,
-			tok.startColumn, tok.endColumn, tok.path, tok.text);
-		outError.copy(targetError);
-		return nullptr;
-	}
-	advance();
-	if (getCurrToken().dataType != TokenType::SEMICOLON) {
-		delete expr;
-		Token tok = getCurrToken();
-		Error targetError(ErrorType::SYNTAXERROR, "Presumably Missing ';'", tok.line,
-			tok.startColumn, tok.endColumn, tok.path, tok.text);
-		outError.copy(targetError);
-		return nullptr;
-	}
-	advance();
-	return new PrintState(expr);
-}
+//Statement* Parser::getPrint(Error& outError) 
+//{
+//	if (getCurrToken().dataType != TokenType::IDENTIFIER || 
+//		getCurrToken().value != "print")
+//		return nullptr;
+//
+//	size_t startPos = currentPos;
+//	advance();
+//
+//	if (getCurrToken().dataType != TokenType::LBRACKET) {
+//		Token tok = getCurrToken();
+//		Error targetError(ErrorType::SYNTAXERROR, "Presumably Missing '('-Bracket", tok.line,
+//			tok.startColumn, tok.endColumn, tok.path, tok.text);
+//		outError.copy(targetError);
+//		return nullptr;
+//	}
+//	advance();
+//	Expression* expr = getExpr(outError);
+//
+//	if (expr == nullptr)
+//		return nullptr;
+//
+//	if (getCurrToken().dataType != TokenType::RBRACKET) {
+//		delete expr;
+//		Token tok = getCurrToken();
+//		Error targetError(ErrorType::SYNTAXERROR, "Presumably Missing ')'-Bracket", tok.line,
+//			tok.startColumn, tok.endColumn, tok.path, tok.text);
+//		outError.copy(targetError);
+//		return nullptr;
+//	}
+//	advance();
+//	if (getCurrToken().dataType != TokenType::SEMICOLON) {
+//		delete expr;
+//		Token tok = getCurrToken();
+//		Error targetError(ErrorType::SYNTAXERROR, "Presumably Missing ';'", tok.line,
+//			tok.startColumn, tok.endColumn, tok.path, tok.text);
+//		outError.copy(targetError);
+//		return nullptr;
+//	}
+//	advance();
+//	return new PrintState(expr);
+//}
 
 Statement* Parser::getReturnState(Error& outError) {
 	if (getCurrToken().dataType != TokenType::RETURN) {
@@ -720,6 +724,7 @@ void Parser::streamToIEAST(std::vector<Token> tokenStream, IEASTNode& rootNode, 
 		case TokenType::DECLIT:
 		case TokenType::INTLIT:
 		case TokenType::CHARLIT:
+		case TokenType::STRINGLIT:
 		{
 			IEASTNode* litNode = nodeStack.top();
 			nodeStack.pop();
@@ -901,7 +906,7 @@ std::vector<Token> Parser::getSingExprTokStream(size_t& pos, const std::vector<T
 	}
 
 	std::vector<enum TokenType> valTypes{
-		TokenType::INTLIT, TokenType::DECLIT, TokenType::CHARLIT , TokenType::IDENTIFIER
+		TokenType::INTLIT, TokenType::DECLIT, TokenType::CHARLIT, TokenType::STRINGLIT , TokenType::IDENTIFIER
 	};
 	std::vector<enum TokenType> binOps{
 		TokenType::PLUS, TokenType::MINUS, TokenType::MUL,
@@ -917,7 +922,7 @@ std::vector<Token> Parser::getSingExprTokStream(size_t& pos, const std::vector<T
 		tokType != TokenType::RCURLBRACKET &&
 		!(tokType == TokenType::RBRACKET && bracketSur == 0) &&
 		!(tokType == TokenType::RSQBRACKET && sqrBracketSur == 0)
-		&& tokenStream[pos].dataType != TokenType::NONE)
+		&& tokType != TokenType::NONE)
 	{
 
 		if (mustValue) {
@@ -988,6 +993,11 @@ std::vector<Token> Parser::getFuncTokStream(const std::vector<Token>& tokenStrea
 	if (tokenStream[pos].dataType != TokenType::IDENTIFIER) {
 		return {};
 	}
+
+	if (tokenStream.size() - pos < 3) {
+		return {};
+	}
+
 	size_t startPos = pos;
 	std::vector<Token> out{Token(TokenType::FUNC), tokenStream[pos]};
 	
@@ -1052,7 +1062,6 @@ std::vector<Token> Parser::transExprTokStream(std::vector<Token> tokenStream) {
 
 	for (auto opClass : opClasses) {
 		tokenStream = addBrackets(tokenStream, opClass);
-		int brackCount = getBrackCount(tokenStream);
 	}
 	return tokenStream;
 }
@@ -1060,7 +1069,8 @@ std::vector<Token> Parser::transExprTokStream(std::vector<Token> tokenStream) {
 // add brackets around given operators
 std::vector<Token> Parser::addBrackets(std::vector<Token> tokenStream, std::vector<enum TokenType> op)
 {
-	auto valExpr = { TokenType::INTLIT, TokenType::DECLIT, TokenType::IDENTIFIER };
+	auto valExpr = { TokenType::INTLIT, TokenType::DECLIT, 
+		TokenType::CHARLIT, TokenType::STRINGLIT, TokenType::IDENTIFIER };
 	for (int i = 1; i < tokenStream.size(); i++) {
 		// if token is a strong-binding operator
 		if (std::find(op.begin(), op.end(), tokenStream[i].dataType) != op.end()) {

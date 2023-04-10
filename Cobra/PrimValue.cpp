@@ -150,6 +150,37 @@ PrimValue* PrimValue::calcOp(T* val1, T* val2, enum TokenType op, int typeId, Er
 	return nullptr;
 }
 
+PrimValue* PrimValue::calcOp(std::string* val1, std::string* val2, enum TokenType op, int typeId, Error& outError) {
+	switch (op)
+	{
+	case TokenType::PLUS:
+		return new PrimValue(typeId, new std::string(*val1 + *val2), outError);
+	case TokenType::EQEQ:
+		return new PrimValue(typeId, new std::string(std::to_string(*val1 == *val2)), outError);
+	case TokenType::EXCLAEQ:
+		return new PrimValue(typeId, new std::string(std::to_string(*val1 != *val2)), outError);
+	case TokenType::SMALL:
+		return new PrimValue(typeId, new std::string(std::to_string(*val1 < *val2)), outError);
+	case TokenType::SMALLEQ:
+		return new PrimValue(typeId, new std::string(std::to_string(*val1 <= *val2)), outError);
+	case TokenType::BIG:
+		return new PrimValue(typeId, new std::string(std::to_string(*val1 > *val2)), outError);
+	case TokenType::BIGEQ:
+		return new PrimValue(typeId, new std::string(std::to_string(*val1 >= *val2)), outError);
+	case TokenType::AND:
+		return new PrimValue(typeId, new std::string(std::to_string((*val1 != "0") && (*val2 != "0"))), outError);
+	case TokenType::OR:
+		return new PrimValue(typeId, new std::string(std::to_string((*val1 != "0") || (*val2 != "0"))), outError);
+	default:
+		break;
+	}
+
+	Error targetError(ErrorType::RUNTIMEERROR, "Invalid Operator: " + std::to_string(op),
+		line, startColumn, endColumn);
+	outError.copy(targetError);
+	return nullptr;
+}
+
 ////template<>
 //Value* PrimValue::calcOp(float* val1, float* val2, enum TokenType op, Error& outError) {
 //	switch (op)
@@ -216,11 +247,19 @@ Value* PrimValue::doOp(Value& other, enum TokenType op, Error& outError)
 	Interpreter* interpreter = Interpreter::getSingelton();
 	int intTypeId = interpreter->getTypeId("int", outError);
 	int floatTypeId = interpreter->getTypeId("float", outError);
+	int charTypeId = interpreter->getTypeId("char", outError);
+	int stringTypeId = interpreter->getTypeId("string", outError);
 	if (this->typeId == intTypeId) {
-		result = calcOp((int*)data, (int*)castVal, op, intTypeId, outError);
+		result = calcOp((int*)data, (int*)castVal, op, this->typeId, outError);
 	}
 	else if (this->typeId == floatTypeId) {
-		result = calcOp((float*)data, (float*)castVal, op, floatTypeId, outError);
+		result = calcOp((float*)data, (float*)castVal, op, this->typeId, outError);
+	}
+	else if (this->typeId == charTypeId) {
+		result = calcOp((char*)data, (char*)castVal, op, this->typeId, outError);
+	}
+	else if (this->typeId == stringTypeId) {
+		result = calcOp((std::string*)data, (std::string*)castVal, op, this->typeId, outError);
 	}
 	else{
 		Error targetError(ErrorType::RUNTIMEERROR, "Invalid DataType", line, startColumn, endColumn);
@@ -253,6 +292,7 @@ void* PrimValue::Cast(void* data, int o_typeId, int t_typeId, Error& outError) {
 	int intTypeId = interpreter->getTypeId("int", outError);
 	int floatTypeId = interpreter->getTypeId("float", outError);
 	int charTypeId = interpreter->getTypeId("char", outError);
+	int stringTypeId = interpreter->getTypeId("string", outError);
 
 	if (t_typeId == intTypeId) {
 		if (o_typeId == intTypeId){
@@ -264,6 +304,15 @@ void* PrimValue::Cast(void* data, int o_typeId, int t_typeId, Error& outError) {
 		else if (o_typeId == charTypeId) {
 			returnValue = (void*)new int(*(char*)data);
 		}
+		else if (o_typeId == stringTypeId) {
+			if (!isNumber(*((std::string*)data))) {
+				Error targetError(ErrorType::RUNTIMEERROR, std::format("Cant cast following string to int: {}",
+					*((std::string*)data)));
+				outError.copy(targetError);
+				return nullptr;
+			}
+			returnValue = (void*) new int(std::stof(*(std::string*)data));
+		}
 	}
 	else if (t_typeId == floatTypeId) {
 		if (o_typeId == intTypeId) {
@@ -271,6 +320,18 @@ void* PrimValue::Cast(void* data, int o_typeId, int t_typeId, Error& outError) {
 		}
 		else if (o_typeId == floatTypeId) {
 			returnValue = (void*)new float{ *(float*)data };
+		}
+		else if (o_typeId == charTypeId) {
+			returnValue = (void*)new float(*(char*)data);
+		}
+		else if (o_typeId == stringTypeId) {
+			if (!isDec(*((std::string*)data))) {
+				Error targetError(ErrorType::RUNTIMEERROR, std::format("Cant cast following string to float: {}",
+					*((std::string*)data)));
+				outError.copy(targetError);
+				return nullptr;
+			}
+			returnValue = (void*) new float(std::stof(*(std::string*)data));
 		}
 	}
 	else if (t_typeId == charTypeId) {
@@ -281,9 +342,27 @@ void* PrimValue::Cast(void* data, int o_typeId, int t_typeId, Error& outError) {
 			returnValue = (void*)new char(*(char*)data);
 		}
 	}
+	else if (t_typeId == stringTypeId) {
+		if (o_typeId == intTypeId) {
+			returnValue = (void*)new std::string(std::to_string(*(int*)data));
+		}
+		else if (o_typeId == floatTypeId) {
+			returnValue = (void*)new std::string(std::to_string(*(float*)data));
+		}
+		else if (o_typeId == charTypeId) {
+			returnValue = (void*)new std::string(std::to_string(* (char*)data));
+		}
+		else if (o_typeId == stringTypeId) {
+			returnValue = (void*) new std::string(*(std::string*)data);
+		}
+	}
+
 	if (returnValue == nullptr) {
 		Error targetError(ErrorType::RUNTIMEERROR, std::format("Couldnt cast {} to {}", 
-			o_typeId, t_typeId));
+			Interpreter::getSingelton()->getType(o_typeId, outError)->getTypeName(), 
+			Interpreter::getSingelton()->getType(t_typeId, outError)->getTypeName())
+		);
+		outError.copy(targetError);
 		return nullptr;
 	}
 	return returnValue;
@@ -308,9 +387,39 @@ std::string PrimValue::toString()
 		else if (typeId == interpr->getTypeId("char", outError)) {
 			output << *(char*)data;
 		}
+		else if (typeId == interpr->getTypeId("string", outError)) {
+			output << *(std::string*)data;
+		}
 		else if (typeId == 0) {
 			output << "undefined";
 		}
 	}
 	return output.str();
+}
+
+bool PrimValue::isNumber(const std::string& s)
+{
+	return !s.empty() && 
+		std::find_if(s.begin(), s.end(), 
+			[](unsigned char c) { 
+				return !std::isdigit(c); 
+			}
+		) == s.end();
+}
+
+bool PrimValue::isDec(const std::string& s)
+{
+	bool foundPoint = false;
+	for (auto i = s.begin(); i != s.end(); i++) {
+		if (!isdigit(*i)) {
+			if (*i == '.') {
+				if (foundPoint) {
+					return false;
+				}
+				foundPoint = true;
+			}
+			return false;
+		}
+	}
+	return true;
 }

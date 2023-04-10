@@ -2,6 +2,7 @@
 #include "RuntimeError.h"
 #include <format>
 #include <iterator>
+#include "PackageManager.h"
 
 Interpreter* Interpreter::singelton = nullptr;
 
@@ -50,8 +51,9 @@ void Interpreter::contin(Error& outError) {
 	}
 }
 
-void Interpreter::import(std::vector<std::string> imports, Error& outError)
+void Interpreter::importSTD(std::vector<Token> imports, Error& outError)
 {
+	stdFuncs = PackageManager::import(imports, outError);
 }
 
 void Interpreter::addStatements(std::vector<Statement*> statements) {
@@ -96,7 +98,6 @@ Scope* Interpreter::getCurrScope()
 	//return &scopes.back();
 	return &sepScopes.back().back();
 }
-
 
 bool Interpreter::declareVar(std::string name, std::vector<Value*> val,
 	int typeId, Error& outError, bool isConst, bool isStaticType, int size)
@@ -196,6 +197,11 @@ std::vector<Value*> Interpreter::callFunc(std::string name,
 	//	}
 	//}
 	//else {
+
+	auto stdFunc = stdFuncs.find(name);
+	if (stdFunc != stdFuncs.end()) {
+		return stdFunc->second(params, outError);
+	}
 
 	for (auto scopes = sepScopes.rbegin(); scopes != sepScopes.rend(); ++scopes) {
 		for (auto scope = scopes->rbegin(); scope != scopes->rend(); ++scope) {
@@ -308,7 +314,7 @@ int Interpreter::getTypeId(std::string typeName, Error& outError) {
 }
 
 void Interpreter::loadStdTypes() {
-	std::string elemTypes[]{"null", "int", "float", "char"};
+	std::string elemTypes[]{"null", "int", "float", "char", "string"};
 	Error outError{};
 	for (size_t i = 0; i < std::size(elemTypes); i++) {
 		Type* type = new Type(elemTypes[i], i);

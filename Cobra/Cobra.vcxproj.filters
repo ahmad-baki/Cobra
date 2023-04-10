@@ -43,6 +43,12 @@
     <Filter Include="Source Files\PreProcess">
       <UniqueIdentifier>{cfbb0a9a-5801-4445-b2ac-30c8c93379c2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\STDFunc">
+      <UniqueIdentifier>{35ed8b68-4a43-48d7-ab1a-327834abe12d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\STDFunc">
+      <UniqueIdentifier>{99de6460-9703-44af-8e1e-a7889a313877}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Lexer.cpp">
@@ -157,6 +163,15 @@
       <Filter>Source Files\Interpreter</Filter>
     </ClCompile>
     <ClCompile Include="PreProcesser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="StdMath.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PackageManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="StdDef.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -279,6 +294,15 @@
       <Filter>Header Files\PreProcess</Filter>
     </ClInclude>
     <ClInclude Include="Cobra.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StdMath.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PackageManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StdDef.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

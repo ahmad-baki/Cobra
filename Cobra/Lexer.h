@@ -31,6 +31,7 @@ private:
 	Token getNextToken(Error& outError);
 	Token getNextMakro(Error& outError);
 	Token getNextNumber(Error& outError);
+	Token getNextString(Error& outError);
 	Token getNextChar(Error& outError);
 	Token getNextOperator(Error& outError);
 	Token getNextWord(Error& outError);
@@ -64,6 +65,7 @@ private:
 		{"&&",		TokenType::AND},
 		{"||",		TokenType::OR},
 		{"%",		TokenType::MOD},
+		{"\"",		TokenType::QUOTMARK},
 	};
 
 	std::map<std::string, enum TokenType> keywords{
@@ -73,6 +75,7 @@ private:
 		{"int",		TokenType::INTWORD},
 		{"float",	TokenType::FLOATWORD},
 		{"char",	TokenType::CHARWORD},
+		{"string",	TokenType::STRINGWORD},
 		{"void",	TokenType::VOIDWORD},
 		{"var",		TokenType::VARWORD},
 		{"const",	TokenType::CONSTWORD},

@@ -12,7 +12,7 @@ std::map<enum ErrorType, std::string> Error::errorNames = {
 std::ostream& operator<<(std::ostream& output, const Error& e)
 {
 	output
-		<< "File: " << e.path << std::endl
+		<< "File: " << e.path.generic_string() << std::endl
 		<< e.errorNames[e.errType] << " (line: " << e.line << ", column: "
 		<< e.startColumn << "-" << e.endColumn << "): "
 		<< e.desc << std::endl 
@@ -24,7 +24,7 @@ Error::Error()
 	: errType{ErrorType::NULLERROR}, desc{""}, text{""}, line{0}, startColumn{0}, endColumn{0}
 {}
 
-Error::Error(ErrorType errTyp, std::string_view text, size_t line, size_t startColumn, size_t endColumn, fs::path path, std::string_view desc) :
+Error::Error(ErrorType errTyp, std::string_view desc, size_t line, size_t startColumn, size_t endColumn, fs::path path, std::string_view text) :
 	errType{ errTyp }, desc{ desc }, path{ path }, text{text}, line{line}, startColumn{startColumn}, endColumn{endColumn}
 {
 }

@@ -21,19 +21,22 @@ const std::regex STDIMPORTPATH{ "\\\"(.*)\\\"" };
 
 int main(int argc, char* argv[])
 {
+	Error outError{};
 	if (argc > 1) {
 		for (size_t i = 1; i < argc; i++) {
 			Interpreter::reset();
-			double runTime = execFromFile(argv[i]);
+			double runTime = execFromFile(argv[i], outError);
 			//std::cout << "finished in: " << runTime << "ms" << std::endl;
 			//std::cout << std::endl;
 		}
 	}
 	else {
 		Interpreter::reset();
-		execFromCommandLine();
-		std::cout << "finished" << std::endl;
+		execFromCommandLine(outError);
 	}	
+	if (outError.errType != ErrorType::NULLERROR) {
+		std::cout << outError << '\n' << std::endl;
+	}
 	//std::system("pause");
 }
 
@@ -47,7 +50,7 @@ std::string trim(std::string input) {
 	while (endPos > -1 && std::isspace(input[endPos])) {
 		endPos--;
 	}
-	std::string out = input.substr(startPos, endPos - startPos);
+	std::string out = input.substr(startPos, endPos - startPos + 1);
 	return out;
 }
 
@@ -92,15 +95,11 @@ std::string readFileIntoString(fs::path path, Error& outError) {
 	//}
 }
 
-double execFromFile(fs::path path) {
-	//std::cout << "executing: " << path << std::endl;
-	Error outError{};
-
+double execFromFile(fs::path path, Error& outError) {
 	std::string input = readFileIntoString(path, outError);
 
 	if (outError.errType != ErrorType::NULLERROR) {
-		std::cout << outError << '\n' << std::endl;
-		exit(-1);
+		return 0;
 	}
 
 	std::filesystem::path absPath = fs::absolute(path);
@@ -108,32 +107,28 @@ double execFromFile(fs::path path) {
 	std::vector<fs::path> importedFiles{ absPath };
 	std::vector<Token> tokenString = getTokenStream(input, path, outError, importedFiles);
 	if (outError.errType != ErrorType::NULLERROR) {
-		std::cout << outError << '\n' << std::endl;
-		exit(-1);
+		return 0;
 	}
 
 
 	Parser parser = Parser();
 	std::vector<Statement*> statements = parser.parse(tokenString, outError);
 	if (outError.errType != ErrorType::NULLERROR) {
-		std::cout << outError << '\n' << std::endl;
-		exit(-1);
+		return 0;
 	}
 
 	//statements.insert(statements.end(), fileStatements.begin(), fileStatements.end());
 	Interpreter* interpreter = Interpreter::getSingelton();
 
-	std::vector<std::string> stdImports = getSTDImports(tokenString, outError);
+	std::vector<Token> stdImports = getSTDImports(tokenString, outError);
 
 	if (outError.errType != ErrorType::NULLERROR) {
-		std::cout << outError << '\n' << std::endl;
-		exit(-1);
+		return 0;
 	}
 
-	interpreter->import(stdImports, outError);
+	interpreter->importSTD(stdImports, outError);
 	if (outError.errType != ErrorType::NULLERROR) {
-		std::cout << outError << '\n' << std::endl;
-		exit(-1);
+		return 0;
 	}
 
 	interpreter->setStatements(statements);
@@ -146,20 +141,26 @@ double execFromFile(fs::path path) {
 	if (outError.errType != ErrorType::NULLERROR) {
 		outError.path = path;
 		outError.text = input;
-		std::cout << outError << '\n' << std::endl;
 	}
 	return runTime;
 }
 
-void execFromCommandLine() {
+void execFromCommandLine(Error& outError) {
 	size_t line = 1;
-	Error outError{};
 	Interpreter* interpreter = Interpreter::getSingelton();
+
+	// just for debugging
+	interpreter->importSTD({}, outError);
+	// !!!!!
+
+
+	std::vector<fs::path> importedFiles{ };
 	while (true) {
 		std::cout << "> ";
 		std::string input = "";
 		getline(std::cin, input);
 
+		std::string tr = trim(input);
 		if (trim(input) == "exit") {
 			std::cout << "do you want to quit? (y/n)" << std::endl;
 			std::cin >> input;
@@ -169,9 +170,10 @@ void execFromCommandLine() {
 		}
 
 		Lexer lexer = Lexer(input, "<stdin>", line);
-		std::vector<Token> tokenString = lexer.lex(outError);
+
+		std::vector<Token> tokenString = getTokenStream(input, "<stdin>", outError, importedFiles);
+
 		if (outError.errType != ErrorType::NULLERROR) {
-			std::cout << outError << '\n' << std::endl;
 			return;
 		}
 
@@ -179,15 +181,25 @@ void execFromCommandLine() {
 		std::vector<Statement*> statements = parser.parse(tokenString, outError);
 
 		if (outError.errType != ErrorType::NULLERROR) {
-			std::cout << outError << '\n' << std::endl;
 			return;
 		}
+
+		std::vector<Token> stdImports = getSTDImports(tokenString, outError);
+
+		if (outError.errType != ErrorType::NULLERROR) {
+			return;
+		}
+
+		interpreter->importSTD(stdImports, outError);
+		if (outError.errType != ErrorType::NULLERROR) {
+			return;
+		}
+
 		interpreter->addStatements(statements);
 		interpreter->contin(outError);
 		if (outError.errType != ErrorType::NULLERROR) {
 			outError.path = "<stdin>";
 			outError.text = input;
-			std::cout << outError << '\n' << std::endl;
 			return;
 		}
 		line++;
@@ -246,7 +258,6 @@ std::vector<std::tuple<std::string, std::string>> runFileImport(std::vector<Toke
 		std::string file = readFileIntoString(fs::path(base_match[1].str()), outError);
 
 		if (outError.errType != ErrorType::NULLERROR) {
-			std::cout << outError << '\n' << std::endl;
 			return{};
 		}
 	
@@ -270,23 +281,27 @@ std::vector<std::tuple<std::string, std::string>> runFileImport(std::vector<Toke
 }
 
 
-std::vector<std::string> getSTDImports(std::vector<Token>& tokens, Error& outError)
+std::vector<Token> getSTDImports(std::vector<Token>& tokens, Error& outError)
 {
-	std::vector<std::string> out{};
-	std::vector<Token> remove{};
+	// finds right tokens
+	std::vector<Token> out{};
 	std::smatch base_match;
 	for (size_t i = 0; i < tokens.size() && tokens[i].dataType == TokenType::MAKRO; i++) {
 		if (std::regex_match(tokens[i].value, base_match, STDIMPORTREGEX)) {
-			out.push_back(tokens[i].value);
-			remove.push_back(tokens[i]);
+			out.push_back(tokens[i]);
+
+			std::regex_search(tokens[i].value, base_match, STDIMPORTPATH);
+			tokens[i].value = base_match[1].str();
 		}
 		//else if (std::regex_match(tokens[i].value, base_match, CUSTIMPORTREGEX)) {
 		//	remove.push_back(tokens[i]);
 		//}
 	}
 
-	for (auto iter = remove.begin(); iter != remove.end(); iter++) {
+	// remove imports from tokenstring
+	for (auto iter = out.begin(); iter != out.end(); iter++) {
 		tokens.erase(iter);
+
 	}
 	return out;
 }

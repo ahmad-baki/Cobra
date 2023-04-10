@@ -4,6 +4,7 @@
 #include "Statement.h"
 #include "BlockNode.h"
 #include "Scope.h"
+#include "PackageManager.h"
 
 class Interpreter
 {
@@ -14,7 +15,7 @@ public:
 	static void reset();
 	void run(Error& outError);
 	void contin(Error& outError);
-	void import(std::vector<std::string> imports, Error& outError);
+	void importSTD(std::vector<Token> imports, Error& outError);
 	void addStatements(std::vector<Statement*> statements);
 	void addStatement(Statement* statement);
 	void setStatements(std::vector<Statement*> statements);
@@ -45,9 +46,11 @@ public:
 private:
 	//std::vector<Scope> scopes;
 	std::vector<std::vector<Scope>> sepScopes;
-	//BlockNode* blockNode;
 	std::vector<Statement*> statements;
 	size_t nextExecIndex;
+
+	std::map<std::string, cobrfunc_t> stdFuncs;
+
 	Interpreter();
 	static Interpreter* singelton;
 };

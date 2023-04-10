@@ -42,6 +42,10 @@ Expression* IEASTNode::getExpr(Error& outError) {
 		expr = new PrimValue(interp->getTypeId("char", outError),
 			(void*)new char{ token.value.at(0) }, outError);
 		break;
+	case TokenType::STRINGLIT:
+		expr = new PrimValue(interp->getTypeId("string", outError),
+			(void*)new std::string{ token.value }, outError);
+		break;
 	case TokenType::IDENTIFIER:
 		{
 			Expression* indexExpr{ nullptr };

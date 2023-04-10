@@ -82,6 +82,11 @@ Token Lexer::getNextToken(Error& outError) {
 		return getNextChar(outError);
 	}
 
+	// 2. return string-literal
+	if (currentChar == '\"') {
+		return getNextString(outError);
+	}
+
 	// 3. return number-literal
 	if (isInt(currentChar)) {
 		return getNextNumber(outError);
@@ -124,6 +129,18 @@ Token Lexer::getNextChar(Error& outError) {
 	size_t endColumn = column;
 	advance();
 	return Token(TokenType::CHARLIT, path, text, line, startColumn, endColumn, tokenString);
+}
+
+Token Lexer::getNextString(Error& outError) {
+	size_t startPos = pos;
+	advance();
+	while (currentChar != '\"') {
+		advance();
+	}
+	Token out{ TokenType::STRINGLIT, path, text, line, startPos, pos,
+		std::string(text.substr(startPos+1, pos - startPos-1)) };
+	advance();
+	return out;
 }
 
 Token Lexer::getNextNumber(Error& outError) {
