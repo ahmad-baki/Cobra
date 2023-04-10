@@ -224,14 +224,19 @@ bool Interpreter::isFuncDecl(std::string name)
 	//	return sepScopes.back().isFuncDecl(name) || scopes[0].isFuncDecl(name);
 	//}
 
-	for (auto scopes = sepScopes.rbegin(); scopes != sepScopes.rend(); ++scopes) {
-		for (auto i = scopes->end() - 1; i != scopes->begin() - 1; i--) {
-			if (i->isFuncDecl(name)) {
-				return true;
-			}
-		}
+	if (stdFuncs.contains(name)) {
+		return true;
 	}
-	return false;
+	return sepScopes[0][0].isFuncDecl(name);
+
+	//for (auto scopes = sepScopes.rbegin(); scopes != sepScopes.rend(); ++scopes) {
+	//	for (auto i = scopes->end() - 1; i != scopes->begin() - 1; i--) {
+	//		if (i->isFuncDecl(name)) {
+	//			return true;
+	//		}
+	//	}
+	//}
+	//return false;
 }
 
 
