@@ -11,7 +11,6 @@ std::string trim(std::string input);
 std::string readFileIntoString(fs::path path, Error& outError);
 double execFromFile(fs::path path, Error& outError);
 void execFromCommandLine(Error& outError);
-void execFromCommandLine();
 // { { path, fileStr }, ... } 
 std::vector<Token> getTokenStream(std::string_view input, fs::path path, Error& outError,
 	std::vector<fs::path>& importedFiles);

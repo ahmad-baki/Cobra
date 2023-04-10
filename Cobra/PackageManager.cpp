@@ -29,7 +29,7 @@ bool PackageManager::hasSize(std::vector<std::vector<Value*>> param, size_t size
 {
 	if (param.size() != size) {
 		Error targetError = Error(ErrorType::RUNTIMEERROR, 
-			std::format("There is no Function with {} params", param.size()));
+			std::format("Invalid number of params: {}", param.size()));
 		outError.copy(targetError);
 		return false;
 	}

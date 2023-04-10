@@ -89,7 +89,7 @@ bool Variable::setVar(std::vector<Value*> tValues, Value* index, Error& outError
 		}
 
 		if (intIndex > values.size() - 1) {
-			Error targetError{ ErrorType::RUNTIMEERROR, std::format("IndexOutOfBounds: Cannot acces index {} of variable with size {}", intIndex, values.size()) };
+			Error targetError{ ErrorType::RUNTIMEERROR, std::format("IndexOutOfBounds: Cannot acces element at index {} of variable with size {}", intIndex, values.size()) };
 			outError.copy(targetError);
 			return false;
 		}
