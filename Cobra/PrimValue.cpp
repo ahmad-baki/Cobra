@@ -72,11 +72,17 @@ bool PrimValue::getBool(Error& outError)
 {
 	Error targetError{};
 	Interpreter* interpr = Interpreter::getSingelton();
+	if (typeId == interpr->getTypeId("bool", outError)) {
+		return *(bool*)data;
+	}
 	if (typeId == interpr->getTypeId("int", outError)) {
 		return bool(*(int*)data);
 	}
 	if (typeId == interpr->getTypeId("float", outError)) {
 		return bool(*(float*)data);
+	}
+	if (typeId == interpr->getTypeId("char", outError)) {
+		return bool(*(char*)data);
 	}
 	if (typeId == 0) {
 		targetError = Error(ErrorType::RUNTIMEERROR, "Cannot acces data of variable which is not defined",

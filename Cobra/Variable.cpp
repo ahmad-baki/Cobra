@@ -124,9 +124,11 @@ std::vector<Value*> Variable::getVal(Value* index, Error& outError)
 	}
 
 	if (intIndex > values.size()-1) {
-		Error targetError{ ErrorType::RUNTIMEERROR, std::format("IndexOutOfBounds: Cannot acces index {} \
-			of variable with size {}", intIndex, values.size() )};
+		Error targetError{ ErrorType::RUNTIMEERROR, 
+			std::format("IndexOutOfBounds: Cannot acces index {} of variable with size {}", 
+				intIndex, values.size() )};
 		outError.copy(targetError);
+		return{};
 	}
 
 	return { values[abs((int)(intIndex % values.size()))] };

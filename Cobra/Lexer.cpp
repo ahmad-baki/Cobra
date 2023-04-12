@@ -145,6 +145,13 @@ Token Lexer::getNextString(Error& outError) {
 
 Token Lexer::getNextNumber(Error& outError) {
 	std::string tokenString{ "" };
+	size_t startPos = pos;
+
+	if (currentChar == '-') {
+		tokenString += '-';
+		advance();
+	}
+
 	bool containsPeriod = false;
 	while (currentChar != 0 && (isInt(currentChar) || currentChar == '.')) {
 		if (currentChar == '.') {
@@ -152,6 +159,7 @@ Token Lexer::getNextNumber(Error& outError) {
 			{
 				Error copyTarget(ErrorType::INVCHRERROR, "More than one '.' in decimal", line, column, column + 1, path, text);
 				outError.copy(copyTarget);
+				revert(startPos);
 				return Token();
 			}
 			containsPeriod = true;

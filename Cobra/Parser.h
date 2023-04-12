@@ -64,6 +64,9 @@ private:
 	static std::vector<Token> getSingExprTokStream(size_t& pos, const std::vector<Token>& tokenStream);
 	static std::vector<Token> getFuncTokStream(const std::vector<Token>& tokenStream, size_t& pos, Error& outError);
 
+	static std::vector<Token> getBraSingExprTokStream(size_t& pos, const std::vector<Token>& tokenStream);
+
+
 	static std::vector<Token> transExprTokStream(std::vector<Token> tokenStream);
 	static std::vector<Token> addBrackets(std::vector<Token> tokenStream, std::vector<enum TokenType> op);
 

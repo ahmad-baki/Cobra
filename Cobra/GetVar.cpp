@@ -34,5 +34,14 @@ std::vector<Value*> GetVar::run(Error& outError) {
 		outError.endColumn		= endColumn;
 		return {};
 	}
-	return var->getVal(index, outError);
+	std::vector<Value*> val = var->getVal(index, outError);
+
+	if (outError.errType != ErrorType::NULLERROR)
+	{
+		outError.line = line;
+		outError.startColumn = startColumn;
+		outError.endColumn = endColumn;
+		return {};
+	}
+	return val;
 }

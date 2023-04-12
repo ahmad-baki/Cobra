@@ -764,7 +764,7 @@ void Parser::streamToIEAST(std::vector<Token> tokenStream, IEASTNode& rootNode, 
 
 			std::vector<IEASTNode*> params{};
 			while (true) {
-				std::vector<Token> paramTokens = getSingExprTokStream(i, tokenStream);
+				std::vector<Token> paramTokens = getBraSingExprTokStream(i, tokenStream);
 
 				if (paramTokens.size() == 0) {
 					Error targetError(ErrorType::SYNTAXERROR, "Invalid Expression", funcNode->token.line,
@@ -945,6 +945,11 @@ std::vector<Token> Parser::getSingExprTokStream(size_t& pos, const std::vector<T
 					int brackCount = getBrackCount(funkTokStr);
 					outTokenStream.insert(outTokenStream.end(), funkTokStr.begin(), funkTokStr.end());
 					//bracketSur++;
+					mustValue = false;
+				}
+				else if (tokType == TokenType::MINUS) {
+					outTokenStream.push_back(Token(TokenType::INTLIT, "", "", 0, 0, 0, "0"));
+					outTokenStream.push_back(tokenStream[pos]);
 				}
 				else if (std::find(valTypes.begin(), valTypes.end(), tokType) == valTypes.end()) {
 					//revert(startPos);
@@ -954,9 +959,9 @@ std::vector<Token> Parser::getSingExprTokStream(size_t& pos, const std::vector<T
 				}
 				else {
 					outTokenStream.push_back(tokenStream[pos]);
+					mustValue = false;
 				}
 				//outTokenStream.push_back(tokenStream[pos]);
-				mustValue = false;
 			}
 			else {
 				bracketSur++;
@@ -964,25 +969,25 @@ std::vector<Token> Parser::getSingExprTokStream(size_t& pos, const std::vector<T
 			}
 		}
 		else {
-			if (tokType == TokenType::RSQBRACKET) {
-				sqrBracketSur--;
+		if (tokType == TokenType::RSQBRACKET) {
+			sqrBracketSur--;
+		}
+		else if (tokType != TokenType::RBRACKET) {
+			if (tokType == TokenType::LSQBRACKET) {
+				sqrBracketSur++;
 			}
-			else if (tokType != TokenType::RBRACKET) {
-				if (tokType == TokenType::LSQBRACKET) {
-					sqrBracketSur++;
-				}
-				else if (std::find(binOps.begin(), binOps.end(), tokType) == binOps.end()) {
-					//revert(startPos);
-					pos = startPos;
-					tokType = tokenStream[pos].dataType;
-					return std::vector<Token>();
-				}
-				mustValue = true;
+			else if (std::find(binOps.begin(), binOps.end(), tokType) == binOps.end()) {
+				//revert(startPos);
+				pos = startPos;
+				tokType = tokenStream[pos].dataType;
+				return std::vector<Token>();
 			}
-			else {
-				bracketSur--;
-			}
-			outTokenStream.push_back(tokenStream[pos]);
+			mustValue = true;
+		}
+		else {
+			bracketSur--;
+		}
+		outTokenStream.push_back(tokenStream[pos]);
 		}
 		// advance();
 		pos++;
@@ -1011,8 +1016,8 @@ std::vector<Token> Parser::getFuncTokStream(const std::vector<Token>& tokenStrea
 	}
 
 	size_t startPos = pos;
-	std::vector<Token> out{Token(TokenType::FUNC), tokenStream[pos]};
-	
+	std::vector<Token> out{ Token(TokenType::FUNC), tokenStream[pos] };
+
 	pos++;
 	if (tokenStream[pos].dataType != TokenType::LBRACKET) {
 		pos = startPos;
@@ -1056,6 +1061,23 @@ std::vector<Token> Parser::getFuncTokStream(const std::vector<Token>& tokenStrea
 	out.push_back(tokenStream[pos]);
 	out[0].value = std::to_string(pos);
 	return out;
+}
+
+std::vector<Token> Parser::getBraSingExprTokStream(size_t& pos, const std::vector<Token>& tokenStream)
+{
+	size_t startPos = pos;
+	size_t brackSur = 1;
+	pos++;
+	while(brackSur != 0){
+		if (tokenStream[pos].dataType == TokenType::LBRACKET) {
+			brackSur++;
+		}
+		else if (tokenStream[pos].dataType == TokenType::RBRACKET) {
+			brackSur--;
+		}
+		pos++;
+	}
+	return {tokenStream.begin() + startPos, tokenStream.begin() + pos};
 }
 
 // adds Brackets around operators according to their priorities

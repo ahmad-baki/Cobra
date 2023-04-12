@@ -52,9 +52,11 @@ size_t DeclVar::run(Error& outError)
 	if (value != nullptr) {
 		std::vector<Value*> val = value->run(outError);
 		if (outError.errType != ErrorType::NULLERROR) {
-			outError.line = line;
-			outError.startColumn = startColumn;
-			outError.endColumn = endColumn;
+			if (outError.line == 0 && outError.startColumn == 0) {
+				outError.line = line;
+				outError.startColumn = startColumn;
+				outError.endColumn = endColumn;
+			}
 			return 0;
 		}
 		Interpreter::getSingelton()->declareVar(name, val, this->typeId, 
@@ -64,10 +66,11 @@ size_t DeclVar::run(Error& outError)
 		Interpreter::getSingelton()->declareVar(name, this->typeId,
 			outError, isConst, isStaticType, isList);
 	}
-	if (outError.errType != ErrorType::NULLERROR) {
-		outError.line			= line;
-		outError.startColumn	= startColumn;
-		outError.endColumn		= endColumn;
+	if (outError.errType != ErrorType::NULLERROR && 
+		outError.line == 0 && outError.startColumn == 0) {
+			outError.line = line;
+			outError.startColumn = startColumn;
+			outError.endColumn = endColumn;
 	}
 	return 0;
 }
