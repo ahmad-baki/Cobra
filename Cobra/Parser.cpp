@@ -13,8 +13,7 @@
 
 
 Parser::Parser(/*std::string_view text, std::string_view path*/)
-	: /*text{text}, path{path}, */ currentPos{0}, currentToken{Token(TokenType::NONE)},
-	tokenStream{ std::vector<Token>() }
+	: /*text{text}, path{path}, */ currentPos{0}, tokenStream{ std::vector<Token>() }
 {
 }
 
@@ -25,7 +24,6 @@ std::vector<Statement*> Parser::parse(std::vector<Token> tokens, Error& outError
 	}
 
 	tokenStream = tokens;
-	currentToken = tokenStream[0];
 	revert(0);
 
 
@@ -43,14 +41,22 @@ std::vector<Statement*> Parser::parse(std::vector<Token> tokens, Error& outError
 
 void Parser::advance()
 {
-	currentPos++;
+	if (currentPos != tokenStream.size()) {
+		currentPos++;
+	}
 }
 
 Token Parser::getCurrToken() {
 
 	if (currentPos > tokenStream.size() - 1) {
-		return Token(TokenType::NONE, "", "", currentToken.line, currentToken.endColumn + 1,
-			currentToken.endColumn + 2);
+		std::string_view text{};
+		fs::path path{};
+		if (tokenStream.size() != 0) {
+			const Token& currentToken = tokenStream[currentPos - 1];
+			return Token(TokenType::NONE, currentToken.path, currentToken.text,
+				currentToken.line, currentToken.endColumn, currentToken.endColumn + 1);
+		}
+		return Token(TokenType::NONE);
 	}
 	else {
 		return tokenStream[currentPos];

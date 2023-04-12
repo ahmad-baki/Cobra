@@ -20,13 +20,16 @@ std::map<std::string, cobrfunc_t> StdDef::getFuncs()
 		{"append", append},
 		{"removeAt", removeAt},
 		{"slice", slice},
+		{"size", size},
 
 		// Strings
 		{"strElemAt", strElemAt},
 		{"strAppend", strAppend},
 		{"strRemoveAt", strRemoveAt},
-		{"strSub", strSub},
+		{"subStr", subStr},
+		{"strSize", strSize},
 		{"strMatch", strMatch},
+		{"charArrToStr", charArrToStr},
 	};
 }
 
@@ -63,7 +66,7 @@ std::vector<Value*> StdDef::print(std::vector<std::vector<Value*>> param, Error&
 		return printLi(param, outError);
 	}
 
-	int stringType = Interpreter::getSingelton()->getTypeId("string", outError);
+	//int stringType = Interpreter::getSingelton()->getTypeId("string", outError);
 	//if (!PackageManager::cast(param, { stringType }, outError)) {
 	//	return {};
 	//}
@@ -78,14 +81,20 @@ std::vector<Value*> StdDef::printLi(std::vector<std::vector<Value*>> param, Erro
 		return {};
 	}
 
-	int stringType = Interpreter::getSingelton()->getTypeId("string", outError);
-	if (!PackageManager::cast(param, { stringType }, outError)) {
-		return {};
-	}
+	//int stringType = Interpreter::getSingelton()->getTypeId("string", outError);
+	//if (!PackageManager::cast(param, { stringType }, outError)) {
+	//	return {};
+	//}
 
+	int stringType = Interpreter::getSingelton()->getTypeId("string", outError);
 	std::cout << '[';
 	for (size_t i = 0; i < param[0].size(); i++) {
-		std::cout << param[0][i]->toString();
+		if (param[0][i]->getTypeId() == stringType) {
+			std::cout << '\"' << param[0][i]->toString() << '\"';
+		}
+		else {
+			std::cout << param[0][i]->toString();
+		}
 		if (i != param[0].size() - 1) {
 			std::cout << ", ";
 		}
@@ -264,6 +273,22 @@ std::vector<Value*> StdDef::slice(std::vector<std::vector<Value*>> param, Error&
 		return {};
 	}
 
+	if (param[0].size() != 1) {
+		Error targetError = Error(ErrorType::RUNTIMEERROR, "1. Parameter cannot be a list");
+		outError.copy(targetError);
+		return {};
+	}
+	if (param[1].size() != 1) {
+		Error targetError = Error(ErrorType::RUNTIMEERROR, "2. Parameter cannot be a list");
+		outError.copy(targetError);
+		return {};
+	}
+	if (param[2].size() != 1) {
+		Error targetError = Error(ErrorType::RUNTIMEERROR, "3. Parameter cannot be a list");
+		outError.copy(targetError);
+		return {};
+	}
+
 	int intTypeId = Interpreter::getSingelton()->getTypeId("int", outError);
 	if (!PackageManager::cast(param, { 0, intTypeId, intTypeId }, outError)) {
 		return {};
@@ -347,6 +372,17 @@ std::vector<Value*> StdDef::strRemoveAt(std::vector<std::vector<Value*>> param, 
 {
 	if (!PackageManager::hasSize(param, 2, outError)) {
 		return {};
+	}	
+
+	if (param[0].size() != 1) {
+		Error targetError = Error(ErrorType::RUNTIMEERROR, "1. Parameter cannot be a list");
+		outError.copy(targetError);
+		return {};
+	}
+	if (param[1].size() != 1) {
+		Error targetError = Error(ErrorType::RUNTIMEERROR, "2. Parameter cannot be a list");
+		outError.copy(targetError);
+		return {};
 	}
 
 	int intTypeId = Interpreter::getSingelton()->getTypeId("int", outError);
@@ -369,9 +405,24 @@ std::vector<Value*> StdDef::strRemoveAt(std::vector<std::vector<Value*>> param, 
 	return { new PrimValue(strTypeId, str_p, outError) };
 }
 
-std::vector<Value*> StdDef::strSub(std::vector<std::vector<Value*>> param, Error& outError)
+std::vector<Value*> StdDef::subStr(std::vector<std::vector<Value*>> param, Error& outError)
 {
 	if (!PackageManager::hasSize(param, 3, outError)) {
+		return {};
+	}
+	if (param[0].size() != 1) {
+		Error targetError = Error(ErrorType::RUNTIMEERROR, "1. Parameter cannot be a list");
+		outError.copy(targetError);
+		return {};
+	}
+	if (param[1].size() != 1) {
+		Error targetError = Error(ErrorType::RUNTIMEERROR, "2. Parameter cannot be a list");
+		outError.copy(targetError);
+		return {};
+	}
+	if (param[2].size() != 1) {
+		Error targetError = Error(ErrorType::RUNTIMEERROR, "3. Parameter cannot be a list");
+		outError.copy(targetError);
 		return {};
 	}
 
@@ -396,9 +447,41 @@ std::vector<Value*> StdDef::strSub(std::vector<std::vector<Value*>> param, Error
 	return { new PrimValue(strTypeId, newStr_p, outError)} ;
 }
 
+std::vector<Value*> StdDef::strSize(std::vector<std::vector<Value*>> param, Error& outError)
+{
+	if (!PackageManager::hasSize(param, 1, outError)) {
+		return {};
+	}
+
+	if (param[0].size() != 1) {
+		Error targetError = Error(ErrorType::RUNTIMEERROR, "1. Parameter cannot be a list");
+		outError.copy(targetError);
+		return {};
+	}
+
+	int strTypeId = Interpreter::getSingelton()->getTypeId("string", outError);
+	if (!PackageManager::cast(param, { strTypeId }, outError)) {
+		return {};
+	}
+
+	int intTypeId = Interpreter::getSingelton()->getTypeId("int", outError);
+	int* size = new int{ (int)((std::string*)param[0][0])->size() };
+	return { new PrimValue(intTypeId, size, outError) };
+}
+
 std::vector<Value*> StdDef::strMatch(std::vector<std::vector<Value*>> param, Error& outError)
 {
 	if (!PackageManager::hasSize(param, 2, outError)) {
+		return {};
+	}
+	if (param[0].size() != 1) {
+		Error targetError = Error(ErrorType::RUNTIMEERROR, "1. Parameter cannot be a list");
+		outError.copy(targetError);
+		return {};
+	}
+	if (param[1].size() != 1) {
+		Error targetError = Error(ErrorType::RUNTIMEERROR, "2. Parameter cannot be a list");
+		outError.copy(targetError);
 		return {};
 	}
 
@@ -416,6 +499,39 @@ std::vector<Value*> StdDef::strMatch(std::vector<std::vector<Value*>> param, Err
 
 	int boolTypeId = Interpreter::getSingelton()->getTypeId("bool", outError);
 	return { new PrimValue(boolTypeId, val, outError) };
+}
+
+std::vector<Value*> StdDef::charArrToStr(std::vector<std::vector<Value*>> param, Error& outError)
+{
+	if (!PackageManager::hasSize(param, 1, outError)) {
+		return {};
+	}
+
+	int charTypeId = Interpreter::getSingelton()->getTypeId("char", outError);
+	if (!PackageManager::cast(param, { charTypeId }, outError)) {
+		return {};
+	}
+
+	std::string str{};
+	for (auto iter = param[0].begin(); iter != param[0].end(); iter++) {
+		str += *(char*)(*iter)->getData();
+	}
+
+	int strTypeId = Interpreter::getSingelton()->getTypeId("string", outError);
+	return { new PrimValue(strTypeId, new std::string{str}, outError) };
+}
+
+
+std::vector<Value*> StdDef::size(std::vector<std::vector<Value*>> param, Error& outError)
+{
+	if (!PackageManager::hasSize(param, 1, outError)) {
+		return {};
+	}
+
+
+	int intTypeId = Interpreter::getSingelton()->getTypeId("int", outError);
+	int* size = new int{ (int)param[0].size() };
+	return { new PrimValue(intTypeId, size, outError) };
 }
 
 

@@ -14,5 +14,7 @@ public:
 	// helper functions:
 	static bool hasSize(std::vector<std::vector<Value*>> param, size_t size, Error& outError);
 	static bool cast(std::vector<std::vector<Value*>>& param, std::vector<int> t_types, Error& outError);
+	// should always be called when PackageManager::cast ist called
+	static void deleteData(std::vector<std::vector<Value*>>& param);
 };
 

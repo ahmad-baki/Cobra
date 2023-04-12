@@ -49,3 +49,13 @@ bool PackageManager::cast(std::vector<std::vector<Value*>>& param, std::vector<i
 	}
 	return true;
 }
+
+void PackageManager::deleteData(std::vector<std::vector<Value*>>& param)
+{
+	for (size_t i = 0; i < param.size(); i++)
+	{
+		for (size_t j = 0; j < param[i].size(); j++) {
+			delete param[i][j];
+		}
+	}
+}

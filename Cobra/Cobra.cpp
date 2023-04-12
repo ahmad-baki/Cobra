@@ -35,7 +35,7 @@ int main(int argc, char* argv[])
 		execFromCommandLine(outError);
 	}	
 	if (outError.errType != ErrorType::NULLERROR) {
-		std::cout << outError << '\n' << std::endl;
+		std::cout << outError << std::endl;
 	}
 	//std::system("pause");
 }
@@ -174,25 +174,29 @@ void execFromCommandLine(Error& outError) {
 		std::vector<Token> tokenString = getTokenStream(input, "<stdin>", outError, importedFiles);
 
 		if (outError.errType != ErrorType::NULLERROR) {
-			return;
+			std::cout << outError << std::endl;
+			continue;
 		}
 
 		Parser parser = Parser();
 		std::vector<Statement*> statements = parser.parse(tokenString, outError);
 
 		if (outError.errType != ErrorType::NULLERROR) {
-			return;
+			std::cout << outError << std::endl;
+			continue;
 		}
 
 		std::vector<Token> stdImports = getSTDImports(tokenString, outError);
 
 		if (outError.errType != ErrorType::NULLERROR) {
-			return;
+			std::cout << outError << std::endl;
+			continue;
 		}
 
 		interpreter->importSTD(stdImports, outError);
 		if (outError.errType != ErrorType::NULLERROR) {
-			return;
+			std::cout << outError << std::endl;
+			continue;
 		}
 
 		interpreter->addStatements(statements);

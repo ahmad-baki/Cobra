@@ -20,12 +20,16 @@ public:
 	static std::vector<Value*> append(std::vector<std::vector<Value*>> param, Error& outError);
 	static std::vector<Value*> removeAt(std::vector<std::vector<Value*>> param, Error& outError);
 	static std::vector<Value*> slice(std::vector<std::vector<Value*>> param, Error& outError);
+	static std::vector<Value*> size(std::vector<std::vector<Value*>> param, Error& outError);
 
 	static std::vector<Value*> strElemAt(std::vector<std::vector<Value*>> param, Error& outError);
 	static std::vector<Value*> strAppend(std::vector<std::vector<Value*>> param, Error& outError);
 	static std::vector<Value*> strRemoveAt(std::vector<std::vector<Value*>> param, Error& outError);
-	static std::vector<Value*> strSub(std::vector<std::vector<Value*>> param, Error& outError);
+	static std::vector<Value*> subStr(std::vector<std::vector<Value*>> param, Error& outError);
+	static std::vector<Value*> strSize(std::vector<std::vector<Value*>> param, Error& outError);
 	static std::vector<Value*> strMatch(std::vector<std::vector<Value*>> param, Error& outError);
+	static std::vector<Value*> charArrToStr(std::vector<std::vector<Value*>> param, Error& outError);
+
 
 };
 

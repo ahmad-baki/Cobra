@@ -32,7 +32,6 @@ public:
 
 private:
 	size_t currentPos;
-	Token currentToken;
 	std::vector<Token> tokenStream;
 
 	void advance();
