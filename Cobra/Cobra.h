@@ -16,4 +16,4 @@ std::vector<Token> getTokenStream(std::string_view input, fs::path path, Error& 
 	std::vector<fs::path>& importedFiles);
 std::vector<std::tuple<std::string, std::string>> runFileImport(std::vector<Token>& tokens,
 	std::vector<fs::path> ignoreFiles, Error& outError);
-std::vector<Token> getSTDImports(std::vector<Token>& tokens, Error& outError);
+std::vector<Token> getSTDImports(std::vector<Token>& tokens, std::vector<std::string>& ignorePackages, Error& outError);

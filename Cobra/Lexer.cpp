@@ -107,7 +107,7 @@ Token Lexer::getNextToken(Error& outError) {
 Token Lexer::getNextMakro(Error& outError)
 {
 	size_t startPos = pos;
-	while (currentChar != '\n') {
+	while (currentChar != '\n' && pos != text.size()) {
 		advance();
 	}
 	Token out{ TokenType::MAKRO, path, text, line, startPos, pos,

@@ -17,7 +17,8 @@ using namespace std::chrono;
 
 const std::regex STDIMPORTREGEX{"^#import\\s+<.*>"};
 const std::regex FILEIMPORTREGEX{ "^#import\\s+\".*\"" };
-const std::regex STDIMPORTPATH{ "\\\"(.*)\\\"" };
+const std::regex FILEIMPORTPATH{ "\\\"(.*)\\\"" };
+const std::regex STDIMPORTPATH{ "<(.*)>" };
 
 int main(int argc, char* argv[])
 {
@@ -110,23 +111,23 @@ double execFromFile(fs::path path, Error& outError) {
 		return 0;
 	}
 
-
-	Parser parser = Parser();
-	std::vector<Statement*> statements = parser.parse(tokenString, outError);
-	if (outError.errType != ErrorType::NULLERROR) {
-		return 0;
-	}
-
 	//statements.insert(statements.end(), fileStatements.begin(), fileStatements.end());
 	Interpreter* interpreter = Interpreter::getSingelton();
 
-	std::vector<Token> stdImports = getSTDImports(tokenString, outError);
+	std::vector<std::string> importedPackages{};
+	std::vector<Token> stdImports = getSTDImports(tokenString, importedPackages, outError);
 
 	if (outError.errType != ErrorType::NULLERROR) {
 		return 0;
 	}
 
 	interpreter->importSTD(stdImports, outError);
+	if (outError.errType != ErrorType::NULLERROR) {
+		return 0;
+	}
+
+	Parser parser = Parser();
+	std::vector<Statement*> statements = parser.parse(tokenString, outError);
 	if (outError.errType != ErrorType::NULLERROR) {
 		return 0;
 	}
@@ -149,11 +150,7 @@ void execFromCommandLine(Error& outError) {
 	size_t line = 1;
 	Interpreter* interpreter = Interpreter::getSingelton();
 
-	// just for debugging
-	interpreter->importSTD({}, outError);
-	// !!!!!
-
-
+	std::vector<std::string> importedPackages{ };
 	std::vector<fs::path> importedFiles{ };
 	while (true) {
 		std::cout << "> ";
@@ -178,15 +175,13 @@ void execFromCommandLine(Error& outError) {
 			continue;
 		}
 
-		Parser parser = Parser();
-		std::vector<Statement*> statements = parser.parse(tokenString, outError);
 
 		if (outError.errType != ErrorType::NULLERROR) {
 			std::cout << outError << std::endl;
 			continue;
 		}
 
-		std::vector<Token> stdImports = getSTDImports(tokenString, outError);
+		std::vector<Token> stdImports = getSTDImports(tokenString, importedPackages, outError);
 
 		if (outError.errType != ErrorType::NULLERROR) {
 			std::cout << outError << std::endl;
@@ -198,6 +193,10 @@ void execFromCommandLine(Error& outError) {
 			std::cout << outError << std::endl;
 			continue;
 		}
+
+
+		Parser parser = Parser();
+		std::vector<Statement*> statements = parser.parse(tokenString, outError);
 
 		interpreter->addStatements(statements);
 		interpreter->contin(outError);
@@ -258,7 +257,7 @@ std::vector<std::tuple<std::string, std::string>> runFileImport(std::vector<Toke
 	std::vector<std::tuple<std::string, std::string>> out{};
 	for (auto iter = imports.begin(); iter != imports.end(); iter++) {
 
-		std::regex_search((*iter)->value, base_match, STDIMPORTPATH);
+		std::regex_search((*iter)->value, base_match, FILEIMPORTPATH);
 		std::string file = readFileIntoString(fs::path(base_match[1].str()), outError);
 
 		if (outError.errType != ErrorType::NULLERROR) {
@@ -285,17 +284,28 @@ std::vector<std::tuple<std::string, std::string>> runFileImport(std::vector<Toke
 }
 
 
-std::vector<Token> getSTDImports(std::vector<Token>& tokens, Error& outError)
+std::vector<Token> getSTDImports(std::vector<Token>& tokens, std::vector<std::string>& ignorePackages, Error& outError)
 {
 	// finds right tokens
 	std::vector<Token> out{};
+
+	if (std::find(ignorePackages.begin(), ignorePackages.end(), "default") == ignorePackages.end()) {
+		out.push_back(Token(TokenType::MAKRO, "", "", 0, 0, 0, "default"));
+		ignorePackages.push_back("default");
+	}
+
+	std::vector<std::vector<Token>::iterator> del{};
 	std::smatch base_match;
 	for (size_t i = 0; i < tokens.size() && tokens[i].dataType == TokenType::MAKRO; i++) {
 		if (std::regex_match(tokens[i].value, base_match, STDIMPORTREGEX)) {
-			out.push_back(tokens[i]);
-
 			std::regex_search(tokens[i].value, base_match, STDIMPORTPATH);
 			tokens[i].value = base_match[1].str();
+
+			del.push_back(tokens.begin() + i);
+			if (std::find(ignorePackages.begin(), ignorePackages.end(), tokens[i].value) == ignorePackages.end()) {
+				out.push_back(tokens[i]);
+				ignorePackages.push_back(tokens[i].value);
+			}
 		}
 		//else if (std::regex_match(tokens[i].value, base_match, CUSTIMPORTREGEX)) {
 		//	remove.push_back(tokens[i]);
@@ -303,9 +313,8 @@ std::vector<Token> getSTDImports(std::vector<Token>& tokens, Error& outError)
 	}
 
 	// remove imports from tokenstring
-	for (auto iter = out.begin(); iter != out.end(); iter++) {
-		tokens.erase(iter);
-
+	for (auto iter = del.begin(); iter != del.end(); iter++) {
+		tokens.erase(*iter);
 	}
 	return out;
 }

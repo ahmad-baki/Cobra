@@ -174,6 +174,9 @@
     <ClCompile Include="StdDef.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="StdDir.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BinOp.h">
@@ -303,6 +306,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="StdDef.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StdDir.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

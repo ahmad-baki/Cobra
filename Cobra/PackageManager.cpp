@@ -1,16 +1,22 @@
 #include "PackageManager.h"
 #include "StdMath.h"
 #include "StdDef.h"
+#include "StdDir.h"
 
 std::map<std::string, cobrfunc_t> PackageManager::import(std::vector<Token> packages, Error& outError)
 {
-	std::map<std::string, cobrfunc_t> out = StdDef::getFuncs();
+	std::map<std::string, cobrfunc_t> out{};
 	
 	for (auto iter = packages.begin(); iter != packages.end(); iter++) {
 		std::map<std::string, cobrfunc_t> import;
-
-		if (iter->value == "math") {
+		if (iter->value == "default") {
+			import = StdDef::getFuncs();
+		}
+		else if (iter->value == "math") {
 			import = StdMath::getFuncs();
+		}
+		else if (iter->value == "dir") {
+			import = StdDir::getFuncs();
 		}
 		else {
 			Error targetError = Error(ErrorType::INVCHRERROR, "There is no package " + iter->value, 

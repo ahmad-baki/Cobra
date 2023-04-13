@@ -7,8 +7,9 @@
 Interpreter* Interpreter::singelton = nullptr;
 
 Interpreter::Interpreter()
-	: statements{}/*, scopes{}*/, sepScopes{}, nextExecIndex{0}
+	: statements{}/*, scopes{}*/, sepScopes{}, nextExecIndex{ 0 }
 {
+	stdFuncs = {};
 	Error outError{};
 	sepScopes.push_back({ Scope("global", outError) });
 	//blockNode = new BlockNode({}, "global");
@@ -53,7 +54,12 @@ void Interpreter::contin(Error& outError) {
 
 void Interpreter::importSTD(std::vector<Token> imports, Error& outError)
 {
-	stdFuncs = PackageManager::import(imports, outError);
+	std::map<std::string, cobrfunc_t> newImports = PackageManager::import(imports, outError);
+	//stdFuncs.insert(imports.begin(), imports.end());
+	//stdFuncs = newImports;
+	for (auto iter = newImports.begin(); iter != newImports.end(); iter++) {
+		stdFuncs.emplace(*iter);
+	}
 }
 
 void Interpreter::addStatements(std::vector<Statement*> statements) {
